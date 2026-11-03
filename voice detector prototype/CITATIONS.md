@@ -20,6 +20,14 @@ Every external model, dataset and library used in this project, with its licence
 | Whisper base.en (Radford et al., 2022) | https://huggingface.co/openai/whisper-base.en | Apache-2.0 | Quality check only: transcribing Orpheus output to confirm it is intelligible |
 | SpeechT5 TTS + HiFi-GAN vocoder | https://huggingface.co/microsoft/speecht5_tts, https://huggingface.co/microsoft/speecht5_hifigan | MIT (weights are `.bin`; loaded by transformers with `weights_only=True`) | Making synthetic test clips |
 
+## Methods
+
+| Name | Source | Used for |
+|---|---|---|
+| OC-softmax, one-class learning (Zhang, Jiang and Duan, 2021) | https://arxiv.org/abs/2010.13995 | The `--one-class` training option and `CosineOutput`. Alpha 20 and margins 0.9 and 0.2 are the paper's values. No code was copied |
+| RawBoost (Tak, Kamble, Patino, Todisco and Evans, ICASSP 2022) | https://arxiv.org/abs/2111.04433 | `audio/rawboost.py` and the `--rawboost` training option. The settings are the defaults in the authors' public code, https://github.com/TakHemlata/SSL_Anti-spoofing, which we read but did not copy |
+| wav2vec 2.0 front-end fine-tuning with AASIST and RawBoost (Tak, Todisco, Wang, Jung, Yamagishi and Evans, Odyssey 2022) | https://arxiv.org/abs/2202.12233 | The reason for trying `--unfreeze`. They fine-tune the whole XLS-R backbone; we open only the last layers, because of the 6 GB GPU and our small data |
+
 ## Datasets
 
 | Name | Source | Licence | Used for |

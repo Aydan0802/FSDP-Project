@@ -23,6 +23,7 @@ Run from the project root:
 import argparse
 import json
 import zlib
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import matplotlib
@@ -37,27 +38,37 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+BATCH_CLIPS = 32  # clips whose copies are made at once, which limits the memory used
+
+
+def three_versions(clip):
+    """The clean, compressed and phone audio of one clip."""
+    wav = load_audio(ROOT / clip.path)
+    seed = zlib.crc32(clip.path.encode())  # same clip -> same phone copy every run
+    phone_wav, phone_info = degrade(wav, seed=seed, config=PhoneConfig())
+    clip_wav, clip_info = compress_clip(wav, seed=seed)
+    return [("clean", wav, {}), ("compressed", clip_wav, clip_info), ("phone", phone_wav, phone_info)]
 
 
 def score_all(manifest, head=None):
-    rows = []
-    for i, clip in enumerate(manifest.itertuples(index=False)):
-        wav = load_audio(ROOT / clip.path)
-        seed = zlib.crc32(clip.path.encode())  # same clip -> same phone copy every run
-        phone_wav, phone_info = degrade(wav, seed=seed, config=PhoneConfig())
-        clip_wav, clip_info = compress_clip(wav, seed=seed)
-        for condition, audio, info in [("clean", wav, {}), ("compressed", clip_wav, clip_info),
-                                       ("phone", phone_wav, phone_info)]:
-            r = score_clip(audio, head)
-            rows.append({**clip._asdict(), "condition": condition,
-                         "codec": info.get("codec"), "snr_db": info.get("snr_db"),
-                         "packet_loss": info.get("packet_loss"),
-                         "fake_score_raw": r["fake_score_raw"], "window_spread": r["window_spread"],
-                         "window_scores": json.dumps(r["window_scores"]),
-                         "n_windows": r["n_windows"], "duration_s": r["duration_s"],
-                         "inconclusive": r["inconclusive"]})
-        if (i + 1) % 25 == 0:
-            print(f"  scored {i + 1}/{len(manifest)} clips")
+    rows, clips, done = [], list(manifest.itertuples(index=False)), 0
+    # Most of the time here is ffmpeg, a separate program, so several clips at once are much faster.
+    with ThreadPoolExecutor(max_workers=8) as threads:
+        for start in range(0, len(clips), BATCH_CLIPS):
+            batch = clips[start:start + BATCH_CLIPS]
+            for clip, versions in zip(batch, threads.map(three_versions, batch)):
+                for condition, audio, info in versions:
+                    r = score_clip(audio, head)
+                    rows.append({**clip._asdict(), "condition": condition,
+                                 "codec": info.get("codec"), "snr_db": info.get("snr_db"),
+                                 "packet_loss": info.get("packet_loss"),
+                                 "fake_score_raw": r["fake_score_raw"], "window_spread": r["window_spread"],
+                                 "window_scores": json.dumps(r["window_scores"]),
+                                 "n_windows": r["n_windows"], "duration_s": r["duration_s"],
+                                 "inconclusive": r["inconclusive"]})
+                done += 1
+                if done % 25 == 0:
+                    print(f"  scored {done}/{len(manifest)} clips")
     return pd.DataFrame(rows)
 
 

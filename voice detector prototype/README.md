@@ -73,7 +73,12 @@ The full evaluation takes about 3 minutes on an RTX 4050. Latest results: `docs/
 After that, each step uses scores saved by `eval.run_eval`, one folder per head. The commands are at the top of each script:
 
 - `eval/calibrate.py` fits `detectors/calibration.json` on validation clips and reports the test clips.
+- `eval/clip_rules.py` compares the average with the worst windows, and reports fakes missed at a set false alarm rate.
 - `eval/splice_test.py` tests the "part of this clip sounds synthetic" warning.
+- `eval/false_alarm_check.py` measured false alarms on real Singaporean clips that had never been scored. Those clips are now used by `data_prep/prepare_fresh.py`.
+- `data_prep/prepare_fresh.py` adds Parts 1 and 3 of the corpus to training and validation, and builds the held-out clips (`data/manifest_heldout.csv`).
+- `eval/compare_heads.py` compares mixes of heads on validation, using a rule fixed before scoring. Test folders are only reported.
+- `eval/window_pooling.py` tries other ways to combine a clip's 5 s windows on validation.
 
 ## Run the tests
 

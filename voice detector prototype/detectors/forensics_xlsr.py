@@ -21,6 +21,7 @@ Run (from the project root):
     python -m detectors.forensics_xlsr path/to/clip.wav [more.wav ...]
 """
 import argparse
+import copy
 import functools
 import importlib.util
 import time
@@ -64,6 +65,26 @@ def _load_author_classes():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.AASISTPool, module.Classifier
+
+
+class CosineOutput(torch.nn.Module):
+    """One-class last layer (OC-softmax, Zhang et al. 2021, see CITATIONS.md).
+    It replaces the final Linear and keeps its weight names. The score is how
+    closely a clip's features point at one learned "real speech" direction, so
+    real clips must sit close together while fakes may be anywhere else. It is
+    returned as a logit, so sigmoid(logit) = P(real) still holds."""
+    ALPHA = 20.0        # sharpness, from the paper
+    REAL_MARGIN = 0.9   # real clips should reach this cosine, from the paper
+    FAKE_MARGIN = 0.2   # fake clips should stay below this one, from the paper
+    MID = (REAL_MARGIN + FAKE_MARGIN) / 2
+
+    def __init__(self, linear):
+        super().__init__()
+        self.weight, self.bias = linear.weight, linear.bias  # bias is unused; kept so the names match
+
+    def forward(self, x):
+        cosine = torch.nn.functional.cosine_similarity(x, self.weight)
+        return (self.ALPHA * (cosine - self.MID)).unsqueeze(-1)
 
 
 class ForensicsDetector(torch.nn.Module):
@@ -115,8 +136,12 @@ def get_model(head=None):
     original, device = _load_original()
     if not head:
         return original, device
-    model = ForensicsDetector(wavlm=original.wavlm)
     head_state = load_file(str(head))
+    # A head trained with --unfreeze brings its own last backbone layers, so it cannot share.
+    own_backbone = any(k.startswith("wavlm.") for k in head_state)
+    model = ForensicsDetector(wavlm=copy.deepcopy(original.wavlm) if own_backbone else original.wavlm)
+    if head_state.pop("one_class", None) is not None:  # marker saved by train/finetune_head.py
+        model.classifier.output_head[3] = CosineOutput(model.classifier.output_head[3])
     result = model.load_state_dict(head_state, strict=False)
     missing = [k for k in result.missing_keys if k.startswith(("pool.", "classifier."))]
     if missing or result.unexpected_keys:

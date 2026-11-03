@@ -42,7 +42,9 @@ WAV_DIR = RAW.parent
 SOURCES = ROOT / "docs" / "sg_officials_sources.csv"
 FINETUNED = {"fine-tuned 1": ROOT / "models" / "finetuned" / "head.safetensors",      # audiobook data only
              "fine-tuned 2": ROOT / "models" / "finetuned" / "head_sg.safetensors",  # + Singaporean speech
-             "best so far": ROOT / "models" / "finetuned" / "final_slow.safetensors"}  # + Orpheus fakes
+             "fine-tuned 3": ROOT / "models" / "finetuned" / "final_slow.safetensors",  # + Orpheus fakes
+             "fine-tuned 4": ROOT / "models" / "finetuned" / "clips_final2.safetensors",  # + vocoded and compressed
+             "best so far": ROOT / "models" / "finetuned" / "clips_final3.safetensors"}  # + Parts 1 and 3 of the corpus
 OUT = ROOT / "results" / "sg_officials"
 FLAG_AT = 0.5  # a window counts as "flagged" when its raw fake score is at least this
 

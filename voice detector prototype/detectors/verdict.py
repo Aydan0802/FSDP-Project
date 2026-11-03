@@ -31,9 +31,10 @@ from detectors.forensics_xlsr import MIN_SECONDS, SR, load_audio, score_clip
 ROOT = Path(__file__).resolve().parent.parent
 CALIBRATION = Path(__file__).resolve().parent / "calibration.json"
 LEVELS = ["low", "medium", "high"]
-PART_WINDOW = 0.7  # a 5 s window counts as sounding synthetic from this chance (the HIGH band)
-PART_MIN_WINDOWS = 2  # one odd window is not enough: at least this many, and
-PART_MIN_SHARE = 0.2  # at least this share of the clip
+# "Part of this clip sounds synthetic" rule, chosen on validation with eval/splice_test.py:
+PART_WINDOW = 0.9  # a 5 s window counts as sounding synthetic from this chance
+PART_MIN_WINDOWS = 1  # at least this many windows, and
+PART_MIN_SHARE = 0.1  # at least this share of the clip
 
 
 def phone_band_share(wav, cutoff_hz=3800):
@@ -75,7 +76,7 @@ def analyse(wav):
     level, reasons = 2, ["no watermark found (this does NOT mean the voice is real)"]
     if channel == "phone":
         level -= 1
-        reasons.append("phone-quality audio: our tests show about twice the error of clean audio")
+        reasons.append("phone-quality audio: our tests show more errors here than on clean audio")
     if duration < 4:
         level -= 1
         reasons.append(f"short clip ({duration} s)")

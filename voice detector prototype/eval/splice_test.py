@@ -8,10 +8,11 @@ enough 5 s windows sound synthetic. This script measures that rule:
     real only   real + real + real      a warning here is a false alarm
     spliced     real + FAKE + real      a warning here is a catch
 
-Each pair of test clips is built from different recordings, clean and through
-a simulated phone call. Real pieces come from different speakers, so this
-tests the windows, not a believable edit. The script scores every clip once,
-saves the window chances, then tries each rule setting on those saved scores.
+Each pair of test clips is built from different recordings, clean, compressed
+and through a simulated phone call. Real pieces come from different speakers,
+so this tests the windows, not a believable edit. The script scores every clip
+once, saves the window chances, then tries each rule setting on those saved
+scores.
 
 Choose the rule on validation clips, then run the test clips ONCE to report it:
     python -m eval.splice_test --manifest data/train_manifest_sg_orpheus.csv --split val --out results/splice_val
@@ -25,7 +26,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from audio.phone import PhoneConfig, degrade
+from audio.phone import PhoneConfig, compress_clip, degrade
 from detectors.calibration import combine
 from detectors.forensics_xlsr import load_audio, score_clip
 from detectors.verdict import CALIBRATION, PART_MIN_SHARE, PART_MIN_WINDOWS, PART_WINDOW, phone_band_share
@@ -50,9 +51,11 @@ def make_trials(manifest, n, seed=0):
 
 def score_trial(kind, generator, paths, cal):
     wav = np.concatenate([load_audio(ROOT / p) for p in paths])
-    phone, _ = degrade(wav, seed=zlib.crc32("".join(paths).encode()), config=PhoneConfig())
+    seed = zlib.crc32("".join(paths).encode())
+    phone, _ = degrade(wav, seed=seed, config=PhoneConfig())
+    compressed, _ = compress_clip(wav, seed=seed)
     rows = []
-    for condition, audio in [("clean", wav), ("phone", phone)]:
+    for condition, audio in [("clean", wav), ("compressed", compressed), ("phone", phone)]:
         params = cal["phone" if phone_band_share(audio) < cal["band_cutoff"] else "wideband"]
         dets = [score_clip(audio, ROOT / head if head else None) for head in cal["heads"]]
         rows.append({"kind": kind, "generator": generator, "condition": condition,
@@ -76,7 +79,7 @@ def rule_table(scores, high_edge):
     for part_window, min_windows, min_share in GRID:
         flagged = (scores.chance >= high_edge) | windows.map(lambda w: warned(w, part_window, min_windows, min_share))
         row = {"window_chance": part_window, "min_windows": min_windows, "min_share": min_share}
-        for condition in ("clean", "phone"):
+        for condition in ("clean", "compressed", "phone"):
             kept = flagged[scores.condition == condition]
             kinds = scores.kind[scores.condition == condition]
             row[f"{condition}_false_alarm_%"] = round(100 * kept[kinds == "real only"].mean(), 1)
