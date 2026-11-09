@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en-SG">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | Verify the Caller</title>
+  <meta name="description" content="Verify the Caller: a student prototype of anti-AI-scam tools for OCBC's Digital Trust challenge. Not a real OCBC service.">
+
+  <!-- Owner: SHARED (whole team). Every file is already linked below, so nobody needs to edit
+       this page again. Each person only changes the files listed under their own name. -->
+
+  <!-- Clarity's font, from Google Fonts. Without internet the page falls back to Segoe UI. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Shared styles: base first, then the Clarity theme -->
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/clarity.css">
+
+  <!-- Feature styles, one file per feature -->
+  <!-- Jiliana -->
+  <link rel="stylesheet" href="css/features/login.css">
+  <link rel="stylesheet" href="css/features/pause-verify.css">
+  <link rel="stylesheet" href="css/features/learn-signs.css">
+  <link rel="stylesheet" href="css/features/passphrase.css">
+  <!-- Aydan -->
+  <link rel="stylesheet" href="css/features/analyser.css">
+  <link rel="stylesheet" href="css/features/coming-soon.css">
+  <!-- Jose -->
+  <link rel="stylesheet" href="css/features/risk-scorer.css">
+  <link rel="stylesheet" href="css/features/report.css">
+  <link rel="stylesheet" href="css/features/freeze.css">
+  <link rel="stylesheet" href="css/features/call-match-logic.css">
+  <!-- Yan Lin -->
+  <link rel="stylesheet" href="css/features/call-match.css">
+  <link rel="stylesheet" href="css/features/evidence-checker.css">
+  <link rel="stylesheet" href="css/features/customer-home.css">
+  <!-- Wei Ye -->
+  <link rel="stylesheet" href="css/features/triage-console.css">
+</head>
+<body data-theme="clarity">
+  <!-- The skip link and the demo banner stay on every screen. The router draws the current
+       screen inside <div id="app">. -->
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <div class="demo-bar">
+    <p><strong>Student prototype.</strong> Not a real OCBC service. All data is made up.</p>
+  </div>
+  <div id="app"></div>
+
+  <!-- Scripts run in this order. Core first, so the helpers and registerRoute() exist before
+       any feature file uses them. -->
+
+  <!-- Core: SHARED (whole team), except access.js (Wei Ye) -->
+  <script src="js/core/helpers.js"></script>
+  <script src="js/core/state.js"></script>
+  <script src="js/core/a11y.js"></script>
+  <script src="js/core/access.js"></script>
+  <script src="js/core/router.js"></script>
+
+  <!-- Made-up data, one file per feature -->
+  <!-- Jiliana -->
+  <script src="js/data/login.js"></script>
+  <script src="js/data/pause-verify.js"></script>
+  <script src="js/data/learn-signs.js"></script>
+  <script src="js/data/passphrase.js"></script>
+  <!-- Aydan -->
+  <script src="js/data/analyser.js"></script>
+  <script src="js/data/coming-soon.js"></script>
+  <!-- Jose -->
+  <script src="js/data/risk-scorer.js"></script>
+  <script src="js/data/report.js"></script>
+  <script src="js/data/freeze.js"></script>
+  <script src="js/data/call-match-logic.js"></script>
+  <!-- Yan Lin -->
+  <script src="js/data/call-match.js"></script>
+  <script src="js/data/evidence-checker.js"></script>
+  <script src="js/data/customer-home.js"></script>
+  <!-- Wei Ye -->
+  <script src="js/data/triage-console.js"></script>
+
+  <!-- Feature screens, one file per feature -->
+  <!-- Jiliana -->
+  <script src="js/features/login.js"></script>
+  <script src="js/features/pause-verify.js"></script>
+  <script src="js/features/learn-signs.js"></script>
+  <script src="js/features/passphrase.js"></script>
+  <!-- Aydan -->
+  <script src="js/features/analyser.js"></script>
+  <script src="js/features/coming-soon.js"></script>
+  <!-- Jose (call-match-logic.js must load before Yan Lin's call-match.js, which uses it) -->
+  <script src="js/features/risk-scorer.js"></script>
+  <script src="js/features/report.js"></script>
+  <script src="js/features/freeze.js"></script>
+  <script src="js/features/call-match-logic.js"></script>
+  <!-- Yan Lin -->
+  <script src="js/features/call-match.js"></script>
+  <script src="js/features/evidence-checker.js"></script>
+  <script src="js/features/customer-home.js"></script>
+  <!-- Wei Ye -->
+  <script src="js/features/triage-console.js"></script>
+</body>
+</html>

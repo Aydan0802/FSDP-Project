@@ -1,0 +1,265 @@
+/* Verify the Caller: shared base styles.
+   Owner: SHARED (whole team). Talk to the team before changing this file.
+   Copied from the theme samples (shared/base.css). This file holds only what more than one
+   screen uses: colours, accessibility helpers, the demo banner, brand, buttons, form fields,
+   text size, the customer and staff headers, the staff side menu, panels, tables and the five
+   result badges. Styles for a single screen live in css/features/<feature>.css instead. */
+
+:root {
+  /* OCBC colours (same values and contrast notes as the theme samples) */
+  --red: #ED1C24;        /* buttons, borders, icons, big shapes. Never small text (4.4:1 on white) */
+  --red-dark: #9E1B32;   /* red text, the solid "likely AI" badge (7.9:1 on white) */
+  --charcoal: #363B40;   /* main text (11.3:1 on white) */
+  --slate: #3D525D;      /* secondary text (8.2:1 on white) */
+  --white: #FFFFFF;
+  --red-tint: #FDEDEE;
+  --slate-tint: #EEF2F4;
+  --divider: #C9D2D7;
+
+  /* Theme slots: clarity.css sets its own values for some of these */
+  --font-body: "Segoe UI", Arial, sans-serif;
+  --font-head: var(--font-body);
+  --bg: var(--white);
+  --surface: var(--white);
+  --surface-2: var(--slate-tint);
+  --text: var(--charcoal);
+  --muted: var(--slate);
+  --border: var(--divider);
+  --field-border: var(--slate);
+  --accent: var(--red);
+  --accent-text: var(--red-dark);
+  --btn-bg: var(--red);
+  --btn-text: var(--white);
+  --btn-hover: var(--red-dark);
+  --radius: 6px;
+  --radius-lg: 12px;
+  --btn-radius: 6px;
+  --shadow: none;
+  --focus: var(--charcoal);
+  --bar: var(--red);
+  --bar-2: var(--charcoal);
+  --grid-line: var(--divider);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+/* The A / A+ / A++ buttons: everything is sized in rem, so it all grows together */
+html[data-size="large"] { font-size: 112.5%; }
+html[data-size="larger"] { font-size: 125%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body); font-size: 1.125rem; line-height: 1.55;
+  color: var(--text); background: var(--bg);
+}
+h1, h2, h3 { margin: 0 0 .75rem; font-family: var(--font-head); line-height: 1.2; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.375rem; }
+p { margin: 0 0 1rem; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+button, input { font: inherit; color: inherit; }
+a { color: inherit; text-underline-offset: 3px; }
+[hidden] { display: none !important; }
+
+/* A clear focus ring on every control for keyboard users */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Headings and main only take focus so screen readers start reading at the new screen */
+h1:focus, main:focus { outline: none; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Icons are simple line drawings in the text colour */
+.icon {
+  width: 1.5em; height: 1.5em; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.skip-link {
+  position: absolute; left: 1rem; top: -6rem; z-index: 10;
+  padding: .75rem 1rem; background: var(--white); color: var(--charcoal);
+  border: 2px solid var(--charcoal); border-radius: 6px;
+}
+.skip-link:focus { top: 1rem; }
+
+/* ---------- Demo banner: "Student prototype. Not a real OCBC service." ----------
+   The theme switcher is gone, so only the message is left. */
+
+.demo-bar {
+  padding: .25rem 1rem; background: var(--slate-tint); color: var(--charcoal); border-bottom: 1px solid var(--divider);
+  font-family: "Segoe UI", Arial, sans-serif; font-size: 1rem; line-height: 1.4;
+}
+.demo-bar p { margin: .375rem 0; }
+
+/* ---------- Brand ---------- */
+
+.brand { display: inline-flex; align-items: center; gap: .75rem; min-height: 48px; color: inherit; text-decoration: none; }
+.brand-mark {
+  display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem;
+  border-radius: var(--radius); background: var(--red); color: var(--white);
+}
+.brand-mark .icon { width: 1.75rem; height: 1.75rem; }
+.brand-name { font-family: var(--font-head); font-size: 1.25rem; font-weight: 700; line-height: 1.1; }
+.brand-tag {
+  padding: .125rem .5rem; border: 2px solid currentColor; border-radius: 999px;
+  font-size: .9375rem; font-weight: 700; line-height: 1.2;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  width: 100%; min-height: 56px; padding: .75rem 1.5rem;
+  border: 2px solid transparent; border-radius: var(--btn-radius);
+  font-size: 1.25rem; font-weight: 700; line-height: 1.2; text-align: center; text-decoration: none;
+  cursor: pointer; transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .15s;
+}
+.btn .icon { width: 1.25em; height: 1.25em; }
+/* White bold 20px text counts as large text, so 4.4:1 on OCBC red passes WCAG AA */
+.btn-primary { background: var(--btn-bg); color: var(--btn-text); }
+.btn-primary:hover { background: var(--btn-hover); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--field-border); }
+.btn-secondary:hover { background: var(--surface-2); }
+.btn-link {
+  width: auto; min-height: 48px; padding: .5rem; background: none; color: var(--muted);
+  font-size: 1.125rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-small { width: auto; min-height: 48px; padding: .5rem 1rem; font-size: 1rem; }
+
+/* ---------- Form fields (any screen with a form can use these) ---------- */
+
+.field { margin: 0 0 1.25rem; }
+.field label { display: block; margin: 0 0 .4rem; padding: 0; font-weight: 700; }
+.field input {
+  display: block; width: 100%; min-height: 56px; padding: .75rem 1rem;
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+}
+.field input[aria-invalid="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.field-error { margin: 0 0 1rem; color: var(--accent-text); font-weight: 700; }
+.field-error:empty { display: none; }
+
+/* ---------- Text size buttons ---------- */
+
+.text-size { display: inline-flex; align-items: center; gap: .25rem; }
+.text-size-label { margin-right: .25rem; color: var(--muted); font-size: 1rem; }
+.text-size button {
+  min-width: 48px; min-height: 48px; padding: 0 .5rem; cursor: pointer; line-height: 1;
+  background: var(--surface); color: var(--text); font-weight: 700;
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+}
+.text-size [data-size="normal"] { font-size: 1rem; }
+.text-size [data-size="large"] { font-size: 1.125rem; }
+.text-size [data-size="larger"] { font-size: 1.3rem; }
+.text-size button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* ---------- App header (customer and staff) ---------- */
+
+.app-header {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.5rem;
+  padding: .75rem 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.app-nav { display: flex; gap: .25rem; }
+.app-nav a, .app-nav button {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 48px; padding: .5rem .875rem;
+  background: none; border: 0; border-radius: var(--radius); color: var(--text);
+  font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.app-nav a:hover, .app-nav button:hover { background: var(--surface-2); }
+.app-nav [aria-current="page"] { color: var(--accent-text); box-shadow: inset 0 -3px 0 var(--accent); }
+.header-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-left: auto; }
+.tool-btn {
+  display: inline-flex; align-items: center; gap: .4rem; min-height: 48px; padding: .5rem .875rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font-weight: 600;
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+}
+.tool-btn .icon { width: 1.375rem; height: 1.375rem; }
+.tool-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.who { display: flex; align-items: center; gap: .5rem; margin: 0 .5rem 0 0; color: var(--muted); font-size: 1rem; line-height: 1.3; }
+
+@media (max-width: 47.99rem) {
+  .app-header { padding: .5rem 1rem; }
+  .app-nav {
+    order: 3; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%;
+    padding-top: .375rem; border-top: 1px solid var(--border);
+  }
+  .app-nav a, .app-nav button { flex-direction: column; gap: .125rem; padding: .375rem .25rem; font-size: 1rem; }
+  .tool-btn { min-width: 48px; justify-content: center; padding: .5rem; }
+  .tool-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .text-size-label, .who { display: none; }
+}
+
+/* ---------- Customer pages: the main column every customer screen sits in ---------- */
+
+.cust-main { max-width: 72rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+.eyebrow { margin: 0 0 .25rem; color: var(--accent-text); font-weight: 700; }
+
+/* ---------- Staff pages: side menu and main column every staff screen sits in ---------- */
+
+.staff-body { display: grid; }
+.side-nav {
+  display: flex; gap: .25rem; padding: .5rem 1rem; overflow-x: auto;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.side-nav a, .side-nav button {
+  display: flex; align-items: center; gap: .625rem; min-height: 48px; padding: .5rem .875rem;
+  background: none; border: 0; border-radius: var(--radius); color: var(--text);
+  font-weight: 600; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.side-nav a:hover, .side-nav button:hover { background: var(--surface-2); }
+.side-nav .icon { width: 1.375rem; height: 1.375rem; }
+.side-nav [aria-current="page"] { background: var(--surface-2); color: var(--accent-text); box-shadow: inset 0 -3px 0 var(--accent); }
+.side-nav .count {
+  margin-left: .25rem; min-width: 1.75rem; padding: 0 .4rem; border-radius: 999px;
+  background: var(--red-dark); color: var(--white); font-size: .9375rem; font-weight: 700; text-align: center;
+}
+@media (min-width: 64rem) {
+  .staff-body { grid-template-columns: 15.5rem minmax(0, 1fr); min-height: calc(100vh - 7rem); }
+  .side-nav {
+    flex-direction: column; padding: 1.5rem 1rem; overflow: visible;
+    border-bottom: 0; border-right: 1px solid var(--border);
+  }
+  .side-nav [aria-current="page"] { box-shadow: inset 3px 0 0 var(--accent); }
+  .side-nav .count { margin-left: auto; }
+}
+
+.staff-main { min-width: 0; padding: 1.75rem 1.25rem 3rem; }
+@media (min-width: 64rem) { .staff-main { padding: 2rem 2.5rem 3rem; } }
+.staff-title { margin-bottom: 1.5rem; }
+.staff-title h1 { margin-bottom: .25rem; }
+.meta { margin: 0; color: var(--muted); }
+
+/* ---------- Panels: a white card for a block of content ---------- */
+
+.panel {
+  min-width: 0; padding: 1.5rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+}
+.panel h2 { font-size: 1.25rem; }
+
+/* ---------- Result badges: fill, outline, icon and words, never colour alone ---------- */
+
+.badge {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .625rem;
+  background: var(--white); color: var(--slate); border: 2px solid var(--slate); border-radius: var(--radius);
+  font-size: 1rem; font-weight: 700; line-height: 1.3; white-space: nowrap;
+}
+.badge .icon { width: 1.25rem; height: 1.25rem; }
+.badge--likely { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+.badge--partial, .badge--uncertain { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.badge--unsure { background: var(--slate-tint); color: var(--charcoal); }
+
+/* ---------- Tables scroll inside their own box on small screens ---------- */
+
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+.data-table th, .data-table td { padding: .75rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--border); }
+.data-table thead th { color: var(--muted); font-size: .9375rem; font-weight: 700; }
+.data-table tbody tr:last-child > * { border-bottom: 0; }
+
+/* Respect people who turn off animation in their device settings */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

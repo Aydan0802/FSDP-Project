@@ -1,0 +1,38 @@
+/* Theme: Clarity (the only theme we use).
+   Owner: SHARED (whole team). Talk to the team before changing this file.
+   A modern banking-app look: a soft grey page, white rounded cards, gentle shadows and pill
+   buttons. Copied from the theme samples (clarity.css). Clarity rules for a single screen
+   (sign in, customer home, staff overview) were moved into that screen's css/features file. */
+
+:root {
+  --font-body: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --bg: #F3F5F7;
+  --border: #E1E6EA;
+  --field-border: #6B7A84;   /* 4.4:1 on white: enough for outlines, which need 3:1 */
+  --radius: 14px;
+  --radius-lg: 22px;
+  --btn-radius: 999px;
+  --shadow: 0 1px 2px rgba(54, 59, 64, .06), 0 8px 24px rgba(54, 59, 64, .08);
+  --bar-2: var(--slate);
+}
+
+h1, h2, .brand-name { font-weight: 800; letter-spacing: -.02em; }
+
+/* ---------- Headers and menus (customer and staff) ---------- */
+
+.app-header { border-bottom: 0; box-shadow: 0 1px 0 var(--border), 0 4px 16px rgba(54, 59, 64, .05); }
+.brand-mark { border-radius: 12px; }
+.app-nav a, .app-nav button, .tool-btn, .text-size button { border-radius: 999px; }
+.app-nav [aria-current="page"] { background: var(--red-tint); color: var(--red-dark); box-shadow: none; }
+
+.side-nav a, .side-nav button { border-radius: 999px; }
+.side-nav [aria-current="page"] { background: var(--red-tint); color: var(--red-dark); box-shadow: none; }
+@media (min-width: 64rem) {
+  .side-nav { border-right: 0; box-shadow: 1px 0 0 var(--border); }
+  .side-nav a, .side-nav button { border-radius: 12px; }
+}
+
+/* ---------- Cards and small buttons ---------- */
+
+.panel { border: 0; }
+.btn-small { border-radius: 999px; }
