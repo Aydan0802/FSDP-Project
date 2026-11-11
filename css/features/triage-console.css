@@ -1,0 +1,107 @@
+/* Feature: Triage console (staff overview, case queue, case detail).
+   Owner: Wei Ye
+   The staff overview styles were moved out of the theme samples: first the layout
+   (from base.css), then the Clarity look (from clarity.css). Clarity's rules come last and win. */
+
+/* ---------- Layout (from base.css) ---------- */
+
+.kpis { display: grid; gap: 1rem; margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); }
+.kpi {
+  display: flex; flex-direction: column; gap: .25rem; padding: 1.25rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+}
+.kpi-label { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+.kpi-value { font-family: var(--font-head); font-size: 2.5rem; font-weight: 700; line-height: 1.1; }
+.kpi-note { color: var(--muted); font-size: 1rem; line-height: 1.35; }
+.kpi--alert { border-top: 4px solid var(--accent); }
+
+.staff-grid { display: grid; gap: 1.5rem; }
+@media (min-width: 64rem) {
+  .staff-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+  .panel-queue { grid-column: 1 / -1; }
+}
+.panel-chart { overflow: hidden; }   /* keeps hover labels inside the card */
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+.panel-head h2 { margin: 0; }
+
+/* Bar chart: thin bars with rounded tops, faint grid lines, one colour */
+.chart { display: grid; grid-template-columns: 2rem minmax(0, 1fr); grid-template-rows: 13rem auto; column-gap: .5rem; margin: 1.5rem 0 1rem; }
+.chart-scale { position: relative; }
+.chart-scale span {
+  position: absolute; right: 0; top: calc(var(--y) * 100%); transform: translateY(-50%);
+  color: var(--muted); font-size: .9375rem; line-height: 1;
+}
+.bars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;
+  border-bottom: 2px solid var(--muted);
+  background: repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 33.333%);
+}
+.bar-col { display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+.bar {
+  position: relative; display: block; width: min(2.5rem, 70%); height: var(--h);
+  background: var(--bar); border-radius: 4px 4px 0 0;
+}
+.bar:hover, .bar:focus-visible { filter: brightness(.82); }
+.bar-value, .bar-tip {
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+  font-size: .9375rem; font-weight: 700; line-height: 1.3; white-space: nowrap; pointer-events: none;
+}
+.bar-value { color: var(--text); }
+.bar-tip {
+  padding: .125rem .5rem; border-radius: 4px; background: var(--text); color: var(--bg);
+  opacity: 0; transition: opacity .15s;
+}
+.bar:hover .bar-tip, .bar:focus-visible .bar-tip { opacity: 1; }
+.bar:hover .bar-value, .bar:focus-visible .bar-value { opacity: 0; }
+/* Labels near the edges line up with the edge, so they never stick out of the card */
+.bar-col:nth-child(-n+2) .bar-tip { left: 0; transform: none; }
+.bar-col:nth-last-child(-n+2) .bar-tip { left: auto; right: 0; transform: none; }
+.bar-days {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;
+  padding-top: .4rem; color: var(--muted); font-size: .9375rem; text-align: center;
+}
+.bar-days .is-today { color: var(--text); font-weight: 700; }
+.chart-table summary { min-height: 48px; display: flex; align-items: center; color: var(--muted); font-weight: 600; cursor: pointer; }
+.chart-table table { margin-top: .5rem; }
+
+/* Results this week: the badge names each bar */
+.mix { display: grid; gap: .875rem; }
+.mix li { display: grid; grid-template-columns: 12rem minmax(0, 1fr) 2.5rem; align-items: center; gap: .75rem; }
+.mix-track { height: .875rem; overflow: hidden; background: var(--surface-2); border-radius: 4px; }
+.mix-fill { display: block; width: var(--w); height: 100%; background: var(--bar-2); border-radius: 0 4px 4px 0; }
+.mix-n { font-weight: 700; text-align: right; }
+.mix-total { margin: 1.25rem 0 0; color: var(--muted); font-size: 1rem; }
+/* In a narrow card, each bar goes under its badge so it keeps a useful length */
+.panel-mix { container-type: inline-size; }
+@container (max-width: 30rem) {
+  .mix li { grid-template-columns: minmax(0, 1fr) auto; gap: .375rem .75rem; }
+  .mix-track { grid-column: 1 / -1; grid-row: 2; }
+}
+
+/* The "check these first" table */
+.queue { min-width: 50rem; }
+.queue th, .queue td { white-space: nowrap; }
+.queue .queue-what { min-width: 18rem; white-space: normal; }
+/* Case numbers are links now; inline-flex lets them keep the 44px tap height */
+.case-link {
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding: 0; background: none; border: 0; cursor: pointer;
+  color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+}
+.status { font-weight: 700; }
+.status--new::before {
+  content: ""; display: inline-block; width: .625rem; height: .625rem; margin-right: .4rem;
+  border-radius: 50%; background: var(--red);
+}
+.status--new { color: var(--accent-text); }
+.status--in-review { color: var(--muted); }
+
+.honesty { display: flex; gap: .625rem; align-items: flex-start; margin: 1.5rem 0 0; color: var(--muted); font-size: 1rem; }
+.honesty .icon { width: 1.375rem; height: 1.375rem; }
+
+/* ---------- Clarity look (from clarity.css) ---------- */
+
+.kpi-value { font-weight: 800; letter-spacing: -.02em; }
+.kpi { border: 0; }
+.kpi--alert { background: var(--red-dark); color: var(--white); }
+.kpi--alert .kpi-note { color: var(--white); }
