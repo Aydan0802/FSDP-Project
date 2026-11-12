@@ -2,10 +2,6 @@
 
 // Feature: Customer home (urgent banner, tools grid, recent checks).
 // Owner: Yan Lin
-// Moved out of the theme samples (shared/samples.js). The made-up data is in
-// js/data/customer-home.js. Every tile and button now opens its feature's screen.
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
 
 (function () {
   // "Good morning", "Good afternoon" or "Good evening", from the computer's clock
