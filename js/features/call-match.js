@@ -12,4 +12,4 @@
       "Type the caller's number or the officer's name to see if the bank really called you.",
       "customer", "Back to home"))
   });
-})
+})();
