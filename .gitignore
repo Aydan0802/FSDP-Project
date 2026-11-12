@@ -13,7 +13,7 @@ models/
 hf_cache/
 
 # Audio data and datasets (never commit)
-data/
+/voice detector prototype/data/
 *.wav
 *.flac
 *.mp3
