@@ -1,4 +1,97 @@
-/* Feature: Transfer risk scorer (transfer form, scenario picker, risk result).
+/* Feature: Transfer risk scorer (sample picker, risk result).
    Owner: Jose
-   Styles for this feature only. Empty for now: add your rules here on your own branch.
-   Use the Clarity variables (var(--red), var(--surface), var(--radius) ...), never new colour codes. */
+   Styles for this feature only. Uses the Clarity variables (var(--red), var(--surface) ...),
+   never new colour codes. Every band shows an icon and words as well as a colour. */
+
+.rs-intro { max-width: 46rem; margin-bottom: 1.5rem; }
+
+/* Picker on the left, result on the right on wide screens; stacked on phones */
+.rs-layout { display: grid; gap: 1.5rem; align-items: start; }
+@media (min-width: 60rem) {
+  .rs-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+}
+
+/* ---------- The sample picker ---------- */
+
+.rs-samples { min-width: 0; margin: 0 0 1rem; padding: 0; border: 0; }
+.rs-samples legend { padding: 0; }
+.rs-samples ul { display: grid; gap: .75rem; }
+
+.rs-sample {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .875rem; align-items: start;
+  padding: 1rem 1.125rem;
+  background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.rs-sample:hover { border-color: var(--field-border); }
+.rs-sample:has(input:checked) { border-color: var(--red); background: var(--red-tint); }
+.rs-sample input { width: 1.375rem; height: 1.375rem; margin: .15rem 0 0; accent-color: var(--red); }
+.rs-sample-text { display: grid; gap: .2rem; min-width: 0; }
+.rs-sample-text strong { font-size: 1.0625rem; }
+.rs-sample-sum { color: var(--text); font-weight: 600; font-size: 1rem; }
+.rs-sample-story { color: var(--muted); font-size: .9375rem; }
+
+.rs-form .btn-primary { width: 100%; }
+
+/* ---------- The result ---------- */
+
+.rs-empty p { display: flex; align-items: center; gap: .75rem; margin: 0; color: var(--muted); }
+.rs-empty .icon { width: 1.75rem; height: 1.75rem; }
+
+.rs-result h2 { margin-bottom: 1rem; }
+.rs-result h3 { margin: 1.5rem 0 .625rem; font-size: 1.125rem; }
+
+.rs-score-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; }
+.rs-score { margin: 0; }
+.rs-score-num { font-family: var(--font-head); font-size: 3.25rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+.rs-score-max { color: var(--muted); font-weight: 600; }
+
+/* The band label: icon + words, coloured like the shared result badges */
+.rs-band {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .75rem;
+  border: 2px solid var(--slate); border-radius: var(--radius);
+  font-weight: 700; line-height: 1.3; white-space: nowrap;
+}
+.rs-band .icon { width: 1.25rem; height: 1.25rem; }
+.rs-band--low { background: var(--surface-2); color: var(--charcoal); }
+.rs-band--medium { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.rs-band--high { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+
+/* The 0-100 bar. Ticks mark where Medium and High start. Decoration only: the number and the
+   band words above say the same thing. */
+.rs-meter {
+  position: relative; height: .75rem; margin: 1rem 0 1.25rem;
+  background: var(--surface-2); border-radius: 999px; overflow: hidden;
+}
+.rs-meter-fill { position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--slate); border-radius: 999px; }
+.rs-result--medium .rs-meter-fill { background: var(--red); }
+.rs-result--high .rs-meter-fill { background: var(--red-dark); }
+.rs-meter-tick { position: absolute; top: 0; bottom: 0; left: var(--at); width: 2px; background: var(--surface); }
+
+.rs-action { margin: 0; }
+
+.rs-reasons { display: grid; gap: .5rem; }
+.rs-reasons li, .rs-none, .rs-next {
+  display: flex; gap: .625rem; align-items: flex-start;
+}
+.rs-reasons li { padding: .625rem .875rem; background: var(--red-tint); border-radius: var(--radius); }
+.rs-reasons .icon { flex: none; width: 1.375rem; height: 1.375rem; margin-top: .1rem; color: var(--red-dark); }
+.rs-none, .rs-next { margin: 1rem 0; }
+.rs-none .icon, .rs-next .icon { flex: none; width: 1.375rem; height: 1.375rem; margin-top: .1rem; }
+
+.rs-result .btn-primary { margin-top: .5rem; }
+
+/* The transfer's details, two columns where there's room */
+.rs-details { display: grid; gap: .5rem 1.5rem; margin: 0; }
+@media (min-width: 36rem) { .rs-details { grid-template-columns: 1fr 1fr; } }
+.rs-details div { min-width: 0; }
+.rs-details dt { color: var(--muted); font-size: .9375rem; }
+.rs-details dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+.rs-all { margin-top: 1.25rem; }
+.rs-all summary { cursor: pointer; font-weight: 700; min-height: 48px; display: flex; align-items: center; }
+.rs-all .data-table { margin: .5rem 0; }
+.rs-rule { display: block; color: var(--muted); font-size: .875rem; font-weight: 400; }
+
+.rs-source { margin-top: 1rem; font-size: .9375rem; }
+.rs-back { margin-top: 2rem; }
