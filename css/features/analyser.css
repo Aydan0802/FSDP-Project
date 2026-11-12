@@ -1,4 +1,325 @@
-/* Feature: Message and Call Analyser (input and result).
+/* Feature: Check a message or voice clip (the analyser): tabs, forms, results and history.
    Owner: Aydan
-   Styles for this feature only. Empty for now: add your rules here on your own branch.
-   Use the Clarity variables (var(--red), var(--surface), var(--radius) ...), never new colour codes. */
+   Styles for this feature only. Uses the Clarity variables (var(--red), var(--surface) ...),
+   never new colour codes. Every risk level and result shows an icon and words, not just a colour.
+   Hover and press effects are short, and turn off for people who switch off animation
+   (see the reduced-motion rule at the end of css/base.css). */
+
+.an-intro { max-width: 46rem; margin-bottom: 1.5rem; }
+.an-intro h1, .an-result h2 { text-wrap: balance; }
+/* Taps act straight away on phones (no double-tap zoom on these controls) */
+.an-tab, .an-chip, .an-flag, .an-pick, .an-drop { touch-action: manipulation; }
+.an-lead { color: var(--muted); font-size: 1.1875rem; }
+
+/* ---------- Tabs: "A message" / "A voice clip" ---------- */
+
+.an-tabs {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem;
+  max-width: 44rem; margin: 0 0 1.5rem;
+}
+.an-tab {
+  display: flex; align-items: center; gap: .875rem; min-width: 0; min-height: 72px; padding: .75rem 1rem;
+  background: var(--surface); color: var(--text); text-align: left; cursor: pointer;
+  border: 2px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  transition: border-color .15s, background-color .15s, transform .15s;
+}
+.an-tab:hover { border-color: var(--field-border); transform: translateY(-2px); }
+.an-tab:active { transform: translateY(0); }
+.an-tab[aria-selected="true"] { border-color: var(--red); background: var(--red-tint); }
+.an-tab-icon {
+  display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem;
+  border-radius: 12px; background: var(--surface-2); color: var(--red-dark);
+  transition: background-color .15s, color .15s;
+}
+.an-tab[aria-selected="true"] .an-tab-icon { background: var(--red); color: var(--white); }
+.an-tab-text { display: grid; min-width: 0; }
+.an-tab-text strong { font-size: 1.125rem; line-height: 1.25; }
+.an-tab-text span { color: var(--muted); font-size: .9375rem; line-height: 1.3; }
+.an-tab[aria-selected="true"] .an-tab-text span { color: var(--charcoal); }
+@media (max-width: 29.99rem) {
+  /* On phones each tab is only half the screen wide: icon above the title, and no small caption */
+  .an-tab { flex-direction: column; justify-content: center; gap: .375rem; text-align: center; }
+  .an-tab-text { overflow-wrap: anywhere; }
+  .an-tab-text span { display: none; }
+}
+
+/* ---------- Two columns on wide screens: the form on the left, the result on the right ---------- */
+
+.an-grid { display: grid; gap: 1.5rem; align-items: start; }
+@media (min-width: 60rem) {
+  .an-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+}
+
+.an-form h2 { margin-bottom: 1rem; }
+.an-label { display: block; margin: 0 0 .5rem; font-weight: 700; }
+.an-textarea {
+  display: block; width: 100%; min-height: 10rem; padding: .875rem 1rem; resize: vertical;
+  background: var(--surface); color: var(--text); font: inherit; line-height: 1.5;
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+  transition: border-color .15s, box-shadow .15s;
+}
+.an-textarea:hover { border-color: var(--charcoal); }
+.an-textarea[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+
+.an-count { margin: .375rem 0 1rem; color: var(--muted); font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+.an-count--over { color: var(--red-dark); font-weight: 700; }
+
+/* Big buttons in this feature lift slightly on hover and press down when clicked */
+.an-form .btn, .an-actions .btn:not(.btn-link) { box-shadow: none; }
+.an-form .btn:not(:disabled):hover, .an-actions .btn:not(.btn-link):hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.an-form .btn:not(:disabled):active, .an-actions .btn:not(.btn-link):active { transform: translateY(1px); box-shadow: none; }
+/* A switched-off button looks switched off, and a line under it says why */
+.an-form .btn-primary:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
+.an-form .btn-primary:disabled .icon { opacity: .6; }
+.an-hint { margin: .5rem 0 0; color: var(--muted); font-size: 1rem; text-align: center; }
+
+.an-sub { margin: 1.75rem 0 .75rem; font-size: 1.0625rem; }
+
+/* "Try an example" chips */
+.an-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.an-chip {
+  min-height: 48px; padding: .5rem 1rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font-size: 1rem; font-weight: 600;
+  border: 2px solid var(--border); border-radius: 999px;
+  transition: border-color .15s, background-color .15s, color .15s, transform .1s;
+}
+.an-chip:hover { border-color: var(--red); background: var(--red-tint); color: var(--red-dark); }
+.an-chip:active { transform: scale(.96); }
+
+.an-privacy { display: flex; align-items: center; gap: .5rem; margin: 1.5rem 0 0; color: var(--muted); font-size: .9375rem; }
+.an-privacy .icon { width: 1.25rem; height: 1.25rem; }
+
+/* ---------- Before a result: an empty box, or the "Checking..." spinner ---------- */
+
+.an-empty {
+  display: grid; place-items: center; align-content: center; gap: .75rem; min-height: 18rem; padding: 2rem;
+  color: var(--muted); text-align: center;
+  border: 2px dashed var(--border); border-radius: var(--radius-lg);
+}
+.an-empty .icon { width: 3rem; height: 3rem; color: var(--field-border); }
+.an-empty p { margin: 0; font-weight: 600; }
+.an-empty--busy { border-style: solid; background: var(--surface); }
+
+.an-spinner {
+  display: inline-block; flex: none; width: 1.25em; height: 1.25em;
+  border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: an-spin .8s linear infinite;
+}
+.an-spinner--big { width: 2.75rem; height: 2.75rem; border-width: 4px; color: var(--red); }
+@keyframes an-spin { to { transform: rotate(360deg); } }
+
+/* ---------- The result card ---------- */
+
+.an-result { display: grid; gap: 1.25rem; }
+.an-result h2 { margin: 0; font-size: 1.5rem; }
+.an-result h3 { margin: 0 0 .625rem; font-size: 1.125rem; }
+.an-result-body { display: grid; gap: 1.25rem; }
+.an-result-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+
+/* Risk level: icon + words. High is solid dark red, medium light red, low grey. */
+.an-risk {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .375rem .875rem;
+  border: 2px solid var(--slate); border-radius: 999px;
+  font-size: 1.125rem; font-weight: 800; line-height: 1.3; white-space: nowrap;
+}
+.an-risk .icon { width: 1.375rem; height: 1.375rem; }
+.an-risk--low { background: var(--slate-tint); color: var(--charcoal); }
+.an-risk--medium { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.an-risk--high { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+.an-risk--small { padding: .125rem .625rem; font-size: .9375rem; }
+.an-risk--small .icon { width: 1.125rem; height: 1.125rem; }
+
+/* Every placeholder result says it is a demo */
+.an-demo-tag {
+  padding: .125rem .625rem; color: var(--muted); font-size: .875rem; font-weight: 700; white-space: nowrap;
+  border: 1px dashed var(--field-border); border-radius: 999px;
+}
+
+.an-looks { margin: 0 0 .125rem; color: var(--muted); font-weight: 600; }
+.an-summary { margin: .625rem 0 0; font-size: 1.1875rem; }
+.an-sure { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .5rem; margin: .75rem 0 0; }
+.an-dots { display: inline-flex; gap: .25rem; }
+.an-dots span { width: .625rem; height: .625rem; border-radius: 50%; background: var(--divider); }
+.an-dots .on { background: var(--charcoal); }
+
+/* The message, with the warning phrases marked */
+.an-message {
+  margin: 0; padding: 1rem 1.125rem;
+  background: var(--surface-2); border-radius: var(--radius);
+  font-size: 1.0625rem; line-height: 2; overflow-wrap: anywhere;
+}
+.an-flag {
+  position: relative; padding: .15em .3em; cursor: help; color: var(--charcoal);
+  background: var(--red-tint); border-bottom: 2px solid var(--red); border-radius: 4px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  transition: background-color .15s;
+}
+.an-flag:hover, .an-flag:focus-visible, .an-flag[aria-expanded="true"] { background: var(--white); outline: 2px solid var(--red); outline-offset: 0; }
+.an-flag:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.an-flag-n {
+  display: inline-grid; place-items: center; min-width: 1.5em; height: 1.5em; margin-right: .3em; padding: 0 .2em;
+  border-radius: 999px; background: var(--red-dark); color: var(--white);
+  font-size: .75em; font-weight: 800; line-height: 1; vertical-align: .12em;
+}
+/* The reason bubble above a marked phrase. JavaScript nudges it sideways (--shift) if it would
+   go past the edge of the screen. */
+.an-tip {
+  position: absolute; left: var(--shift, 0px); bottom: calc(100% + .5rem); z-index: 5;
+  display: none; width: max-content; max-width: min(18rem, calc(100vw - 2.5rem));
+  padding: .5rem .75rem;
+  background: var(--charcoal); color: var(--white); border-radius: 10px; box-shadow: var(--shadow);
+  font-size: 1rem; font-weight: 600; line-height: 1.35; white-space: normal; text-align: left;
+}
+.an-flag:hover .an-tip, .an-flag:focus-visible .an-tip, .an-flag[aria-expanded="true"] .an-tip { display: block; }
+
+/* The numbered reasons under the message. A row lights up when its phrase is hovered or focused. */
+.an-reasons { display: grid; gap: .5rem; margin-top: .75rem; }
+.an-reasons li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .625rem; align-items: start;
+  padding: .625rem .875rem; border: 2px solid var(--border); border-radius: var(--radius);
+  transition: border-color .15s, background-color .15s;
+}
+.an-reasons li.is-linked { border-color: var(--red); background: var(--red-tint); }
+.an-reasons .an-flag-n { margin: .2em 0 0; font-size: .8125rem; }
+.an-reasons strong { display: block; }
+.an-reasons q { display: block; color: var(--muted); font-size: .9375rem; }
+
+.an-none, .an-extra, .an-honesty { display: flex; gap: .625rem; align-items: flex-start; margin: 0; }
+.an-none .icon, .an-extra .icon, .an-honesty .icon { flex: none; width: 1.375rem; height: 1.375rem; margin-top: .15rem; }
+.an-none { margin-top: .75rem; font-weight: 600; }
+.an-honesty { color: var(--muted); font-size: .9375rem; }
+.an-extra { padding: .75rem 1rem; background: var(--red-tint); border-radius: var(--radius); font-weight: 600; }
+.an-extra .icon { color: var(--red-dark); }
+
+/* Numbered next steps */
+.an-steps { display: grid; gap: .625rem; counter-reset: an-step; }
+.an-steps li { counter-increment: an-step; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+.an-steps li::before {
+  content: counter(an-step); display: grid; place-items: center; width: 2rem; height: 2rem;
+  border-radius: 50%; background: var(--surface-2); font-weight: 800;
+}
+
+/* Buttons under a result: side by side only when the result card itself is wide enough
+   (it is narrow when it sits next to the form), otherwise one under the other */
+.an-result { container-type: inline-size; }
+.an-actions { display: grid; gap: .75rem; }
+@container (min-width: 36rem) {
+  .an-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .an-actions .btn-link { grid-column: 1 / -1; }
+}
+/* 19px bold is "large text", so white on OCBC red (4.4:1) still passes WCAG AA. Don't go smaller. */
+.an-actions .btn { font-size: 1.1875rem; }
+.an-actions .btn-link { justify-self: center; }
+.an-actions .btn-link:hover { color: var(--text); }
+
+/* Something went wrong */
+.an-error-icon {
+  display: grid; place-items: center; width: 3.5rem; height: 3.5rem;
+  border-radius: 50%; background: var(--red-tint); color: var(--red-dark);
+}
+.an-error-icon .icon { width: 2rem; height: 2rem; }
+
+/* ---------- Voice clip: choosing a clip ---------- */
+
+.an-drop {
+  display: grid; justify-items: center; gap: .375rem; padding: 1.75rem 1rem; cursor: pointer; text-align: center;
+  background: var(--surface-2); border: 2px dashed var(--field-border); border-radius: var(--radius-lg);
+  transition: border-color .15s, background-color .15s;
+}
+.an-drop:hover, .an-drop.is-dragover { border-color: var(--red); background: var(--red-tint); }
+.an-drop:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.an-drop .icon { width: 2.75rem; height: 2.75rem; color: var(--red-dark); transition: transform .15s; }
+.an-drop:hover .icon { transform: translateY(-3px); }
+.an-drop strong { font-size: 1.1875rem; }
+.an-drop span { color: var(--muted); font-size: 1rem; }
+
+.an-file {
+  display: flex; align-items: center; gap: .625rem; margin: 1rem 0 0; padding: .375rem .375rem .375rem .875rem;
+  background: var(--slate-tint); border-radius: var(--radius); font-weight: 600;
+}
+.an-file .icon { color: var(--red-dark); }
+.an-file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.an-file .btn-link { min-height: 44px; font-size: 1rem; }
+
+/* "or" with a line either side */
+.an-or { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; color: var(--muted); }
+.an-or::before, .an-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+#an-sample { margin-bottom: .75rem; }
+
+/* ---------- Voice clip: the three checking steps ---------- */
+
+.an-checking h2 { margin-bottom: 1.25rem; }
+.an-progress { display: grid; gap: 1rem; }
+.an-step { display: flex; align-items: center; gap: .875rem; color: var(--muted); }
+.an-step-dot {
+  display: grid; place-items: center; flex: none; width: 2rem; height: 2rem;
+  border: 3px solid var(--divider); border-radius: 50%; color: var(--white);
+}
+.an-step-dot .icon { width: 1.125rem; height: 1.125rem; stroke-width: 3; }
+.an-step.is-active { color: var(--text); font-weight: 700; }
+.an-step.is-active .an-step-dot { border-color: var(--red); border-right-color: transparent; animation: an-spin .8s linear infinite; }
+.an-step.is-done { color: var(--text); }
+.an-step.is-done .an-step-dot { background: var(--charcoal); border-color: var(--charcoal); }
+
+/* ---------- Voice clip: the result ---------- */
+
+.an-voice .badge { font-size: 1.0625rem; padding: .375rem .75rem; }
+.an-chance { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem; margin: 1rem 0 .5rem; }
+.an-chance-num { font-family: var(--font-head); font-size: 3rem; font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+.an-chance-none { margin: 1rem 0 .5rem; font-weight: 600; }
+.an-meter { height: .75rem; overflow: hidden; background: var(--surface-2); border-radius: 999px; }
+.an-meter span { display: block; width: var(--w); height: 100%; background: var(--slate); border-radius: 999px; }
+.an-voice--partial .an-meter span, .an-voice--uncertain .an-meter span { background: var(--red); }
+.an-voice--likely .an-meter span { background: var(--red-dark); }
+
+.an-why { display: grid; gap: .375rem; margin: 0 0 1rem; padding-left: 1.25rem; list-style: disc; }
+
+/* The clip in six 5-second pieces; the AI-sounding pieces are dark red with white text */
+.an-timeline { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+.an-timeline li {
+  display: grid; place-items: center; height: 2.5rem;
+  background: var(--slate-tint); color: var(--muted); border-radius: 8px;
+  font-size: .875rem; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.an-timeline li.is-ai { background: var(--red-dark); color: var(--white); }
+.an-key { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; font-size: .9375rem; }
+.an-key-swatch { width: 1rem; height: 1rem; border-radius: 4px; background: var(--red-dark); }
+
+/* ---------- Demo-only controls (folded away) ---------- */
+
+.an-demo { margin-top: 1rem; padding: .25rem 1rem; border: 1px dashed var(--field-border); border-radius: var(--radius); }
+.an-demo summary {
+  display: flex; align-items: center; min-height: 48px; cursor: pointer;
+  color: var(--muted); font-size: 1rem; font-weight: 700;
+}
+.an-demo summary:hover { color: var(--text); }
+.an-demo-row { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0 0 .875rem; border: 0; }
+.an-pick {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 48px; padding: .25rem .75rem .25rem .5rem; cursor: pointer;
+  border: 2px solid var(--border); border-radius: 999px; transition: border-color .15s, background-color .15s;
+}
+.an-pick:hover { border-color: var(--field-border); background: var(--surface); }
+.an-pick:has(input:checked) { border-color: var(--charcoal); background: var(--surface); }
+.an-pick:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+.an-pick input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--red-dark); }
+
+/* ---------- Your checks today ---------- */
+
+.an-history { margin-top: 2rem; }
+.an-history-list { display: grid; gap: .5rem; }
+.an-history-list li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .5rem 1rem; align-items: center;
+  padding: .75rem 1rem; background: var(--surface-2); border-radius: var(--radius);
+}
+.an-history-time { color: var(--muted); font-size: .9375rem; font-variant-numeric: tabular-nums; }
+.an-history-what { display: flex; align-items: center; gap: .625rem; min-width: 0; }
+.an-history-what .icon { color: var(--red-dark); }
+.an-history-what > span { min-width: 0; overflow-wrap: anywhere; }
+.an-history-what strong { margin-right: .5rem; }
+@media (max-width: 35.99rem) {
+  /* On phones the time sits above the rest of the row */
+  .an-history-list li { grid-template-columns: minmax(0, 1fr) auto; }
+  .an-history-time { grid-column: 1 / -1; }
+}
+
+.an-back { margin-top: 2rem; }
