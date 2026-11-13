@@ -53,7 +53,7 @@ const TRIAGE_CONSOLE_DATA = {
 // account history for the person sending money. The receiver (the account being paid) is
 // kept only in a hidden form: the name is already masked (first letter + stars) and the
 // account shows its last 3 digits only. The one thing we do keep about a receiver is how
-// many times OTHER people have reported it for scams, so staff can be told straight away.
+// many times OTHER people have reported it for scams, so the staff dashboard can show it straight away.
 // Everything here is invented. "Now" in the demo is Tuesday 3 Nov 2026, about 16:50, the same
 // moment the overview above is frozen at.
 // ======================================================================================
@@ -65,7 +65,7 @@ const CASE_QUEUE_DATA = {
   sources: {
     auto: {
       label: "Auto-flagged", icon: "transfer",
-      how: "The transfer risk scorer gave this transfer a High score (70 or more). The transfer was paused and this case opened by itself. A bank officer reviews it before any money leaves."
+      how: "The transfer risk scorer gave this transfer a High score (70 or more). The transfer was paused and flagged by itself. The customer then finishes the check in their app and chooses to continue or cancel."
     },
     pause: {
       label: "Pause check", icon: "lock",
@@ -91,18 +91,19 @@ const CASE_QUEUE_DATA = {
   //   Odd hour                    10   sent between 00:00 and 05:59
 
   // Each case. Fields:
+  //   outcome    what the system and the customer did with it: "Paused", "Released", "Cancelled",
+  //              "Sent to investigators" or "Recorded". Staff never change it: staff only view.
   //   ageMin     minutes since it arrived (used for sorting; "received" is the words shown)
   //   level      "high" | "medium" | "low", and score is 0 to 100
-  //   moneySent  true when money has ALREADY left the account (call these customers first)
+  //   moneySent  true when money has ALREADY left the account (passed to the fraud investigations team automatically)
   //   receiver   the account being paid, hidden: { name (masked), acct (last 3 digits), reports,
   //              senders (optional: how many different people paid it today) }, or null
   //   transfer   { amount, state } or null when no transfer is involved
   //   why        the reasons it was raised. "points" only appears for auto-flagged transfers
-  //   log        staff decisions made before the demo started (the audit log)
   cases: [
     {
       ref: "VC-2611-0103", received: "Today 16:42", ageMin: 8, source: "report",
-      level: "high", score: 92, status: "New", moneySent: false,
+      level: "high", score: 92, outcome: "Recorded", moneySent: false,
       what: "Caller from the \"fraud team\" asked to move savings to a \"safe account\"",
       receiver: { name: "S*** A******", acct: "xxx-xxx-318", reports: 5 },
       transfer: { amount: 18000, state: "Not sent. The customer reported it before paying." },
@@ -125,16 +126,15 @@ const CASE_QUEUE_DATA = {
       timeline: [
         { time: "Today 16:38", text: "Customer opened \"Is the bank really calling?\" and found no matching bank call." },
         { time: "Today 16:41", text: "Voice check ran on the clip: likely AI-made." },
-        { time: "Today 16:42", text: "Customer reported the call. Case opened." }
-      ],
-      next: "Contact the customer through the bank's official channel. Confirm no money has moved, and remind them the bank never asks for a \"safe account\" transfer."
+        { time: "Today 16:42", text: "Customer reported the call. Flagged." }
+      ]
     },
     {
       ref: "TR-2611-0007", received: "Today 16:31", ageMin: 19, source: "auto",
-      level: "high", score: 80, status: "New", moneySent: false,
+      level: "high", score: 80, outcome: "Paused", moneySent: false,
       what: "Three transfers to the same receiver in 40 minutes, $8,000 in total",
       receiver: { name: "J*** W** E*********", acct: "xxx-xxx-482", reports: 0, senders: 6 },
-      transfer: { amount: 8000, state: "Paused. Waiting for a bank officer." },
+      transfer: { amount: 8000, state: "Paused. The customer is finishing the check." },
       why: [
         { label: "Repeated big transfers", points: 25, detail: "Three transfers of $2,500, $2,500 and $3,000 went to the same receiver within 24 hours." },
         { label: "Many senders, one receiver", points: 20, detail: "6 different people have paid this account today." },
@@ -150,13 +150,12 @@ const CASE_QUEUE_DATA = {
       timeline: [
         { time: "Today 15:52", text: "First transfer of $2,500 to this receiver." },
         { time: "Today 16:10", text: "Second transfer of $2,500 to this receiver." },
-        { time: "Today 16:31", text: "Third transfer of $3,000. Risk score 80 (High). Transfer paused and case opened." }
-      ],
-      next: "Contact the customer through the bank's official channel. Ask who asked them to pay, and whether anyone is on the phone with them now."
+        { time: "Today 16:31", text: "Third transfer of $3,000. Risk score 80 (High). Transfer paused and flagged." }
+      ]
     },
     {
       ref: "VC-2611-0102", received: "Today 13:20", ageMin: 210, source: "report",
-      level: "high", score: 88, status: "In review", moneySent: true,
+      level: "high", score: 88, outcome: "Sent to investigators", moneySent: true,
       what: "\"Grandson\" asked for emergency money. Money was sent.",
       receiver: { name: "R**** T*****", acct: "xxx-xxx-905", reports: 2 },
       transfer: { amount: 3500, state: "Already sent at 13:02." },
@@ -180,17 +179,16 @@ const CASE_QUEUE_DATA = {
       ],
       timeline: [
         { time: "Today 13:02", text: "Customer sent $3,500 to a new receiver." },
-        { time: "Today 13:20", text: "Customer reported the call. Case opened." },
-        { time: "Today 13:25", text: "Case picked up for review." }
-      ],
-      next: "Contact the customer first, through the bank's official channel. Ask the recovery team whether the receiving bank can be contacted."
+        { time: "Today 13:20", text: "Customer reported the call. Flagged." },
+        { time: "Today 13:25", text: "Money already sent. Evidence passed to the fraud investigations team automatically." }
+      ]
     },
     {
       ref: "TR-2611-0006", received: "Today 15:58", ageMin: 52, source: "auto",
-      level: "high", score: 80, status: "New", moneySent: false,
+      level: "high", score: 80, outcome: "Paused", moneySent: false,
       what: "$5,400 transfer to an account that has been reported for scams 4 times",
       receiver: { name: "L**** G**** C******", acct: "xxx-xxx-771", reports: 4 },
-      transfer: { amount: 5400, state: "Paused. Waiting for a bank officer." },
+      transfer: { amount: 5400, state: "Paused. The customer is finishing the check." },
       why: [
         { label: "Reported receiver", points: 45, detail: "This account number has been reported for scams by other people." },
         { label: "Reported many times", points: 15, detail: "It has been reported 4 times, which is 3 or more." },
@@ -203,13 +201,12 @@ const CASE_QUEUE_DATA = {
         { label: "Receiver report history", note: "Made-up: reported by 4 other customers" }
       ],
       timeline: [
-        { time: "Today 15:58", text: "Transfer attempted. Risk score 80 (High). Transfer paused and case opened." }
-      ],
-      next: "Contact the customer through the bank's official channel. Ask what the money is for. Investment \"guarantees\" are a common scam script."
+        { time: "Today 15:58", text: "Transfer attempted. Risk score 80 (High). Transfer paused and flagged." }
+      ]
     },
     {
       ref: "VC-2611-0101", received: "Today 11:05", ageMin: 345, source: "report",
-      level: "high", score: 74, status: "New", moneySent: false,
+      level: "high", score: 74, outcome: "Recorded", moneySent: false,
       what: "Courier call, then a second voice asked for card details",
       receiver: null, transfer: null,
       why: [
@@ -223,15 +220,14 @@ const CASE_QUEUE_DATA = {
       ],
       voice: { result: "partial", note: "Checked on the clip the customer chose to share." },
       evidence: [{ label: "Customer's own summary of the call", note: "Typed in the app at 11:05" }],
-      timeline: [{ time: "Today 11:05", text: "Customer reported the call. Case opened." }],
-      next: "Confirm the card was not shared. If in doubt, offer to replace the card and warn the customer about follow-up calls."
+      timeline: [{ time: "Today 11:05", text: "Customer reported the call. Flagged." }]
     },
     {
       ref: "PV-2611-0012", received: "Today 14:15", ageMin: 155, source: "pause",
-      level: "medium", score: 50, status: "New", moneySent: false,
+      level: "medium", score: 50, outcome: "Paused", moneySent: false,
       what: "Customer paused on a $2,500 transfer and said someone is guiding them by phone",
       receiver: { name: "S****** L******* S******", acct: "xxx-xxx-226", reports: 0 },
-      transfer: { amount: 2500, state: "Paused. Customer finished the check." },
+      transfer: { amount: 2500, state: "Paused. The customer finished the check." },
       why: [
         { label: "Rapid repeat transfers", points: 20, detail: "This was the third transfer attempt in 30 minutes." },
         { label: "New receiving account", points: 15, detail: "The receiving account was opened 12 days ago." },
@@ -246,16 +242,15 @@ const CASE_QUEUE_DATA = {
       evidence: [{ label: "Pause check answers", note: "Saved at 14:15" }],
       timeline: [
         { time: "Today 14:11", text: "Transfer attempted. Risk score 50 (Medium). Pause-and-verify started." },
-        { time: "Today 14:15", text: "Customer answered the questions. Case opened for staff." }
-      ],
-      next: "Contact the customer through the bank's official channel. Ask them to hang up on the other caller first."
+        { time: "Today 14:15", text: "Customer answered the questions. Flagged." }
+      ]
     },
     {
       ref: "PV-2611-0013", received: "Today 15:40", ageMin: 70, source: "pause",
-      level: "medium", score: 45, status: "New", moneySent: false,
+      level: "medium", score: 45, outcome: "Cancelled", moneySent: false,
       what: "Customer paused on a $1,800 transfer to a reported account and was told not to tell family",
       receiver: { name: "T*** C********* S******", acct: "xxx-xxx-054", reports: 1 },
-      transfer: { amount: 1800, state: "Paused. Customer finished the check." },
+      transfer: { amount: 1800, state: "Cancelled by the customer after the warning." },
       why: [
         { label: "Reported receiver", points: 45, detail: "This account number has been reported for scams once by another person." },
         { label: "Told to keep it secret", detail: "The customer said the caller asked them not to tell their family." }
@@ -268,13 +263,13 @@ const CASE_QUEUE_DATA = {
       evidence: [{ label: "Pause check answers", note: "Saved at 15:40" }],
       timeline: [
         { time: "Today 15:36", text: "Transfer attempted. Risk score 45 (Medium). Pause-and-verify started." },
-        { time: "Today 15:40", text: "Customer answered the questions. Case opened for staff." }
-      ],
-      next: "Contact the customer. A secret payment to a \"tax\" service is a classic official-impersonation sign."
+        { time: "Today 15:40", text: "Customer answered the questions. Flagged." },
+        { time: "Today 15:48", text: "Customer read the warnings and cancelled the transfer." }
+      ]
     },
     {
       ref: "VC-2611-0099", received: "Yesterday 19:03", ageMin: 1307, source: "report",
-      level: "medium", score: 48, status: "New", moneySent: false,
+      level: "medium", score: 48, outcome: "Recorded", moneySent: false,
       what: "Told the account would close unless it was verified today",
       receiver: null, transfer: null,
       why: [
@@ -284,12 +279,11 @@ const CASE_QUEUE_DATA = {
       answers: [{ q: "Did you click a link or give any details?", a: "No." }],
       voice: { result: "uncertain", note: "Checked on the clip the customer chose to share." },
       evidence: [{ label: "Customer's own summary", note: "Typed in the app yesterday at 19:03" }],
-      timeline: [{ time: "Yesterday 19:03", text: "Customer reported the message. Case opened." }],
-      next: "Reassure the customer, confirm nothing was shared, and mark as cleared if the message did not come from the bank."
+      timeline: [{ time: "Yesterday 19:03", text: "Customer reported the message. Flagged." }]
     },
     {
       ref: "VC-2611-0097", received: "Yesterday 10:10", ageMin: 1840, source: "report",
-      level: "high", score: 78, status: "In review", moneySent: true,
+      level: "high", score: 78, outcome: "Sent to investigators", moneySent: true,
       what: "Sent $1,200 to a \"tax officer\" after a call, reported the next day",
       receiver: { name: "T** O******", acct: "xxx-xxx-613", reports: 3 },
       transfer: { amount: 1200, state: "Already sent yesterday." },
@@ -310,17 +304,16 @@ const CASE_QUEUE_DATA = {
       ],
       timeline: [
         { time: "Yesterday 09:55", text: "Customer sent $1,200 to a new receiver." },
-        { time: "Today 08:30", text: "Customer reported the call. Case opened." },
-        { time: "Today 09:10", text: "Case picked up for review." }
-      ],
-      next: "Contact the customer first. Ask the recovery team whether the receiving bank can still be contacted."
+        { time: "Today 08:30", text: "Customer reported the call. Flagged." },
+        { time: "Today 09:10", text: "Money already sent. Evidence passed to the fraud investigations team automatically." }
+      ]
     },
     {
       ref: "TR-2611-0004", received: "Today 12:05", ageMin: 285, source: "auto",
-      level: "high", score: 75, status: "On hold", moneySent: false,
-      what: "$900 transfer to a reported account with \"refundable fee\" in the note, on hold",
+      level: "high", score: 75, outcome: "Paused", moneySent: false,
+      what: "$900 transfer to a reported account with \"refundable fee\" in the note",
       receiver: { name: "Q**** D*** O****** S****", acct: "xxx-xxx-390", reports: 3 },
-      transfer: { amount: 900, state: "Paused. Waiting for a bank officer." },
+      transfer: { amount: 900, state: "Paused. The customer is finishing the check." },
       why: [
         { label: "Reported receiver", points: 45, detail: "This account number has been reported for scams by other people." },
         { label: "Reported many times", points: 15, detail: "It has been reported 3 times, which is 3 or more." },
@@ -329,13 +322,14 @@ const CASE_QUEUE_DATA = {
       answers: [],
       voice: null,
       evidence: [{ label: "Transfer details", note: "From the transfer screen" }],
-      timeline: [{ time: "Today 12:05", text: "Transfer attempted. Risk score 75 (High). Transfer paused and case opened." }],
-      log: [{ time: "Today 12:40", who: "R. Tan", action: "Hold", reason: "Receiver reported 3 times. Waiting to reach the customer." }],
-      next: "Keep trying the customer through the bank's official channel."
+      timeline: [
+        { time: "Today 12:05", text: "Transfer attempted. Risk score 75 (High). Transfer paused and flagged." },
+        { time: "Today 12:40", text: "Customer has not finished the check yet. Transfer stays paused." }
+      ]
     },
     {
       ref: "VC-2611-0096", received: "Yesterday 15:20", ageMin: 1530, source: "report",
-      level: "high", score: 84, status: "Escalated", moneySent: false,
+      level: "high", score: 84, outcome: "Sent to investigators", moneySent: false,
       what: "Caller posing as a police officer asked for online banking codes",
       receiver: null, transfer: null,
       why: [
@@ -346,13 +340,14 @@ const CASE_QUEUE_DATA = {
       answers: [{ q: "Did you give any codes?", a: "Yes, one code." }],
       voice: { result: "likely", note: "Checked on the clip the customer chose to share." },
       evidence: [{ label: "Customer's own summary", note: "Typed in the app yesterday at 15:20" }],
-      timeline: [{ time: "Yesterday 15:20", text: "Customer reported the call. Case opened." }],
-      log: [{ time: "Yesterday 16:05", who: "R. Tan", action: "Escalate", reason: "A code was shared. Sent to the fraud investigations team." }],
-      next: "With the investigations team. Check the account for activity since the code was shared."
+      timeline: [
+        { time: "Yesterday 15:20", text: "Customer reported the call. Flagged." },
+        { time: "Yesterday 15:25", text: "A one-time code was shared. Evidence passed to the fraud investigations team automatically." }
+      ]
     },
     {
       ref: "TR-2611-0003", received: "Today 09:30", ageMin: 440, source: "auto",
-      level: "high", score: 80, status: "Cleared", moneySent: false,
+      level: "high", score: 80, outcome: "Released", moneySent: false,
       what: "Renovation deposit paid in three $2,000 transfers. Customer confirmed it was genuine.",
       receiver: { name: "B******* R********", acct: "xxx-xxx-148", reports: 0 },
       transfer: { amount: 6000, state: "Released after staff review." },
@@ -365,13 +360,14 @@ const CASE_QUEUE_DATA = {
       answers: [],
       voice: null,
       evidence: [{ label: "Contractor invoice shown by the customer", note: "Seen on the call" }],
-      timeline: [{ time: "Today 09:30", text: "Third transfer attempted. Risk score 80 (High). Transfer paused and case opened." }],
-      log: [{ time: "Today 10:05", who: "R. Tan", action: "Approve", reason: "Contacted the customer through the official channel. Genuine renovation deposit, invoice seen." }],
-      next: "Closed. A reminder that a high score is a warning, not proof."
+      timeline: [
+        { time: "Today 09:30", text: "Third transfer attempted. Risk score 80 (High). Transfer paused and flagged." },
+        { time: "Today 09:42", text: "Customer finished the check and confirmed a renovation deposit. Transfer released." }
+      ]
     },
     {
       ref: "PV-2611-0010", received: "Yesterday 00:45", ageMin: 2405, source: "pause",
-      level: "medium", score: 45, status: "Cleared", moneySent: false,
+      level: "medium", score: 45, outcome: "Released", moneySent: false,
       what: "Customer unsure if someone was guiding them. It was a real family request.",
       receiver: { name: "M*** C***** H**", acct: "xxx-xxx-902", reports: 0 },
       transfer: { amount: 1400, state: "Released after staff review." },
@@ -384,22 +380,24 @@ const CASE_QUEUE_DATA = {
       answers: [{ q: "Is someone on the phone guiding you?", a: "Not sure." }],
       voice: null,
       evidence: [{ label: "Pause check answers", note: "Saved yesterday at 00:45" }],
-      timeline: [{ time: "Yesterday 00:45", text: "Customer answered the questions. Case opened for staff." }],
-      log: [{ time: "Yesterday 08:20", who: "R. Tan", action: "Approve", reason: "Contacted the customer. Sending money to a family member's new account, confirmed." }],
-      next: "Closed."
+      timeline: [
+        { time: "Yesterday 00:45", text: "Customer answered the questions. Flagged." },
+        { time: "Yesterday 00:52", text: "Customer finished the check and confirmed a family request. Transfer released." }
+      ]
     },
     {
       ref: "VC-2611-0094", received: "Sun 1 Nov 11:20", ageMin: 3210, source: "report",
-      level: "low", score: 22, status: "Cleared", moneySent: false,
+      level: "low", score: 22, outcome: "Recorded", moneySent: false,
       what: "Customer unsure if a bank call was real. It matched a genuine bank call.",
       receiver: null, transfer: null,
       why: [{ label: "Customer was unsure", detail: "The customer could not tell whether the call from the bank was real." }],
       answers: [{ q: "Did the caller ask for money or codes?", a: "No." }],
       voice: { result: "real", note: "Checked on the clip the customer chose to share." },
       evidence: [{ label: "Bank's outbound call list", note: "Matched a genuine call at 11:12" }],
-      timeline: [{ time: "Sun 1 Nov 11:20", text: "Customer reported the call. Case opened." }],
-      log: [{ time: "Sun 1 Nov 11:45", who: "R. Tan", action: "Approve", reason: "Matched the bank's own outbound call list. Genuine." }],
-      next: "Closed. Good news: the customer checked first, which is what we want."
+      timeline: [
+        { time: "Sun 1 Nov 11:20", text: "Customer reported the call. Flagged." },
+        { time: "Sun 1 Nov 11:22", text: "Matched the bank's own outbound call list. Recorded as a genuine call." }
+      ]
     }
   ]
 };
