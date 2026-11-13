@@ -105,3 +105,160 @@
 .kpi { border: 0; }
 .kpi--alert { background: var(--red-dark); color: var(--white); }
 .kpi--alert .kpi-note { color: var(--white); }
+
+/* ======================================================================================
+   Case queue and case detail (mock-up added below the overview styles).
+   Owner: Wei Ye
+   Uses only Clarity's variables (var(--red), var(--surface), ...), no new colour codes.
+   Roughly in the order they appear on screen: queue, then case detail.
+   (A queue is a line. This is the paint for the line.)
+   ====================================================================================== */
+
+/* ---------- Case queue: the "how do cases get here" box ---------- */
+
+.how-raised { margin-bottom: 1.5rem; }
+.how-raised summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.how-list { display: grid; gap: .875rem; margin: .75rem 0 1rem; }
+.how-list li { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: .5rem 1rem; align-items: start; }
+.how-note { display: flex; gap: .625rem; margin: 0; color: var(--muted); font-size: 1rem; }
+.how-note .icon { flex: none; width: 1.375rem; height: 1.375rem; }
+@media (max-width: 47.99rem) { .how-list li { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Case queue: tabs, search and menus ---------- */
+
+.qf { margin-bottom: 1rem; }
+.qf-tabs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: .5rem; min-height: 48px; padding: .5rem 1rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font-weight: 700;
+  border: 2px solid var(--field-border); border-radius: 999px;
+}
+.chip:hover { background: var(--surface-2); }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.chip-n { min-width: 1.5rem; padding: 0 .4rem; text-align: center; background: var(--surface-2); color: var(--text); border-radius: 999px; font-size: .9375rem; }
+.chip[aria-pressed="true"] .chip-n { background: var(--bg); }
+.qf-row { display: grid; gap: 0 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+
+/* base.css styles text boxes only, so the menu and the notes box get the same look here */
+.screen-staff-queue .field input[type="search"], .screen-staff-queue .field select, .screen-staff-case .field textarea {
+  display: block; width: 100%; min-height: 56px; padding: .75rem 1rem;
+  background: var(--surface); color: var(--text); font: inherit;
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+}
+.screen-staff-case .field textarea { min-height: 6rem; resize: vertical; }
+.screen-staff-case .field textarea[aria-invalid="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+.qt-count { margin: 0 0 .5rem; color: var(--muted); font-size: 1rem; }
+.qt-empty { display: flex; gap: .625rem; align-items: center; padding: 1.5rem .5rem; margin: 0; color: var(--muted); }
+.qt-empty .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+
+/* ---------- Case queue: the table ---------- */
+
+.case-table { min-width: 56rem; }
+.source { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; }
+.source .icon { flex: none; width: 1.25rem; height: 1.25rem; }
+.risk-score { margin-left: .5rem; color: var(--muted); font-weight: 600; }
+.money-flag {
+  display: flex; align-items: center; gap: .4rem; margin-top: .375rem;
+  color: var(--accent-text); font-weight: 700; font-size: 1rem;
+}
+.money-flag .icon { flex: none; width: 1.25rem; height: 1.25rem; }
+.live-flag { display: block; margin-top: .375rem; color: var(--muted); font-size: .9375rem; font-style: italic; }
+.status--on-hold, .status--escalated { color: var(--accent-text); }
+.status--on-hold::before, .status--escalated::before {
+  content: ""; display: inline-block; width: .625rem; height: .625rem; margin-right: .4rem;
+  border: 2px solid var(--red-dark); border-radius: 2px;   /* a square, so it differs from the round "New" dot */
+}
+.status--cleared { color: var(--muted); }
+.status--cleared::before { content: "\2713"; margin-right: .4rem; }
+
+/* ---------- Case detail ---------- */
+
+.case-title { margin-top: 1.25rem; }
+.muted { color: var(--muted); }
+.flash {
+  display: flex; gap: .625rem; align-items: center; margin: 0 0 1.25rem; padding: .875rem 1.25rem;
+  background: var(--surface-2); border-radius: var(--radius); font-weight: 700;
+}
+.flash .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+/* Green after Approve, Hold or Escalate; orange after Reopen. These two colour pairs are only used
+   here, so they are named in this file instead of touching the shared theme. The icon (tick or
+   warning) and the words still say what happened, so colour is never the only clue. */
+.flash--done { --flash-bg: #E3F4E8; --flash-ink: #14532D; --flash-line: #2E7D4F; }
+.flash--reopen { --flash-bg: #FFF0DB; --flash-ink: #7A3E00; --flash-line: #E07B00; }
+.flash--done, .flash--reopen { background: var(--flash-bg); color: var(--flash-ink); border: 2px solid var(--flash-line); }
+.case-alert {
+  display: flex; gap: .75rem; align-items: flex-start; margin: 0 0 1.25rem; padding: 1rem 1.25rem;
+  background: var(--red-dark); color: var(--white); border-radius: var(--radius-lg);
+}
+.case-alert .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+
+.case-grid { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.case-main, .case-side { display: grid; gap: 1.5rem; align-content: start; min-width: 0; }
+.case-pair { display: grid; gap: 1.5rem; }
+@media (min-width: 64rem) {
+  .case-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+
+/* "Label: value" lists */
+.facts { display: grid; gap: .75rem; margin: 0; }
+.facts div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: .25rem 1rem; align-items: center; }
+.facts dt { color: var(--muted); font-weight: 600; }
+.facts dd { margin: 0; font-weight: 600; }
+@media (max-width: 47.99rem) { .facts div { grid-template-columns: minmax(0, 1fr); } }
+.qa { display: grid; gap: .875rem; margin: 0 0 1rem; }
+.qa dt { color: var(--muted); font-weight: 600; }
+.qa dd { margin: 0; font-weight: 700; }
+
+/* Why it was raised */
+.why-source { display: grid; gap: .375rem; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); color: var(--muted); }
+.why-source .source { color: var(--text); }
+.why-list { display: grid; gap: 1rem; }
+.why-list li { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+.why-pts {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem;
+  background: var(--surface-2); border-radius: var(--radius); font-weight: 800;
+}
+.why-pts .icon { width: 1.25rem; height: 1.25rem; }
+.why-total { margin: 1.25rem 0 .5rem; }
+.why-track { height: .875rem; overflow: hidden; background: var(--surface-2); border-radius: 4px; }
+.why-fill { display: block; width: var(--w); height: 100%; background: var(--bar-2); border-radius: 0 4px 4px 0; }
+
+.voice-line { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; margin: 0 0 .5rem; }
+.evidence { display: grid; gap: .875rem; }
+.evidence li { display: flex; gap: .75rem; align-items: flex-start; }
+.evidence .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+
+/* Timeline: a plain list with a thin line down the side */
+.timeline { display: grid; gap: 1rem; padding-left: 1rem; border-left: 3px solid var(--border); }
+.timeline li { display: grid; gap: .125rem; }
+.tl-time { color: var(--muted); font-size: 1rem; font-weight: 600; }
+
+/* The decision panel */
+.next-step { margin: 0 0 1.25rem; padding: 1rem 1.25rem; background: var(--surface-2); border-radius: var(--radius); }
+.decide-buttons { display: grid; gap: .75rem; }
+.decide-buttons .btn { justify-content: flex-start; flex-wrap: wrap; text-align: left; }
+.decide-buttons .btn small { flex-basis: 100%; padding-left: 1.75em; font-size: .9375rem; font-weight: 500; color: var(--muted); }
+.confirm { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+.confirm h3 { margin: 0 0 .75rem; font-size: 1.125rem; }
+.confirm h3:focus { outline: none; }
+.confirm-buttons { display: flex; flex-wrap: wrap; gap: .75rem; }
+.decision .honesty { margin-top: 1.25rem; }
+
+/* The receiver warning, and the three decision buttons. Each button has a faint colour at rest and
+   a stronger one on hover or keyboard focus: green for approve, grey for hold, red for escalate.
+   Colours are named here only (not in the shared theme). The words and icons say what each
+   button does, so colour is never the only clue. */
+.receiver-alert {
+  display: flex; gap: .75rem; align-items: flex-start; margin: 0 0 1rem; padding: .875rem 1rem;
+  background: var(--red-tint); color: var(--red-dark); border: 2px solid var(--red); border-radius: var(--radius); font-weight: 700;
+}
+.receiver-alert .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+
+.decide-buttons .btn { transition: background-color .15s, border-color .15s; }
+.decide-buttons .btn[data-decide="approve"] { background: #F2F9F4; border-color: #A8CDB5; }
+.decide-buttons .btn[data-decide="approve"]:hover, .decide-buttons .btn[data-decide="approve"]:focus-visible { background: #C9E9D3; border-color: #2E7D4F; }
+.decide-buttons .btn[data-decide="hold"] { background: #F4F5F6; border-color: #C2C9CE; }
+.decide-buttons .btn[data-decide="hold"]:hover, .decide-buttons .btn[data-decide="hold"]:focus-visible { background: #D9DEE1; border-color: #6B7A84; }
+.decide-buttons .btn[data-decide="escalate"] { background: #FEF3F3; border-color: #F2B1B4; }
+.decide-buttons .btn[data-decide="escalate"]:hover, .decide-buttons .btn[data-decide="escalate"]:focus-visible { background: #F9C2C5; border-color: var(--red-dark); }
