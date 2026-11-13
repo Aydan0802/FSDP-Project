@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Android call warning: preview</title>
+<!-- Android call warning preview.
+     Owner: Aydan
+     Preview only: what a customer would see on Android when a suspicious number calls.
+     The bank app (as the phone's "Caller ID & spam app") shows a notification over the
+     incoming call; tapping it opens the warning. Everything is made up and nothing is sent.
+     The number is from the UK range kept for films and TV (020 7946 0xxx), so it is nobody's. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Same values as the team app's css/base.css and css/clarity.css */
+    --red: #ED1C24;        /* buttons, icons, borders only (4.4:1 on white) */
+    --red-dark: #9E1B32;   /* red text and the warning header (7.9:1 on white) */
+    --charcoal: #363B40;   /* main text */
+    --slate: #3D525D;      /* secondary text */
+    --white: #FFFFFF;
+    --red-tint: #FDEDEE;
+    --slate-tint: #EEF2F4;
+    --bg: #F3F5F7;
+    --border: #E1E6EA;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(54, 59, 64, .06), 0 8px 24px rgba(54, 59, 64, .08);
+    --font-app: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+    /* Android's own call screen (the phone's system screen, not our app) */
+    --font-android: Roboto, "Segoe UI", Arial, sans-serif;
+    --android-answer: #1E8E3E;
+    --android-decline: #D93025;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--charcoal); font: 18px/1.5 var(--font-app); }
+  .stage { max-width: 440px; margin: 0 auto; padding: 24px 16px 40px; }
+  .stage > h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 4px; }
+  .intro { color: var(--slate); margin: 0 0 20px; font-size: 16px; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--charcoal); outline-offset: 3px; }
+  .icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2;
+          stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* ---------- The phone ---------- */
+  .phone { position: relative; width: 100%; height: 760px; max-height: calc(100vh - 40px); min-height: 640px;
+           border: 10px solid #1B1F22; border-radius: 40px; overflow: hidden; background: #000;
+           box-shadow: var(--shadow); }
+  .status-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; height: 32px; padding: 0 20px;
+                display: flex; justify-content: space-between; align-items: center;
+                font: 600 14px var(--font-android); color: var(--white); }
+  .status-bar.light { color: var(--charcoal); background: var(--white); }  /* solid, so text scrolls under it */
+  .status-bar .icon { width: 16px; height: 16px; }
+  .screen { position: absolute; inset: 0; padding-top: 32px; overflow-y: auto; }
+  .screen[hidden] { display: none; }
+
+  /* ---------- Screen 1: Android's incoming call screen ---------- */
+  .call { background: linear-gradient(180deg, #2B3A42 0%, #1B2328 100%); color: var(--white);
+          font-family: var(--font-android); display: flex; flex-direction: column; overflow: hidden; }
+  .caller { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 0 20px; }
+  .avatar { width: 96px; height: 96px; border-radius: 50%; background: #4A5B64; display: grid; place-items: center;
+            margin-bottom: 20px; animation: ring 1.6s ease-out infinite; }
+  .avatar .icon { width: 48px; height: 48px; }
+  .number { font-size: 30px; font-weight: 400; margin: 0; letter-spacing: .01em; }
+  .where, .state { margin: 4px 0 0; font-size: 16px; color: #D5DEE3; }
+  .call-actions { display: flex; justify-content: space-around; padding: 0 24px 56px; }
+  .call-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 14px; color: #D5DEE3; }
+  .call-btn span { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; color: var(--white); }
+  .call-btn .decline { background: var(--android-decline); }
+  .call-btn .decline .icon { transform: rotate(135deg); }
+  .call-btn .answer { background: var(--android-answer); }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.35); } 100% { box-shadow: 0 0 0 28px rgba(255,255,255,0); } }
+
+  /* The notification from our app, sliding in over the call */
+  .notif { position: absolute; top: 40px; left: 10px; right: 10px; z-index: 2; display: block; width: auto;
+           text-align: left; background: var(--white); color: var(--charcoal); border: 0; border-left: 6px solid var(--red);
+           border-radius: 18px; padding: 12px 14px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+           font-family: var(--font-android); transform: translateY(-140%); transition: transform .35s ease-out; }
+  .notif.show { transform: translateY(0); }
+  .notif[hidden] { display: none; }
+  .notif-app { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate); margin-bottom: 6px; }
+  .app-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--red); color: var(--white);
+              display: grid; place-items: center; }
+  .app-mark .icon { width: 15px; height: 15px; }
+  .notif-title { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 700; color: var(--red-dark); }
+  .notif-title .icon { width: 20px; height: 20px; }
+  .notif-text { display: block; font-size: 15px; line-height: 1.4; margin-top: 2px; }
+  .notif-tap { display: block; font-size: 15px; font-weight: 700; margin-top: 6px; }
+
+  /* ---------- Screen 2: our warning, opened from the notification ---------- */
+  .warn { background: var(--white); font-family: var(--font-app); }
+  .call-chip { position: sticky; top: 0; z-index: 1;  /* stays in view: the call is still ringing */
+               display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; border: 0;
+               background: var(--android-answer); color: var(--white); font: 600 15px var(--font-android);
+               padding: 8px 16px; text-align: left; }
+  .call-chip .icon { width: 18px; height: 18px; }
+  .warn-head { background: var(--red-dark); color: var(--white); padding: 20px 20px 22px; }
+  .warn-brand { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 14px; opacity: .95; }
+  .warn-brand .app-mark { background: var(--white); color: var(--red); }
+  .warn-head h2 { display: flex; align-items: flex-start; gap: 10px; margin: 0; font-size: 28px; line-height: 1.2;
+                  font-weight: 800; letter-spacing: -.02em; }
+  .warn-head h2 .icon { width: 32px; height: 32px; margin-top: 2px; }
+  .warn-head h2:focus { outline: none; }
+  .warn-head h2:focus-visible { outline: 3px solid var(--white); }
+  .warn-body { padding: 20px; }
+  .warn-body h3 { font-size: 18px; margin: 0 0 8px; }
+  .reasons { list-style: none; padding: 0; margin: 0 0 18px; }
+  .reasons li { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .reasons li:last-child { border-bottom: 0; }
+  .reasons .icon { color: var(--red); margin-top: 2px; }
+  .question { background: var(--red-tint); border-left: 6px solid var(--red); border-radius: var(--radius);
+              padding: 14px 16px; margin: 0 0 20px; }
+  .question strong { display: block; margin-bottom: 4px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 56px;
+         border-radius: 999px; padding: 10px 20px; margin-bottom: 12px; font-weight: 700; font-size: 18px; }
+  .btn-main { background: var(--red); color: var(--white); border: 0; font-size: 20px; }
+  .btn-second { background: var(--white); color: var(--charcoal); border: 2px solid var(--slate); }
+  .btn-hint { display: block; font-size: 15px; color: var(--slate); margin: -6px 0 16px; text-align: center; }
+  .one-sign { font-size: 15px; color: var(--slate); margin: 8px 0 4px; text-align: center; }
+  .link-btn { display: block; margin: 0 auto; min-height: 48px; background: none; border: 0; color: var(--slate);
+              text-decoration: underline; font-size: 16px; }
+
+  /* ---------- Under the phone ---------- */
+  .controls { display: flex; justify-content: center; margin-top: 16px; }
+  .controls button { min-height: 48px; padding: 0 24px; border-radius: 999px; border: 2px solid var(--slate);
+                     background: var(--white); color: var(--charcoal); font-weight: 600; }
+  .preview-note { min-height: 1.5em; text-align: center; font-size: 16px; color: var(--slate); margin: 12px 0 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .avatar { animation: none; }
+    .notif { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="stage">
+  <h1>Android call warning: preview</h1>
+  <p class="intro">What a customer sees when a suspicious number calls. Tap the notification to open the warning. The number and reports are made up.</p>
+
+  <div class="phone" role="region" aria-label="Phone screen">
+    <div class="status-bar" id="status-bar">
+      <span>14:05</span>
+      <span aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 20h2v-4H4zM9 20h2v-8H9zM14 20h2V8h-2zM19 20h2V4h-2z"/></svg>
+        <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10.5v3"/></svg>
+      </span>
+    </div>
+
+    <!-- Screen 1: the phone's own incoming call screen, with our notification on top -->
+    <section class="screen call" id="call-screen" aria-label="Incoming call">
+      <button class="notif" id="notif" type="button" hidden>
+        <span class="notif-app">
+          <span class="app-mark"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg></span>
+          Verify the Caller · now
+        </span>
+        <span class="notif-title">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.01"/></svg>
+          Possible scam call
+        </span>
+        <span class="notif-text">This number was reported as a scam. Don't share codes or move money.</span>
+        <span class="notif-tap">Tap for advice</span>
+      </button>
+
+      <div class="caller">
+        <div class="avatar" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <p class="number">+44 20 7946 0123</p>
+        <p class="where">United Kingdom</p>
+        <p class="state">Incoming call</p>
+      </div>
+
+      <!-- Picture of Android's buttons only: this preview doesn't answer calls -->
+      <div class="call-actions" aria-hidden="true">
+        <div class="call-btn"><span class="decline"><svg class="icon" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span>Decline</div>
+        <div class="call-btn"><span class="answer"><svg class="icon" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span>Answer</div>
+      </div>
+    </section>
+
+    <!-- Screen 2: our warning, opened by tapping the notification -->
+    <section class="screen warn" id="warning-screen" aria-label="Warning" hidden>
+      <button class="call-chip" id="back-to-call" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>
+        +44 20 7946 0123 is still calling · Back to call
+      </button>
+      <div class="warn-head">
+        <div class="warn-brand">
+          <span class="app-mark"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg></span>
+          Verify the Caller
+        </div>
+        <h2 id="warn-title" tabindex="-1">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.01"/></svg>
+          This call could be a scam
+        </h2>
+      </div>
+
+      <div class="warn-body">
+        <h3>Why we warned you</h3>
+        <ul class="reasons">
+          <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></svg>
+              <span>37 people reported this number as a scam.</span></li>
+          <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+              <span>It is an overseas number (+44). Scammers often call from overseas and pretend to be local.</span></li>
+        </ul>
+
+        <div class="question">
+          <strong>Is the caller asking you to move money, share a code or install an app?</strong>
+          Hang up. A real bank officer will never ask you for these.
+        </div>
+
+        <button class="btn btn-main" type="button" data-preview="Check if the bank is really calling">Check if the bank is really calling</button>
+        <button class="btn btn-second" type="button" data-preview="Hang up and call the bank yourself">Hang up and call the bank yourself</button>
+        <span class="btn-hint">Use the number on the back of your card.</span>
+        <button class="btn btn-second" type="button" data-preview="Record this call">Record this call</button>
+        <span class="btn-hint">Then check the voice. A real voice can still be a scammer.</span>
+
+        <p class="one-sign">This is one warning sign, not proof of a scam.</p>
+        <button class="link-btn" id="dismiss" type="button">I know this caller</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="controls"><button type="button" id="replay">Replay the call</button></div>
+  <p class="preview-note" id="preview-note" role="status"></p>
+</main>
+
+<script>
+  "use strict";
+  const callScreen = document.getElementById("call-screen");
+  const warningScreen = document.getElementById("warning-screen");
+  const notif = document.getElementById("notif");
+  const statusBar = document.getElementById("status-bar");
+  const note = document.getElementById("preview-note");
+  let timer = null;
+
+  // Show the incoming call. withNotification: slide our notification in after a moment,
+  // the way a caller ID app reacts once the phone starts ringing.
+  function showCall(withNotification) {
+    clearTimeout(timer);
+    warningScreen.hidden = true;
+    callScreen.hidden = false;
+    statusBar.classList.remove("light");
+    notif.classList.remove("show");
+    notif.hidden = true;
+    if (withNotification) {
+      timer = setTimeout(() => {
+        notif.hidden = false;
+        requestAnimationFrame(() => notif.classList.add("show"));
+        note.textContent = "Notification shown: Possible scam call.";
+      }, 1200);
+    }
+  }
+
+  // Tapping the notification opens our warning; focus moves to its heading for screen readers
+  function showWarning() {
+    callScreen.hidden = true;
+    warningScreen.hidden = false;
+    warningScreen.scrollTop = 0;
+    statusBar.classList.add("light");
+    note.textContent = "";
+    document.getElementById("warn-title").focus();
+  }
+
+  notif.addEventListener("click", showWarning);
+  document.getElementById("back-to-call").addEventListener("click", () => {
+    showCall(false);
+    notif.hidden = false;
+    notif.classList.add("show");
+    notif.focus();
+  });
+  document.getElementById("dismiss").addEventListener("click", () => {
+    showCall(false);
+    note.textContent = "Preview: \"I know this caller\" would stop warnings for this number.";
+  });
+  document.getElementById("replay").addEventListener("click", () => { note.textContent = ""; showCall(true); });
+
+  // The action buttons are not built yet: say so instead of doing nothing
+  document.querySelectorAll("[data-preview]").forEach(btn => btn.addEventListener("click", () => {
+    note.textContent = `Preview only: "${btn.dataset.preview}" is not built yet.`;
+  }));
+
+  showCall(true);
+</script>
+</body>
+</html>
