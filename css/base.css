@@ -259,7 +259,134 @@ h1:focus, main:focus { outline: none; }
 .data-table thead th { color: var(--muted); font-size: .9375rem; font-weight: 700; }
 .data-table tbody tr:last-child > * { border-bottom: 0; }
 
+/* ---------- Senior flow pieces (added on frontend-update), used by several screens ---------- */
+
+/* One comfortable column for the simple, step-by-step screens */
+.narrow .cust-main, .cust-main .narrow { max-width: 46rem; margin-left: auto; margin-right: auto; }
+
+.back-link { display: inline-flex; align-items: center; gap: .25rem; margin: 0 0 .5rem -.5rem; }
+.back-link .icon { width: 1.25rem; height: 1.25rem; }
+.lead { color: var(--muted); font-size: 1.1875rem; }
+/* A phone number inside a sentence: still a 48px tall target to tap */
+.tel-link { display: inline-flex; align-items: center; min-height: 48px; padding: 0 .25rem; font-weight: 800; white-space: nowrap; }
+.note { margin: 1.5rem 0 0; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 1rem; }
+.stack { display: grid; gap: .75rem; margin-top: 1.25rem; }
+.stack .btn-link { justify-self: center; }
+.card { margin-bottom: 1rem; }
+
+/* Big answer buttons in the stressful flows */
+.answer-btns .btn { min-height: 64px; }
+.btn-secondary[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Pill buttons for picking one thing: aria-pressed says which is picked */
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: .4rem; min-height: 48px; padding: .5rem 1rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font-size: 1rem; font-weight: 600;
+  border: 2px solid var(--border); border-radius: 999px;
+}
+.chip .icon { width: 1.25rem; height: 1.25rem; }
+.chip:hover { border-color: var(--red); }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* Text boxes and drop-downs (inputs already use .field input) */
+.field textarea, .field select {
+  display: block; width: 100%; min-height: 56px; padding: .75rem 1rem;
+  background: var(--surface); color: var(--text); font: inherit;
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+}
+.field textarea { min-height: 8rem; resize: vertical; }
+.field textarea[aria-invalid="true"], .field select[aria-invalid="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+/* "Step 1 of 2" with dots. The words say the same as the dots. */
+.flow-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+.step-dots { display: inline-flex; align-items: center; gap: .375rem; margin: 0; color: var(--muted); font-weight: 600; }
+.step-dots i { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; background: var(--divider); }
+.step-dots i.on { background: var(--red); }
+
+/* A calm pill above a heading: "You are doing the right thing" */
+.calm {
+  display: inline-flex; align-items: center; gap: .4rem; margin: 0 0 .75rem; padding: .3rem .875rem;
+  border-radius: 999px; background: var(--red-tint); color: var(--red-dark); font-weight: 700;
+}
+.calm .icon { width: 1.25rem; height: 1.25rem; }
+
+/* The round mark at the top of a "done" screen */
+.done-mark {
+  display: grid; place-items: center; width: 4rem; height: 4rem; margin-bottom: .75rem;
+  border-radius: 50%; background: var(--red-tint); color: var(--red-dark);
+}
+.done-mark .icon { width: 2rem; height: 2rem; }
+
+/* "Do not ..." rules with a cross */
+.rules { display: grid; gap: .5rem; margin: 1rem 0; }
+.rules li { display: flex; align-items: flex-start; gap: .625rem; font-size: 1.1875rem; font-weight: 700; }
+.rules .icon { margin-top: .1rem; color: var(--red-dark); }
+
+/* A result: icon + words + heading, never colour alone.
+   bad = solid dark red, careful = red tint, good = grey (the same as the result badges). */
+.verdict {
+  display: flex; align-items: flex-start; gap: .875rem; margin-bottom: 1rem; padding: 1.125rem 1.25rem;
+  border: 2px solid; border-radius: var(--radius-lg);
+}
+.verdict > .icon { width: 2.25rem; height: 2.25rem; }
+.verdict h1, .verdict h2 { margin: 0 0 .25rem; }
+.verdict p { margin: 0; }
+.verdict .badge { margin-bottom: .5rem; }
+.v-bad { --focus: var(--white); background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+.v-bad .badge--likely { border-color: var(--white); }
+.v-careful { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.v-careful p { color: var(--text); }
+.v-good { background: var(--slate-tint); border-color: var(--slate); color: var(--text); }
+
+/* A list of reasons, each with an icon, and points on the right if there are any */
+.reasons { display: grid; gap: .625rem; margin: .5rem 0 1rem; }
+.reasons li { display: flex; align-items: flex-start; gap: .625rem; }
+.reasons .icon { margin-top: .1rem; color: var(--red-dark); }
+.reasons .pts { margin-left: auto; padding-left: .5rem; color: var(--muted); font-weight: 800; white-space: nowrap; }
+
+/* "Checking..." steps: done (tick), now (spinner), still to do (empty ring) */
+.progress-list { display: grid; gap: .75rem; margin: 1rem 0 0; }
+.progress-list li { display: flex; align-items: center; gap: .75rem; color: var(--muted); font-weight: 600; }
+.progress-list li.done, .progress-list li.now { color: var(--text); }
+.progress-list li.done .icon { color: var(--red-dark); }
+.spin, .dot { flex: none; width: 1.5rem; height: 1.5rem; border: 3px solid var(--divider); border-radius: 50%; }
+.spin { border-top-color: var(--red); animation: vtc-spin 1s linear infinite; }
+@keyframes vtc-spin { to { transform: rotate(360deg); } }
+
+/* Label : value rows */
+.summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: .625rem 0; border-top: 1px solid var(--border); }
+.summary-row span:first-child { color: var(--muted); }
+.summary-row span:last-child { font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+
+/* The "Call OCBC" bar fixed to the bottom of stressful screens */
+.call-bar-space { height: 6rem; }
+.call-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); box-shadow: 0 -1px 0 var(--border), var(--shadow);
+}
+.call-bar-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; max-width: 46rem; margin: 0 auto; }
+.call-bar p { margin: 0; font-weight: 700; }
+
+/* A short message at the bottom of the screen */
+.toast {
+  position: fixed; left: 50%; bottom: 7rem; z-index: 20; transform: translateX(-50%);
+  max-width: calc(100vw - 2rem); padding: .75rem 1.25rem;
+  background: var(--charcoal); color: var(--white); border-radius: 999px; box-shadow: var(--shadow); font-weight: 700;
+}
+.toast:empty { display: none; }
+
+/* ---------- Read aloud: the word being spoken is highlighted (see a11y.js) ---------- */
+
+.w { border-radius: 4px; transition: background-color .08s; }
+/* The one colour that isn't a Clarity variable: a soft yellow highlighter, with dark text on it (14:1) */
+.w.now { background: #FFE066; color: var(--charcoal); box-shadow: 0 0 0 2px #FFE066; }
+.is-reading [data-read] { outline: 2px dashed var(--border); outline-offset: 6px; border-radius: 10px; }
+
 /* Respect people who turn off animation in their device settings */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  /* The spinner stands still, so give it a second red edge to show it is busy */
+  .spin { border-right-color: var(--red); }
 }

@@ -2,7 +2,15 @@
 
 // Made-up data for: Family passphrase.
 // Owner: Jiliana
-// Empty for now. Put this feature's made-up data inside PASSPHRASE_DATA, for example
-// PASSPHRASE_DATA.examples = [ ... ]. Keep to this one name, so it can't clash with a teammate's file.
 
-const PASSPHRASE_DATA = {};
+const PASSPHRASE_DATA = {
+  // The passphrase already saved when the demo starts
+  saved: [
+    { who: "Grandson (Jun Hao)", word: "ondeh" }
+  ],
+
+  // The choices for "Who is it for?"
+  who: ["Son", "Daughter", "Grandchild", "Husband or wife", "Someone else"],
+
+  minLength: 3   // the shortest passphrase allowed, in letters
+};

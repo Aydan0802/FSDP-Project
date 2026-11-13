@@ -1,2 +1,10 @@
 /* Feature: Is the bank really calling? (input and match result).
    Owner: Yan Lin
+   Most of the look comes from the shared senior flow pieces in css/base.css (.chips, .verdict,
+   .summary-row). Uses the Clarity variables only. */
+
+.call-match .field input { font-size: 1.375rem; letter-spacing: .04em; }
+.call-match .chips { align-items: center; }
+.call-match .chips-label { color: var(--muted); font-weight: 600; }
+.call-match .panel { margin-bottom: 1rem; }
+.cm-warning { margin: 1rem 0 0; font-weight: 600; }

@@ -1,1 +1,11 @@
-/*Add page specific styles*/
+/* Feature: Family passphrase (saved list with show / hide, add form).
+   Owner: Jiliana
+   Uses the Clarity variables only. */
+
+.pp-screen .panel { margin-bottom: 1rem; }
+.pp-saved {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  padding: .875rem 0; border-top: 1px solid var(--border);
+}
+.pp-saved:first-child { border-top: 0; padding-top: 0; }
+.pp-word { font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }

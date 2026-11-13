@@ -2,7 +2,15 @@
 
 // Made-up data for: Freeze my accounts.
 // Owner: Jose
-// Empty for now. Put this feature's made-up data inside FREEZE_DATA, for example
-// FREEZE_DATA.examples = [ ... ]. Keep to this one name, so it can't clash with a teammate's file.
 
-const FREEZE_DATA = {};
+const FREEZE_DATA = {
+  // The key to press on OCBC's hotline to reach the team that freezes accounts (the preview's wording)
+  hotlineKey: "8",
+
+  // What the freeze stops, shown on the "frozen" screen
+  frozenItems: [
+    "Transfers and PayNow payments are stopped.",
+    "Your cards cannot be used.",
+    "Nobody can sign in to your banking app."
+  ]
+};

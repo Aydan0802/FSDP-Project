@@ -1,0 +1,7 @@
+/* Feature: Someone is calling me now (the stress flow).
+   Owner: added on frontend-update (from the senior flow preview).
+   Most of the look comes from the shared senior flow pieces in css/base.css (.calm, .rules,
+   .step-dots, .answer-btns, .call-bar). Uses the Clarity variables only. */
+
+.calling-now h1 { font-size: 2.25rem; }
+.calling-now .panel { margin-bottom: 1rem; }
