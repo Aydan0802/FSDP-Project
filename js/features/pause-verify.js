@@ -195,15 +195,26 @@
       </aside>`;
   }
 
-  // Step 0: why the transfer was stopped.
-  // JOSEPH: these reasons are made up (DATA.sampleTransfer). When the risk scorer saves its own
-  // reasons, read them here instead, e.g. from appState.riskScorer.
+  // The transfer that was stopped and why. If the customer came from Jose's risk scorer
+  // (appState.riskScorer.lastResult, a Medium or High result), its real amount and reasons are
+  // used. Otherwise (opened straight from the address bar) the made-up DATA.sampleTransfer.
+  // (Connected on frontend-update.)
+  function stoppedTransfer() {
+    const last = appState.riskScorer && appState.riskScorer.lastResult;
+    const sample = last && RISK_SCORER_DATA.samples.find(s => s.id === last.sampleId);
+    if (!sample || last.band === "low" || !last.reasons.length) return DATA.sampleTransfer;
+    const amount = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 }).format(sample.transfer.amount);
+    return { amount: `S$${amount}`, reasons: last.reasons };
+  }
+
+  // Step 0: why the transfer was stopped
   function whyHtml() {
+    const transfer = stoppedTransfer();
     return `
       <section class="pv-card" data-read>
-        <h2 tabindex="-1" id="pv-step-title">Why we stopped you</h2>
+        <h2 tabindex="-1" id="pv-step-title">Why we stopped your ${transfer.amount} transfer</h2>
         <ul class="pv-reasons">
-          ${DATA.sampleTransfer.reasons.map(reason => `<li>${icon("warning")}<span>${reason}</span></li>`).join("")}
+          ${transfer.reasons.map(reason => `<li>${icon("warning")}<span>${escapeHtml(reason)}</span></li>`).join("")}
         </ul>
         <p>We will ask you ${DATA.questions.length} quick questions while you wait.</p>
         <div class="pv-actions">

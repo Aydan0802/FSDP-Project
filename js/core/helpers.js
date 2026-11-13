@@ -41,7 +41,17 @@ const ICONS = {
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   // New for the two added home tiles: money moving both ways, and a page with lines on it
   transfer: '<path d="M4 8h14M14 4l4 4-4 4"/><path d="M20 16H6M10 12l-4 4 4 4"/>',
-  document: '<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h6"/>'
+  document: '<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h6"/>',
+  // Added for the senior flow (frontend-update): pictures, chat, upload, small arrows, a cross,
+  // a heart for the "you are doing the right thing" pill, and a clock
+  image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M20.5 16l-5-5-9 8.5"/>',
+  chat: '<path d="M4 5h16v11H9.5L5 20v-4H4z"/><path d="M8 9h8M8 12.5h5"/>',
+  upload: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4.5 14.5V20h15v-5.5"/>',
+  chevron: '<path d="M9.5 5.5 16 12l-6.5 6.5"/>',
+  back: '<path d="M14.5 5.5 8 12l6.5 6.5"/>',
+  cross: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  clock: '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>'
 };
 
 // Returns one icon as an SVG drawing. aria-hidden hides it from screen readers, because the
@@ -132,6 +142,45 @@ function staffPageHtml(current, content) {
       <nav class="side-nav" aria-label="Staff menu">${menuLinksHtml(STAFF_MENU, current)}</nav>
       <main class="staff-main" tabindex="-1">${content}</main>
     </div>`;
+}
+
+// ---------- Senior flow pieces (added on frontend-update) ----------
+
+// OCBC's phone number, written for people and as a link that dials it
+const OCBC_PHONE = "1800 363 3333";
+const OCBC_TEL = "tel:18003633333";
+
+// A small "Home" link for the top of a screen
+function homeLinkHtml() {
+  return `<a class="btn btn-link back-link" href="#customer">${icon("back")}Home</a>`;
+}
+
+// The bar fixed to the bottom of the screen on stressful screens (calling now, freeze).
+// The spacer stops the bar covering the last button on the page.
+function callBarHtml() {
+  return `
+    <div class="call-bar-space" aria-hidden="true"></div>
+    <div class="call-bar">
+      <div class="call-bar-in">
+        <p>Want to talk to a real person?</p>
+        <a class="btn btn-primary btn-small" href="${OCBC_TEL}">${icon("phone")}Call OCBC</a>
+      </div>
+    </div>`;
+}
+
+// A short message at the bottom of the screen ("Passphrase saved") that screen readers also read
+function showToast(text) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.setAttribute("role", "status");
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.textContent = text; }, 50);   // filled a moment later so screen readers notice
+  setTimeout(() => toast.remove(), 3200);
+}
+
+// Makes text typed by the customer safe to put inside HTML
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 }
 
 // ---------- Stub screen ----------

@@ -1,10 +1,10 @@
 "use strict";
 
-// Made-up data for: Check a message or voice clip (the analyser).
+// Made-up data for: Check anything (the analyser): messages and voice recordings.
 // Owner: Aydan
-// PLACEHOLDER: every result below is written by hand. Nothing is analysed yet. When the real
-// message checker and voice detector are ready, they will produce results in this same shape,
-// so the screen (js/features/analyser.js) won't need to change.
+// The example and voice results below are written by hand. A typed or pasted message that isn't
+// one of the examples is really scanned on this device for the scam phrases in "phrases".
+// When the real voice detector is ready, it will produce results in this same shape.
 // All messages are short, made up and clearly fake: fake names, ".example" links, no real people.
 // The Chinese and Malay examples still need a teammate to check the wording.
 
@@ -228,15 +228,53 @@ const ANALYSER_DATA = {
     }
   ],
 
-  // Shown for any message typed or pasted by the customer, because nothing is really checked yet
-  typedResult: {
-    title: "This is a demo",
-    text: "The real message checker isn't connected yet. When it is, you'll see the risk level, the kind of scam, the warning signs in your message and what to do next. Try one of the examples to see a full result.",
-    steps: [
-      "Don't reply, tap links or send money until you're sure.",
-      "Never share a one-time password (OTP) or PIN with anyone.",
-      "Call the bank on the number on the back of your card, or the Anti-Scam Helpline on 1799."
-    ]
+  // ---------- The kinds of thing the "Check anything" screen handles here ----------
+  // Screenshots and documents are Yan Lin's (js/data/evidence-checker.js).
+  kinds: {
+    message: { label: "Text message", icon: "chat", steps: ["Reading the words", "Looking for scam phrases", "Checking links and phone numbers"] },
+    voice: { label: "Voice recording", icon: "wave", steps: ["Looking for a hidden AI watermark", "Listening for signs of an AI voice", "Working out how sure we are"] }
+  },
+
+  // The "Sample SMS" button uses this example, so it shows the full hand-written result
+  sampleMessageId: "bank",
+
+  // ---------- Scam phrases looked for in any message the customer types or pastes ----------
+  // A real check, done on this device: each pattern that is found adds one warning sign.
+  // 2 or more signs is high risk, 1 is medium, none is low.
+  phrases: [
+    { pattern: /safe account/i, reason: "Asks you to move money to a \"safe account\"" },
+    { pattern: /\b(otp|one[- ]time password|pin|verification code|tac)\b/i, reason: "Asks for your OTP, PIN or a code" },
+    { pattern: /\burgent(ly)?\b|immediately|within \d+\s*(min|mins|minutes|hour|hours|hrs)\b|right now|act now/i, reason: "Rushes you to act now" },
+    { pattern: /https?:\/\/\S+|www\.\S+|bit\.ly\/\S+|\b[\w-]+\.(com|sg|co|net|org|xyz|link|info|example)(\/\S*)?/i, reason: "Has a link for you to tap" },
+    { pattern: /\bpolice\b|\bmas\b|\bcourt\b|\bcustoms\b|\bica\b|\bgovernment\b|\bmoh\b|\biras\b/i, reason: "Says it is from the police or government" },
+    { pattern: /don'?t tell|do not tell|keep (this|it) (a )?secret|do not share this|don'?t share this/i, reason: "Tells you to keep it a secret" },
+    { pattern: /\blocked\b|suspended|frozen|suspicious (login|activity)|unusual login|will be closed|deactivated/i, reason: "Says your account is in trouble" }
+  ],
+
+  // What the result says for a typed or pasted message, by risk level
+  scan: {
+    titles: {
+      high: "This message is likely a scam",
+      medium: "Please be careful with this message",
+      low: "We did not find scam signs"
+    },
+    noSigns: ["No requests for codes, money or secrecy.", "No links or rushing words."],
+    steps: {
+      high: [
+        "Don't reply, tap links or send money.",
+        "Never share a one-time password (OTP) or PIN with anyone.",
+        "Call the bank on the number on the back of your card, or the Anti-Scam Helpline on 1799."
+      ],
+      medium: [
+        "Don't reply, tap links or send money until you're sure.",
+        "Never share a one-time password (OTP) or PIN with anyone.",
+        "Call the bank on the number on the back of your card, or the Anti-Scam Helpline on 1799."
+      ],
+      low: [
+        "You don't need to do anything.",
+        "If something still feels wrong, call OCBC yourself before you reply or pay."
+      ]
+    }
   },
 
   // ---------- Voice clip results ----------
@@ -296,8 +334,5 @@ const ANALYSER_DATA = {
       ],
       extra: "A real voice can still belong to a scammer. If the caller asks for money, codes or secrecy, hang up."
     }
-  },
-
-  // The three steps shown while a clip is "checked"
-  voiceSteps: ["Looking for a hidden AI watermark", "Listening for signs of an AI voice", "Working out how sure we are"]
+  }
 };

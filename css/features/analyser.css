@@ -1,112 +1,54 @@
-/* Feature: Check a message or voice clip (the analyser): tabs, forms, results and history.
-   Owner: Aydan
+/* Feature: Check anything (the analyser): one input for any file or message, the checking
+   steps, and the results for messages, voice, screenshots and documents.
+   Owner: Aydan (screenshots and documents: Yan Lin's checker, shown with these same styles).
    Styles for this feature only. Uses the Clarity variables (var(--red), var(--surface) ...),
    never new colour codes. Every risk level and result shows an icon and words, not just a colour.
    Hover and press effects are short, and turn off for people who switch off animation
    (see the reduced-motion rule at the end of css/base.css). */
 
-.an-intro { max-width: 46rem; margin-bottom: 1.5rem; }
-.an-intro h1, .an-result h2 { text-wrap: balance; }
+.an-screen h1 { text-wrap: balance; }
+.an-screen .panel { margin-bottom: 1rem; }
+.an-screen .verdict h1 { font-size: 1.75rem; }
 /* Taps act straight away on phones (no double-tap zoom on these controls) */
-.an-tab, .an-chip, .an-flag, .an-pick, .an-drop { touch-action: manipulation; }
-.an-lead { color: var(--muted); font-size: 1.1875rem; }
+.an-screen .chip, .an-flag, .an-pick, .an-drop { touch-action: manipulation; }
 
-/* ---------- Tabs: "A message" / "A voice clip" ---------- */
+/* ---------- Adding something: the drop box, the message box and the samples ---------- */
 
-.an-tabs {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem;
-  max-width: 44rem; margin: 0 0 1.5rem;
+.an-drop {
+  position: relative; display: grid; justify-items: center; gap: .375rem; margin-top: 1.25rem;
+  padding: 1.75rem 1rem; cursor: pointer; text-align: center;
+  background: var(--surface); border: 2.5px dashed var(--slate); border-radius: var(--radius-lg);
+  transition: border-color .15s, background-color .15s;
 }
-.an-tab {
-  display: flex; align-items: center; gap: .875rem; min-width: 0; min-height: 72px; padding: .75rem 1rem;
-  background: var(--surface); color: var(--text); text-align: left; cursor: pointer;
-  border: 2px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-  transition: border-color .15s, background-color .15s, transform .15s;
-}
-.an-tab:hover { border-color: var(--field-border); transform: translateY(-2px); }
-.an-tab:active { transform: translateY(0); }
-.an-tab[aria-selected="true"] { border-color: var(--red); background: var(--red-tint); }
-.an-tab-icon {
-  display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem;
-  border-radius: 12px; background: var(--surface-2); color: var(--red-dark);
-  transition: background-color .15s, color .15s;
-}
-.an-tab[aria-selected="true"] .an-tab-icon { background: var(--red); color: var(--white); }
-.an-tab-text { display: grid; min-width: 0; }
-.an-tab-text strong { font-size: 1.125rem; line-height: 1.25; }
-.an-tab-text span { color: var(--muted); font-size: .9375rem; line-height: 1.3; }
-.an-tab[aria-selected="true"] .an-tab-text span { color: var(--charcoal); }
-@media (max-width: 29.99rem) {
-  /* On phones each tab is only half the screen wide: icon above the title, and no small caption */
-  .an-tab { flex-direction: column; justify-content: center; gap: .375rem; text-align: center; }
-  .an-tab-text { overflow-wrap: anywhere; }
-  .an-tab-text span { display: none; }
-}
+.an-drop:hover, .an-drop.is-dragover { border-color: var(--red); background: var(--red-tint); }
+.an-drop:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.an-drop .icon { width: 2.75rem; height: 2.75rem; color: var(--red-dark); transition: transform .15s; }
+.an-drop:hover .icon { transform: translateY(-3px); }
+.an-drop strong { font-size: 1.1875rem; }
+.an-drop span { color: var(--muted); font-size: 1rem; }
 
-/* ---------- Two columns on wide screens: the form on the left, the result on the right ---------- */
+/* "or" with a line either side */
+.an-or { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; color: var(--muted); font-weight: 700; }
+.an-or::before, .an-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
-.an-grid { display: grid; gap: 1.5rem; align-items: start; }
-@media (min-width: 60rem) {
-  .an-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
-}
-
-.an-form h2 { margin-bottom: 1rem; }
-.an-label { display: block; margin: 0 0 .5rem; font-weight: 700; }
-.an-textarea {
-  display: block; width: 100%; min-height: 10rem; padding: .875rem 1rem; resize: vertical;
-  background: var(--surface); color: var(--text); font: inherit; line-height: 1.5;
-  border: 2px solid var(--field-border); border-radius: var(--radius);
-  transition: border-color .15s, box-shadow .15s;
-}
-.an-textarea:hover { border-color: var(--charcoal); }
-.an-textarea[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
-
-.an-count { margin: .375rem 0 1rem; color: var(--muted); font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
+.an-screen .field { margin-bottom: .25rem; }
+.an-count { margin: 0 0 .5rem; color: var(--muted); font-size: 1rem; text-align: right; font-variant-numeric: tabular-nums; }
 .an-count--over { color: var(--red-dark); font-weight: 700; }
 
-/* Big buttons in this feature lift slightly on hover and press down when clicked */
-.an-form .btn, .an-actions .btn:not(.btn-link) { box-shadow: none; }
-.an-form .btn:not(:disabled):hover, .an-actions .btn:not(.btn-link):hover { transform: translateY(-1px); box-shadow: var(--shadow); }
-.an-form .btn:not(:disabled):active, .an-actions .btn:not(.btn-link):active { transform: translateY(1px); box-shadow: none; }
-/* A switched-off button looks switched off, and a line under it says why */
-.an-form .btn-primary:disabled { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
-.an-form .btn-primary:disabled .icon { opacity: .6; }
-.an-hint { margin: .5rem 0 0; color: var(--muted); font-size: 1rem; text-align: center; }
+.an-chips { display: flex; flex-wrap: wrap; gap: .5rem; padding-bottom: .875rem; }
 
-.an-sub { margin: 1.75rem 0 .75rem; font-size: 1.0625rem; }
-
-/* "Try an example" chips */
-.an-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
-.an-chip {
-  min-height: 48px; padding: .5rem 1rem; cursor: pointer;
-  background: var(--surface); color: var(--text); font-size: 1rem; font-weight: 600;
-  border: 2px solid var(--border); border-radius: 999px;
-  transition: border-color .15s, background-color .15s, color .15s, transform .1s;
-}
-.an-chip:hover { border-color: var(--red); background: var(--red-tint); color: var(--red-dark); }
-.an-chip:active { transform: scale(.96); }
-
-.an-privacy { display: flex; align-items: center; gap: .5rem; margin: 1.5rem 0 0; color: var(--muted); font-size: .9375rem; }
+.an-privacy { display: flex; align-items: center; gap: .5rem; margin: 1.25rem 0 0; color: var(--muted); font-size: .9375rem; }
 .an-privacy .icon { width: 1.25rem; height: 1.25rem; }
 
-/* ---------- Before a result: an empty box, or the "Checking..." spinner ---------- */
+/* ---------- "We found: ..." ---------- */
 
-.an-empty {
-  display: grid; place-items: center; align-content: center; gap: .75rem; min-height: 18rem; padding: 2rem;
-  color: var(--muted); text-align: center;
-  border: 2px dashed var(--border); border-radius: var(--radius-lg);
+.an-detected {
+  display: flex; align-items: center; gap: .875rem; margin-bottom: 1rem; padding: .875rem 1rem;
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
 }
-.an-empty .icon { width: 3rem; height: 3rem; color: var(--field-border); }
-.an-empty p { margin: 0; font-weight: 600; }
-.an-empty--busy { border-style: solid; background: var(--surface); }
-
-.an-spinner {
-  display: inline-block; flex: none; width: 1.25em; height: 1.25em;
-  border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%;
-  animation: an-spin .8s linear infinite;
-}
-.an-spinner--big { width: 2.75rem; height: 2.75rem; border-width: 4px; color: var(--red); }
-@keyframes an-spin { to { transform: rotate(360deg); } }
+.an-detected .icon { width: 2rem; height: 2rem; color: var(--red-dark); }
+.an-detected small { display: block; color: var(--muted); font-size: 1rem; overflow-wrap: anywhere; }
+.panel .an-detected { box-shadow: none; background: var(--surface-2); }
 
 /* ---------- The result card ---------- */
 
@@ -219,47 +161,6 @@
 }
 .an-error-icon .icon { width: 2rem; height: 2rem; }
 
-/* ---------- Voice clip: choosing a clip ---------- */
-
-.an-drop {
-  display: grid; justify-items: center; gap: .375rem; padding: 1.75rem 1rem; cursor: pointer; text-align: center;
-  background: var(--surface-2); border: 2px dashed var(--field-border); border-radius: var(--radius-lg);
-  transition: border-color .15s, background-color .15s;
-}
-.an-drop:hover, .an-drop.is-dragover { border-color: var(--red); background: var(--red-tint); }
-.an-drop:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
-.an-drop .icon { width: 2.75rem; height: 2.75rem; color: var(--red-dark); transition: transform .15s; }
-.an-drop:hover .icon { transform: translateY(-3px); }
-.an-drop strong { font-size: 1.1875rem; }
-.an-drop span { color: var(--muted); font-size: 1rem; }
-
-.an-file {
-  display: flex; align-items: center; gap: .625rem; margin: 1rem 0 0; padding: .375rem .375rem .375rem .875rem;
-  background: var(--slate-tint); border-radius: var(--radius); font-weight: 600;
-}
-.an-file .icon { color: var(--red-dark); }
-.an-file-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.an-file .btn-link { min-height: 44px; font-size: 1rem; }
-
-/* "or" with a line either side */
-.an-or { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; color: var(--muted); }
-.an-or::before, .an-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-#an-sample { margin-bottom: .75rem; }
-
-/* ---------- Voice clip: the three checking steps ---------- */
-
-.an-checking h2 { margin-bottom: 1.25rem; }
-.an-progress { display: grid; gap: 1rem; }
-.an-step { display: flex; align-items: center; gap: .875rem; color: var(--muted); }
-.an-step-dot {
-  display: grid; place-items: center; flex: none; width: 2rem; height: 2rem;
-  border: 3px solid var(--divider); border-radius: 50%; color: var(--white);
-}
-.an-step-dot .icon { width: 1.125rem; height: 1.125rem; stroke-width: 3; }
-.an-step.is-active { color: var(--text); font-weight: 700; }
-.an-step.is-active .an-step-dot { border-color: var(--red); border-right-color: transparent; animation: an-spin .8s linear infinite; }
-.an-step.is-done { color: var(--text); }
-.an-step.is-done .an-step-dot { background: var(--charcoal); border-color: var(--charcoal); }
 
 /* ---------- Voice clip: the result ---------- */
 
@@ -303,23 +204,3 @@
 .an-pick:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 .an-pick input { width: 1.25rem; height: 1.25rem; margin: 0; accent-color: var(--red-dark); }
 
-/* ---------- Your checks today ---------- */
-
-.an-history { margin-top: 2rem; }
-.an-history-list { display: grid; gap: .5rem; }
-.an-history-list li {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .5rem 1rem; align-items: center;
-  padding: .75rem 1rem; background: var(--surface-2); border-radius: var(--radius);
-}
-.an-history-time { color: var(--muted); font-size: .9375rem; font-variant-numeric: tabular-nums; }
-.an-history-what { display: flex; align-items: center; gap: .625rem; min-width: 0; }
-.an-history-what .icon { color: var(--red-dark); }
-.an-history-what > span { min-width: 0; overflow-wrap: anywhere; }
-.an-history-what strong { margin-right: .5rem; }
-@media (max-width: 35.99rem) {
-  /* On phones the time sits above the rest of the row */
-  .an-history-list li { grid-template-columns: minmax(0, 1fr) auto; }
-  .an-history-time { grid-column: 1 / -1; }
-}
-
-.an-back { margin-top: 2rem; }

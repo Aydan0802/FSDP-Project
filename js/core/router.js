@@ -70,6 +70,13 @@ function showScreen() {
   firstLoad = false;
 }
 
+// Draws the current screen again, for a feature that moves to its next step without changing
+// the address (for example "Checking..." then the result). Like any screen change, it stops
+// Read aloud, moves to the top and moves focus to the new heading.
+function redrawScreen() {
+  showScreen();
+}
+
 window.addEventListener("hashchange", showScreen);
 // DOMContentLoaded fires after every <script> in index.html has run, so all routes are registered by then
 document.addEventListener("DOMContentLoaded", showScreen);

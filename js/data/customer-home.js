@@ -6,21 +6,26 @@
 const CUSTOMER_HOME_DATA = {
   customerName: "Mdm Lim",
 
-  // The customer's safety tools, shown as tiles
-  tools: [
-    { icon: "wave", title: "Check a message or voice clip", text: "See if a text or recording could be made by AI.", route: "analyser" },
-    { icon: "shield", title: "Is the bank really calling?", text: "See if a real bank officer is on the line.", route: "call-match" },
-    { icon: "transfer", title: "Check a transfer", text: "See how risky a payment looks before you send it.", route: "risk-scorer" },
-    { icon: "document", title: "Check a screenshot or document", text: "See if a picture or file could be faked.", route: "evidence" },
-    { icon: "key", title: "Family passphrase", text: "Agree on a secret word to test callers.", route: "passphrase" },
-    { icon: "flag", title: "Report a scam", text: "Tell the bank what happened.", route: "report" },
-    { icon: "lock", title: "Freeze my accounts", text: "Emergency stop if you shared a code.", route: "freeze" },
-    { icon: "book", title: "Learn the signs", text: "A 3-minute guide to scam calls.", route: "learn-signs" }
+  // "Not sure? Check it first": tools for checking something before replying or paying.
+  // wide: true makes the tile span the whole row.
+  checkTools: [
+    { icon: "upload", title: "Check a message, call or picture", text: "Add anything: an SMS, a call recording, a screenshot or a letter. We work out what it is.", route: "analyser", wide: true },
+    { icon: "shield", title: "Is the bank really calling?", text: "Match the caller to real OCBC calls", route: "call-match" },
+    { icon: "user", title: "Is the caller a real person?", text: "A quick code check that AI voices fail", route: "caller-check" },
+    { icon: "transfer", title: "Check a transfer first", text: "See how risky it looks before you send", route: "risk-scorer" }
   ],
 
-  // Checks the customer did before. result is one of the five RESULTS keys (helpers.js).
+  // "Be ready next time": things to set up or learn before a scam happens
+  readyTools: [
+    { icon: "key", title: "Family passphrase", text: "A secret word to test callers", route: "passphrase" },
+    { icon: "book", title: "Learn the signs", text: "Real banks never ask for your OTP", route: "learn-signs" },
+    { icon: "flag", title: "Report a scam", text: "Tell the bank what happened", route: "report" }
+  ],
+
+  // Checks the customer did before this visit. result is one of the five RESULTS keys (helpers.js).
+  // Checks made during this visit come from the analyser (appState.analyser.history) and are shown first.
   recent: [
-    { result: "likely", what: "Voice message from someone who sounded like my nephew", when: "Checked 2 Nov" },
+    { result: "likely", what: "Voice message that sounded like my nephew", when: "Checked 2 Nov" },
     { result: "unsure", what: "Short voicemail about a parcel", when: "Checked 30 Oct" }
   ]
 };
