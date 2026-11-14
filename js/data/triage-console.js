@@ -9,8 +9,8 @@ const TRIAGE_CONSOLE_DATA = {
   kpis: [
     { label: "New reports today", value: "14", note: "3 more than yesterday", alert: true },
     { label: "Likely AI-made voice", value: "5", note: "Of today's reports" },
-    { label: "Waiting for review", value: "9", note: "Oldest has waited 2 h 10 min" },
-    { label: "Money already sent", value: "2", note: "Call these customers first" }
+    { label: "Paused transfers", value: "4", note: "Customers are finishing the check" },
+    { label: "Money already sent", value: "2", note: "Passed to the investigators by the system" }
   ],
 
   // Reports per day for the last 7 days (3 Nov 2026 is a Tuesday)
@@ -33,15 +33,15 @@ const TRIAGE_CONSOLE_DATA = {
     { result: "real", count: 31 }
   ],
 
-  // Cases to check first
+  // Latest flagged activity
   queue: [
-    { ref: "VC-2611-0103", received: "Today 16:42", result: "likely", status: "New",
+    { ref: "VC-2611-0103", received: "Today 16:42", result: "likely", status: "Recorded",
       what: "Caller from the \"fraud team\" asked to move savings to a \"safe account\"" },
-    { ref: "VC-2611-0102", received: "Today 13:20", result: "likely", status: "In review",
+    { ref: "VC-2611-0102", received: "Today 13:20", result: "likely", status: "Sent to investigators",
       what: "\"Grandson\" asked for emergency money. Money was sent." },
-    { ref: "VC-2611-0101", received: "Today 11:05", result: "partial", status: "New",
+    { ref: "VC-2611-0101", received: "Today 11:05", result: "partial", status: "Recorded",
       what: "Courier call, then a second voice asked for card details" },
-    { ref: "VC-2611-0099", received: "Yesterday 19:03", result: "uncertain", status: "New",
+    { ref: "VC-2611-0099", received: "Yesterday 19:03", result: "uncertain", status: "Recorded",
       what: "Told the account would close unless it was verified today" }
   ]
 };
@@ -121,7 +121,7 @@ const CASE_QUEUE_DATA = {
       voice: { result: "likely", note: "Checked on the 14-second clip the customer chose to share." },
       evidence: [
         { label: "Customer's own summary of the call", note: "Typed in the app at 16:42" },
-        { label: "Voice clip (made-up sample)", note: "14 seconds, shared by the customer" }
+        { label: "Voice clip", note: "14 seconds, shared by the customer" }
       ],
       timeline: [
         { time: "Today 16:38", text: "Customer opened \"Is the bank really calling?\" and found no matching bank call." },
@@ -174,7 +174,7 @@ const CASE_QUEUE_DATA = {
       voice: { result: "likely", note: "Checked on the clip the customer chose to share." },
       evidence: [
         { label: "Customer's own summary of the call", note: "Typed in the app at 13:20" },
-        { label: "Voice clip (made-up sample)", note: "21 seconds, shared by the customer" },
+        { label: "Voice clip", note: "21 seconds, shared by the customer" },
         { label: "Transfer record", note: "Sent 13:02" }
       ],
       timeline: [
@@ -198,7 +198,7 @@ const CASE_QUEUE_DATA = {
       voice: null,
       evidence: [
         { label: "Transfer details", note: "From the transfer screen" },
-        { label: "Receiver report history", note: "Made-up: reported by 4 other customers" }
+        { label: "Receiver report history", note: "Reported by 4 other customers" }
       ],
       timeline: [
         { time: "Today 15:58", text: "Transfer attempted. Risk score 80 (High). Transfer paused and flagged." }
@@ -399,5 +399,110 @@ const CASE_QUEUE_DATA = {
         { time: "Sun 1 Nov 11:22", text: "Matched the bank's own outbound call list. Recorded as a genuine call." }
       ]
     }
+  ]
+};
+
+// Later, when the backend exists, the same shapes can come from the server:
+//   GET  /api/cases             the list above (Jose's GET /api/risk/cases already sends the auto-flagged ones)
+//   GET  /api/cases/:ref        one case
+// The server should mask the receiver's name and account BEFORE sending, so the browser never
+// holds the full details. The reports count comes from a list of reported account numbers.
+
+
+// ======================================================================================
+// Made-up numbers for the Insights tab of Flagged activity.
+// These are totals, not individual cases, and they hold no customer details at all. They are
+// counted by the system and have nothing to do with the 14 sample cases above, which are only
+// the latest few. (When the backend exists, these come from "count and group" queries.)
+// "Now" is Tuesday 3 Nov 2026. The last 7 days add up to 86 flags, the same "86 this week"
+// the overview shows. The three sources match the ones above: auto-flagged transfers, pause
+// checks and customer reports.
+// ======================================================================================
+
+const CASE_INSIGHTS_DATA = {
+  // Flags per day for the last 14 days (oldest first), split by who raised them
+  daily: {
+    labels: [
+      { day: "Wed", date: "21", month: "Oct" }, { day: "Thu", date: "22", month: "Oct" }, { day: "Fri", date: "23", month: "Oct" }, { day: "Sat", date: "24", month: "Oct" },
+      { day: "Sun", date: "25", month: "Oct" }, { day: "Mon", date: "26", month: "Oct" }, { day: "Tue", date: "27", month: "Oct" }, { day: "Wed", date: "28", month: "Oct" },
+      { day: "Thu", date: "29", month: "Oct" }, { day: "Fri", date: "30", month: "Oct" }, { day: "Sat", date: "31", month: "Oct" }, { day: "Sun", date: "1", month: "Nov" },
+      { day: "Mon", date: "2", month: "Nov" }, { day: "Tue", date: "3", month: "Nov" }
+    ],
+    auto:   [3, 4, 3, 2, 2, 4, 4, 4, 6, 4, 3, 3, 6, 5],
+    pause:  [2, 2, 1, 2, 1, 2, 3, 2, 3, 3, 2, 2, 3, 3],
+    report: [4, 4, 4, 3, 3, 4, 4, 5, 6, 5, 5, 4, 6, 6]
+  },
+
+  // Flags per week for the last 8 weeks (oldest first). The last week is the last 7 days above.
+  weekly: {
+    labels: [
+      { day: "Wk of", date: "9", month: "Sep" }, { day: "Wk of", date: "16", month: "Sep" }, { day: "Wk of", date: "23", month: "Sep" }, { day: "Wk of", date: "30", month: "Sep" },
+      { day: "Wk of", date: "7", month: "Oct" }, { day: "Wk of", date: "14", month: "Oct" }, { day: "Wk of", date: "21", month: "Oct" }, { day: "Wk of", date: "28", month: "Oct" }
+    ],
+    auto:   [14, 17, 19, 21, 18, 24, 22, 31],
+    pause:  [8, 9, 11, 12, 10, 13, 13, 18],
+    report: [20, 22, 24, 27, 23, 28, 26, 37]
+  },
+
+  // What became of the transfers that were paused (auto-flagged + pause checks).
+  // "now" is today / this week, "before" is yesterday / last week. Each adds up to the
+  // paused total in the numbers above (for example 21 + 17 + 4 + 7 = 49 for this week).
+  outcomes: {
+    daily: {
+      now:    { cancelled: 3, released: 2, paused: 3, investigators: 0 },
+      before: { cancelled: 4, released: 3, paused: 0, investigators: 2 }
+    },
+    weekly: {
+      now:    { cancelled: 21, released: 17, paused: 4, investigators: 7 },
+      before: { cancelled: 11, released: 17, paused: 2, investigators: 5 }
+    }
+  },
+
+  // Money (in dollars). "kept" is the amount of transfers customers cancelled after the pause.
+  // "sent" is money that had already left before anything could be paused.
+  money: {
+    daily: {
+      kept: { now: 12400, before: 9600 },
+      sent: { now: { count: 1, amount: 3500 }, before: { count: 1, amount: 1200 } }
+    },
+    weekly: {
+      kept: { now: 96400, before: 52300 },
+      sent: { now: { count: 7, amount: 21300 }, before: { count: 4, amount: 9800 } }
+    }
+  },
+
+  // When flags happen over the last 7 days (adds up to 86)
+  timeOfDay: [
+    { label: "00:00 to 05:59", count: 4 },
+    { label: "06:00 to 09:59", count: 9 },
+    { label: "10:00 to 13:59", count: 27 },
+    { label: "14:00 to 17:59", count: 24 },
+    { label: "18:00 to 21:59", count: 17 },
+    { label: "22:00 to 23:59", count: 5 }
+  ],
+
+  // Which warning signs showed up on the 49 paused transfers in the last 7 days.
+  // One transfer can have several signs, so these add up to more than 49.
+  pausedTotal: 49,
+  signs: [
+    { label: "Reported receiver", count: 31 },
+    { label: "Large amount", count: 22 },
+    { label: "Repeated big transfers", count: 19 },
+    { label: "Rapid repeat transfers", count: 17 },
+    { label: "Many senders, one receiver", count: 12 },
+    { label: "New receiving account", count: 11 },
+    { label: "Scam wording in the note", count: 9 },
+    { label: "Odd hour", count: 6 }
+  ],
+
+  // Receiving accounts that other people keep reporting. Names are already masked and only the
+  // last 3 digits of the account are kept. "cases" is how many flags involved the account in
+  // the last 7 days, "attempted" the total amount people tried to send to it.
+  receivers: [
+    { name: "S*** A******", acct: "xxx-xxx-318", reports: 5, cases: 5, attempted: 54000 },
+    { name: "L**** G**** C******", acct: "xxx-xxx-771", reports: 4, cases: 6, attempted: 31200 },
+    { name: "T** O******", acct: "xxx-xxx-613", reports: 3, cases: 3, attempted: 4100 },
+    { name: "Q**** D*** O****** S****", acct: "xxx-xxx-390", reports: 3, cases: 2, attempted: 1900 },
+    { name: "R**** T*****", acct: "xxx-xxx-905", reports: 2, cases: 3, attempted: 9600 }
   ]
 };

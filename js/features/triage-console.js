@@ -56,17 +56,17 @@
             <span class="mix-n">${m.count}</span>
           </li>`).join("")}
       </ul>
-      <p class="mix-total">${total} reports this week. A person checks every "Not sure" result.</p>`;
+      <p class="mix-total">${total} reports this week. Results are warning signs, not proof.</p>`;
   }
 
   // The "Check these first" table. Each case number links to that case's detail screen.
   function queueHtml() {
     return `
       <table class="data-table queue">
-        <caption class="visually-hidden">Reports to check first, highest risk first</caption>
+        <caption class="visually-hidden">Latest flagged activity, highest risk first</caption>
         <thead><tr>
           <th scope="col">Case</th><th scope="col">Received</th><th scope="col">Result</th>
-          <th scope="col">What happened</th><th scope="col">Status</th>
+          <th scope="col">What happened</th><th scope="col">Outcome</th>
         </tr></thead>
         <tbody>
           ${data.queue.map(c => `<tr>
@@ -86,7 +86,7 @@
       <div class="staff-title">
         <p class="eyebrow">Fraud operations</p>
         <h1 tabindex="-1">Overview</h1>
-        <p class="meta">Tuesday 3 Nov 2026. Made-up data.</p>
+        <p class="meta">Tuesday 3 Nov 2026. View only.</p>
       </div>
 
       <ul class="kpis">
@@ -108,8 +108,8 @@
         </section>
         <section class="panel panel-queue" aria-labelledby="queue-title">
           <div class="panel-head">
-            <h2 id="queue-title">Check these first</h2>
-            <a class="btn btn-secondary btn-small" href="#staff-queue">Open the case queue</a>
+            <h2 id="queue-title">Latest flagged activity</h2>
+            <a class="btn btn-secondary btn-small" href="#staff-queue/cases">See all flagged activity</a>
           </div>
           <div class="table-wrap">${queueHtml()}</div>
         </section>
@@ -147,10 +147,16 @@
 // Owner: Wei Ye
 // The staff side is a VIEW-ONLY dashboard: staff look, they don't do. There are no buttons that
 // change anything and no jobs for staff. What it does:
-//   #staff-queue        a list of everything the system flagged, with search, filters and sorting
-//   #staff-case/<ref>   one flagged case in detail: why it was flagged, the transfer, the receiver,
-//                       what the customer told us, the evidence, and a timeline
-// (The address still says "queue" because the router and the side menu already use that name.)
+//   #staff-queue          Flagged activity, "Insights" tab (the default): numbers and trends, so staff
+//                         can spot patterns (per day or per week, what happens to paused transfers,
+//                         when flags happen, which warning signs show up, which receivers keep
+//                         being reported)
+//   #staff-queue/cases    Flagged activity, "Cases" tab: the list of individual cases, with search,
+//                         filters and sorting
+//   #staff-case/<ref>     one flagged case in detail: why it was flagged, the transfer, the receiver,
+//                         what the customer told us, the evidence, and a timeline
+// (The address still says "queue" because the router and the side menu already use that name.
+// The tab is the bit after the slash, the same way #staff-case/<ref> works.)
 // It replaces the two stubs above: registerRoute() just keeps the LAST screen registered under
 // a name, so the stubs are still here but never shown. (Delete them whenever you are ready.)
 // Who does what instead of staff: the CUSTOMER chooses to continue or cancel a paused transfer,
@@ -233,11 +239,11 @@
 
   // ---------- What this screen remembers (appState.triageQueue) ----------
 
-  // The search, filters and sort. Created the first time it is needed, so we never have to touch
+  // The search, filters, sort and the daily/weekly choice. Created the first time it is needed, so we never have to touch
   // state.js. Coming back from a case, the list still shows the same search. #reset wipes it.
   function view() {
     if (!appState.triageQueue) {
-      appState.triageQueue = { source: "all", level: "all", sort: "newest", search: "" };
+      appState.triageQueue = { source: "all", level: "all", sort: "newest", search: "", period: "daily", chartMode: "stacked" };
     }
     return appState.triageQueue;
   }
@@ -336,23 +342,299 @@
     return `<span class="status status--${slug(outcome)}">${esc(outcome)}</span>`;
   }
 
-  // ---------- Screen 1: flagged activity ----------
+  // ---------- Screen 1a: Insights (the default tab) ----------
 
-  // The four numbers at the top, worked out from the cases
-  function kpisHtml() {
-    const all = allCases();
+  // All the numbers on this tab come from CASE_INSIGHTS_DATA (totals only, no customer details)
+  const I = CASE_INSIGHTS_DATA;
+
+  // Daily shows the last 14 days, weekly the last 8 weeks. "now" and "before" are the two things
+  // each number is compared with (today and yesterday, or this week and last week).
+  const PERIODS = {
+    daily: { label: "Daily", span: "Last 14 days", unit: "day", now: "today", before: "yesterday", series: I.daily },
+    weekly: { label: "Weekly", span: "Last 8 weeks", unit: "week", now: "this week", before: "last week", series: I.weekly }
+  };
+
+  // The three stacked pieces of every bar, bottom to top. The names come from the sources in
+  // the data file, so the legend, chart and table always agree.
+  const STACK = ["auto", "pause", "report"];
+  const SHORT = { auto: "Auto", pause: "Pause", report: "Reports" };   // short table headings for narrow screens
+
+  function totalAt(series, i) { return series.auto[i] + series.pause[i] + series.report[i]; }
+  function pausedAt(series, i) { return series.auto[i] + series.pause[i]; }   // transfers that were paused
+  function sumOf(obj) { return Object.keys(obj).reduce((sum, key) => sum + obj[key], 0); }
+  function share(part, whole) { return whole ? Math.round((part / whole) * 100) : 0; }
+
+  // "Up 41% on last week". An arrow AND words, so it never relies on colour. The colour only adds to it:
+  // more flags is bad news (red), fewer is good news (green), no change is plain.
+  function changeHtml(now, before, p) {
+    if (!before) return `New ${p.now}`;
+    const change = Math.round(((now - before) / before) * 100);
+    if (change === 0) return `<span class="delta delta--flat"><span aria-hidden="true">= </span>Same as ${p.before}</span>`;
+    const up = change > 0;
+    return `<span class="delta ${up ? "delta--bad" : "delta--good"}"><span aria-hidden="true">${up ? "\u25B2" : "\u25BC"} </span>${up ? "Up" : "Down"} ${Math.abs(change)}% on ${p.before}</span>`;
+  }
+
+  // Four numbers for the chosen period, each compared with the one before
+  function insightKpisHtml(p) {
+    const s = p.series;
+    const last = s.labels.length - 1;
+    const out = I.outcomes[p.unit === "day" ? "daily" : "weekly"];
+    const cash = I.money[p.unit === "day" ? "daily" : "weekly"];
+    const paused = sumOf(out.now);
+    const pausedBefore = sumOf(out.before);
+    const rate = share(out.now.cancelled, paused);
+    const rateBefore = share(out.before.cancelled, pausedBefore);
     const items = [
-      { label: "Flagged activity", value: all.length, note: "Last 7 days" },
-      { label: "Money already sent", value: all.filter(c => c.moneySent).length, note: "Passed to the investigators by the system", alert: true },
-      { label: "Auto-flagged transfers", value: all.filter(c => c.source === "auto").length, note: "Paused by the risk scorer" },
-      { label: "Reported receivers", value: all.filter(c => c.receiver && c.receiver.reports >= 2).length, note: "Reported 2 or more times by others" }
+      { label: "Flagged activity", value: totalAt(s, last), note: changeHtml(totalAt(s, last), totalAt(s, last - 1), p) },
+      { label: "Paused transfers", value: pausedAt(s, last), note: changeHtml(pausedAt(s, last), pausedAt(s, last - 1), p) },
+      { label: "Cancelled by customers", value: rate + "%", note: `${formatMoney(cash.kept.now)} kept safe. ${rateBefore}% ${p.before}.` },
+      { label: "Money already sent", value: formatMoney(cash.sent.now.amount), alert: cash.sent.now.count > 0,
+        note: `${cash.sent.now.count} ${cash.sent.now.count === 1 ? "case" : "cases"}. ${formatMoney(cash.sent.before.amount)} ${p.before}.` }
     ];
-    return items.map(k => `<li class="kpi${k.alert && k.value ? " kpi--alert" : ""}">
+    return `<ul class="kpis ins-kpis" data-read>${items.map(k => `<li class="kpi${k.alert ? " kpi--alert" : ""}">
         <span class="kpi-label">${k.label}</span>
         <span class="kpi-value">${k.value}</span>
         <span class="kpi-note">${k.note}</span>
-      </li>`).join("");
+      </li>`).join("")}</ul>`;
   }
+
+  // Plain sentences worked out from the numbers, so nobody has to read the charts to get the point
+  function glanceHtml(p) {
+    const s = p.series;
+    const last = s.labels.length - 1;
+    const out = I.outcomes[p.unit === "day" ? "daily" : "weekly"];
+    const now = totalAt(s, last);
+    const before = totalAt(s, last - 1);
+    const change = before ? Math.round(((now - before) / before) * 100) : 0;
+    const busy = I.timeOfDay.slice().sort((a, b) => b.count - a.count);
+    const week = I.timeOfDay.reduce((sum, t) => sum + t.count, 0);
+    const watch = I.receivers.filter(r => r.reports >= 3);
+    const lines = [
+      `Flagged activity is ${change === 0 ? "the same as" : (change > 0 ? "up " + change + "% on" : "down " + Math.abs(change) + "% on")} ${p.before} (${now} compared with ${before}).`,
+      `Most flags happen between ${busy[0].label.replace(" to ", " and ")} (${share(busy[0].count, week)}%), then between ${busy[1].label.replace(" to ", " and ")} (${share(busy[1].count, week)}%).`,
+      `Customers cancelled ${share(out.now.cancelled, sumOf(out.now))}% of paused transfers ${p.now}, compared with ${share(out.before.cancelled, sumOf(out.before))}% ${p.before}.`,
+      `${watch.length} receiving accounts have each been reported 3 or more times. They were involved in ${watch.reduce((sum, r) => sum + r.cases, 0)} flags in the last 7 days.`
+    ];
+    return `
+      <section class="panel" aria-labelledby="glance-title" data-read>
+        <h2 id="glance-title">Summary</h2>
+        <ul class="ins-glance">${lines.map(l => `<li>${icon("chart")}<span>${esc(l)}</span></li>`).join("")}</ul>
+      </section>`;
+  }
+
+  function formatMoney(n) {
+    return "$" + Number(n).toLocaleString("en-SG");
+  }
+
+  // "21 Oct to 3 Nov" (or, for weeks, "weeks starting 9 Sep to 28 Oct")
+  function spanText(p) {
+    const first = p.series.labels[0];
+    const last = p.series.labels[p.series.labels.length - 1];
+    return `${p.unit === "week" ? "weeks starting " : ""}${first.date} ${first.month} to ${last.date} ${last.month}`;
+  }
+
+  // The three ways to draw the same numbers. Whichever is chosen, every column still says the same
+  // thing in words (its aria-label), and the table underneath has the same numbers, so the chart is
+  // never the only way to read it.
+  const MODES = [
+    { key: "stacked", label: "Stacked", note: "Each bar is one {unit}, split by who raised the flag." },
+    { key: "side", label: "Side by side", note: "Each group is one {unit}, with one bar for each way a flag is raised." },
+    { key: "line", label: "Lines", note: "Each line is one way a flag is raised, with a point for every {unit}." }
+  ];
+
+  // The chart's heading area: the mode switch, then the chart itself (redrawn when the mode changes)
+  function chartPanelHtml(p) {
+    const v = view();
+    return `
+      <section class="panel" aria-labelledby="trend-title" data-read>
+        <h2 id="trend-title">Flagged activity over time</h2>
+        <div class="ins-modes-row">
+          <span id="ins-mode-label" class="ins-period-label">Chart style</span>
+          <div class="ins-modes" role="group" aria-labelledby="ins-mode-label">
+            ${MODES.map(m => `<button type="button" class="chip" data-mode="${m.key}" aria-pressed="${v.chartMode === m.key}">${m.label}</button>`).join("")}
+          </div>
+        </div>
+        <div id="ins-chart-area">${chartAreaHtml(p)}</div>
+      </section>`;
+  }
+
+  // "21 Oct to 3 Nov" (or, for weeks, "weeks starting 9 Sep to 28 Oct")
+  function spanText(p) {
+    const first = p.series.labels[0];
+    const last = p.series.labels[p.series.labels.length - 1];
+    return `${p.unit === "week" ? "weeks starting " : ""}${first.date} ${first.month} to ${last.date} ${last.month}`;
+  }
+
+  // What a screen reader hears for one column, and what a mouse hover shows
+  function columnText(p, i) {
+    const s = p.series;
+    const l = s.labels[i];
+    return `${l.day} ${l.date} ${l.month}: ${totalAt(s, i)} flags. ${STACK.map(k => s[k][i] + " " + q.sources[k].label.toLowerCase()).join(", ")}.`;
+  }
+
+  function chartAreaHtml(p) {
+    const mode = MODES.find(m => m.key === view().chartMode) || MODES[0];
+    const s = p.series;
+    const n = s.labels.length;
+    const last = n - 1;
+    const totals = s.labels.map((_, i) => totalAt(s, i));
+    // Stacked bars need room for the total, the others only for the biggest single number
+    const biggestOne = Math.max(...STACK.map(k => Math.max(...s[k])));
+    const top = mode.key === "stacked" ? Math.ceil(Math.max(...totals) / 15) * 15 : Math.ceil(biggestOne / 3) * 3;
+
+    // The columns (one per day or week). Stacked and side by side draw bars inside them. Lines use
+    // them as invisible, keyboard-friendly "hot spots" and draw the lines on top.
+    const cols = s.labels.map((l, i) => {
+      const text = esc(columnText(p, i));
+      let inner;
+      if (mode.key === "stacked") {
+        inner = `<span class="ins-total" aria-hidden="true">${totals[i]}</span>
+          <span class="ins-stack" role="img" tabindex="0" aria-label="${text}" title="${text}">
+            ${STACK.map(k => `<span class="seg seg--${k}" style="flex: ${s[k][i]} 1 0"></span>`).join("")}
+          </span>`;
+      } else if (mode.key === "side") {
+        inner = `<span class="ins-group" role="img" tabindex="0" aria-label="${text}" title="${text}">
+            ${STACK.map(k => `<span class="gbar seg--${k}" style="--h: ${(s[k][i] / top) * 100}%">${i === last ? `<span class="gval" aria-hidden="true">${s[k][i]}</span>` : ""}</span>`).join("")}
+          </span>`;
+      } else {
+        inner = `<span class="ins-hit" role="img" tabindex="0" aria-label="${text}" title="${text}"></span>`;
+      }
+      return `<li class="ins-col${i === last ? " is-now" : ""}" style="--h: ${(totals[i] / top) * 100}%">${inner}</li>`;
+    }).join("");
+
+    // Line mode: the lines are one SVG (stretched to fit), the round/diamond/triangle points are
+    // ordinary elements placed by percentage, so they never get squashed.
+    let overlay = "";
+    if (mode.key === "line") {
+      const x = i => ((i + 0.5) / n) * 100;
+      overlay = `
+        <svg class="ins-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          ${STACK.map(k => `<polyline class="ln ln--${k}" points="${s[k].map((v, i) => x(i).toFixed(2) + "," + (100 - (v / top) * 100).toFixed(2)).join(" ")}"></polyline>`).join("")}
+        </svg>
+        ${STACK.map(k => s[k].map((v, i) => `<span class="pt pt--${k}" aria-hidden="true" style="left: ${x(i)}%; bottom: ${(v / top) * 100}%"></span>`).join("")).join("")}
+        ${STACK.map(k => `<span class="pt-val" aria-hidden="true" style="left: ${x(last)}%; bottom: ${(s[k][last] / top) * 100}%">${s[k][last]}</span>`).join("")}`;
+    }
+
+    const legend = mode.key === "line"
+      ? STACK.map(k => `<li><span class="ins-key ins-key--${k}" aria-hidden="true"><span class="pt pt--${k}"></span></span>${q.sources[k].label}</li>`).join("")
+      : STACK.map(k => `<li><span class="swatch seg--${k}" aria-hidden="true"></span>${q.sources[k].label}</li>`).join("");
+
+    return `
+      <p class="muted">${p.span}, ${spanText(p)}. ${mode.note.replace("{unit}", p.unit)}</p>
+      <div class="ins-chart">
+        <div class="ins-scale" aria-hidden="true">
+          ${[1, 2 / 3, 1 / 3, 0].map(f => `<span style="--y: ${f}">${Math.round(top * f)}</span>`).join("")}
+        </div>
+        <div class="ins-plot">
+          <ol class="ins-cols${mode.key === "line" ? " ins-cols--line" : ""}">${cols}</ol>
+          ${overlay}
+        </div>
+        <span></span>
+        <ol class="ins-days" aria-hidden="true">
+          ${s.labels.map((l, i) => `<li${i === last ? ' class="is-now"' : ""}><span class="ins-wd">${l.day}</span><span>${l.date}<span class="ins-mo"> ${l.month}</span></span></li>`).join("")}
+        </ol>
+      </div>
+      <ul class="ins-legend">${legend}</ul>
+      <details class="chart-table">
+        <summary>Show as a table</summary>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th scope="col">${p.unit === "day" ? "Day" : "Week starting"}</th>${STACK.map(k => `<th scope="col"><span class="th-full">${q.sources[k].label}</span><span class="th-short">${SHORT[k]}</span></th>`).join("")}<th scope="col">Total</th></tr></thead>
+            <tbody>${s.labels.map((l, i) => `<tr><th scope="row">${esc(p.unit === "day" ? l.day + " " + l.date + " " + l.month : l.date + " " + l.month)}</th>${STACK.map(k => `<td>${s[k][i]}</td>`).join("")}<td>${totals[i]}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </details>`;
+  }
+
+  // A list of bars: a label, a bar, and the number. One shape used by three panels.
+  // "of" is what the bar is a share of; "mark" adds a word to one row (never colour alone).
+  function rowsHtml(rows, whole, markLabel) {
+    const most = Math.max(...rows.map(r => r.count));
+    return `<ul class="ins-rows">${rows.map(r => `<li>
+        <span class="ins-row-label">${esc(r.label)}${markLabel && r.count === most ? `<span class="ins-mark">${markLabel}</span>` : ""}${r.note ? `<small>${esc(r.note)}</small>` : ""}</span>
+        <span class="ins-track" aria-hidden="true"><span class="ins-fill" style="--w: ${(r.count / most) * 100}%"></span></span>
+        <span class="ins-row-n">${r.count} <small>(${share(r.count, whole)}%)</small></span>
+      </li>`).join("")}</ul>`;
+  }
+
+  function outcomesHtml(p) {
+    const o = I.outcomes[p.unit === "day" ? "daily" : "weekly"].now;
+    const total = sumOf(o);
+    return `
+      <section class="panel" aria-labelledby="out-title" data-read>
+        <h2 id="out-title">What happened to paused transfers</h2>
+        <p class="muted">Of ${total} transfers paused ${p.now}. Customers decide; the system does the rest.</p>
+        ${rowsHtml([
+          { label: "Cancelled by the customer", note: "They read the warnings and stopped", count: o.cancelled },
+          { label: "Released after the check", note: "The customer confirmed it was genuine", count: o.released },
+          { label: "Still paused", note: "The customer is finishing the check", count: o.paused },
+          { label: "Passed to investigators", note: "Done by the system, not by staff", count: o.investigators }
+        ], total)}
+      </section>`;
+  }
+
+  function timeOfDayHtml() {
+    const total = I.timeOfDay.reduce((sum, t) => sum + t.count, 0);
+    return `
+      <section class="panel" aria-labelledby="tod-title" data-read>
+        <h2 id="tod-title">When flags happen</h2>
+        <p class="muted">All ${total} flags in the last 7 days, by time of day.</p>
+        ${rowsHtml(I.timeOfDay, total, "Busiest")}
+      </section>`;
+  }
+
+  function signsHtml() {
+    return `
+      <section class="panel" aria-labelledby="sign-title" data-read>
+        <h2 id="sign-title">Warning signs behind paused transfers</h2>
+        <p class="muted">Out of ${I.pausedTotal} paused transfers in the last 7 days. One transfer can show several signs.</p>
+        ${rowsHtml(I.signs, I.pausedTotal)}
+      </section>`;
+  }
+
+  function receiversHtml() {
+    return `
+      <section class="panel" aria-labelledby="rcv-title" data-read>
+        <h2 id="rcv-title">Receivers reported most</h2>
+        <p class="muted">Accounts that other people keep reporting, in the last 7 days.</p>
+        <ul class="ins-receivers">
+          ${I.receivers.map(r => `<li>
+              <span class="rc-top"><strong>${esc(r.name)}</strong><span class="rc-acct">${esc(r.acct)}</span></span>
+              <span class="rc-badge"><span class="badge ${r.reports >= 3 ? "badge--likely" : "badge--uncertain"}">${icon("warning")}Reported ${r.reports} times</span></span>
+              <span class="rc-meta">${r.cases} flags. ${formatMoney(r.attempted)} attempted.</span>
+            </li>`).join("")}
+        </ul>
+        <p class="honesty">${icon("lock")}<span>Receiver names are masked and only the last 3 digits of each account are kept.</span></p>
+      </section>`;
+  }
+
+  // Everything below the day/week switch. Redrawn when the switch is pressed.
+  function insightsBodyHtml() {
+    const p = PERIODS[view().period] || PERIODS.daily;
+    return `
+      ${glanceHtml(p)}
+      ${insightKpisHtml(p)}
+      ${chartPanelHtml(p)}
+      <div class="ins-pair">${outcomesHtml(p)}${timeOfDayHtml()}</div>
+      <div class="ins-pair">${signsHtml()}${receiversHtml()}</div>`;
+  }
+
+  function insightsHtml() {
+    const v = view();
+    return `
+      <div class="ins-toolbar">
+        <span id="ins-period-label" class="ins-period-label">Show by</span>
+        <div class="ins-period" role="group" aria-labelledby="ins-period-label">
+          ${Object.keys(PERIODS).map(key => `<button type="button" class="chip" data-period="${key}" aria-pressed="${v.period === key}">${PERIODS[key].label}</button>`).join("")}
+        </div>
+        <p class="visually-hidden" id="ins-status" role="status"></p>
+      </div>
+      <div id="ins-body">${insightsBodyHtml()}</div>
+      <p class="honesty">${icon("question")}<span>Totals only: this page never shows a customer's name or details.</span></p>`;
+  }
+
+  // ---------- Screen 1b: Cases (the second tab) ----------
+
 
   // The explainer: how does activity get here? (Cases are never created by staff.)
   function howRaisedHtml() {
@@ -362,7 +644,7 @@
         <ul class="how-list">
           ${sourceKeys().map(key => `<li>${sourceHtml(key)}<span>${esc(q.sources[key].how)}</span></li>`).join("")}
         </ul>
-        <p class="how-note">${icon("lock")}<span>Staff only view this page, and nothing here needs an action. The customer stays in control: after the check they choose to continue or cancel.</span></p>
+        <p class="how-note">${icon("lock")}<span>Customers stay in control: after the check they choose to continue or cancel. The system records the rest.</span></p>
       </details>`;
   }
 
@@ -428,39 +710,88 @@
       </table>`;
   }
 
-  function queueScreenHtml() {
+  // The two mini tabs under the heading. They are ordinary links (#staff-queue and
+  // #staff-queue/cases), so the Back button, bookmarks and keyboard all work without extra code.
+  function tabsHtml(onCases) {
+    return `
+      <nav class="subtabs" aria-label="Flagged activity views">
+        <a href="#staff-queue"${onCases ? "" : ' aria-current="page"'}>${icon("chart")}Insights</a>
+        <a href="#staff-queue/cases"${onCases ? ' aria-current="page"' : ""}>${icon("list")}Cases <span class="subtab-n">${allCases().length}</span></a>
+      </nav>`;
+  }
+
+  function casesHtml() {
     const list = visibleCases();
-    return staffPageHtml("staff-queue", `
-      <div class="staff-title">
-        <p class="eyebrow">Fraud operations</p>
-        <h1 tabindex="-1">Flagged activity</h1>
-        <p class="meta">Tuesday 3 Nov 2026. View only. Made-up data.</p>
-      </div>
-
-      <ul class="kpis" id="qk" data-read>${kpisHtml()}</ul>
-
+    return `
       ${howRaisedHtml()}
 
       <section class="panel" aria-labelledby="qlist-title">
-        <h2 id="qlist-title">Everything the system flagged</h2>
+        <h2 id="qlist-title">Individual cases</h2>
         ${controlsHtml()}
         <p class="qt-count" id="qt-count" role="status">${countText(list.length)}</p>
         <div class="table-wrap" id="qt-table" data-read>${tableHtml(list)}</div>
       </section>
 
-      <p class="honesty">${icon("question")}<span>Risk scores are warning signs, not proof of a scam. Plenty of risky-looking transfers turn out to be genuine, which is why the customer, not the system, makes the final choice.</span></p>`);
+      <p class="honesty">${icon("question")}<span>Risk scores are warning signs, not proof of a scam. The customer makes the final choice after the check.</span></p>`;
   }
 
-  // Wires up the search and menus. Only the table and numbers are redrawn when something
-  // changes, so the search box keeps keyboard focus while you type.
-  function queueAfterRender() {
+  // param is whatever follows the slash: "cases" shows the Cases tab, anything else the Insights tab
+  function queueScreenHtml(param) {
+    const onCases = param === "cases";
+    return staffPageHtml("staff-queue", `
+      <div class="staff-title">
+        <p class="eyebrow">Fraud operations</p>
+        <h1 tabindex="-1">Flagged activity</h1>
+        <p class="meta">Tuesday 3 Nov 2026, updated 16:50. View only.</p>
+      </div>
+
+      ${tabsHtml(onCases)}
+
+      ${onCases ? casesHtml() : insightsHtml()}`);
+  }
+
+  // Wires up whichever tab is showing
+  function queueAfterRender(param) {
+    if (param === "cases") casesAfterRender();
+    else insightsAfterRender();
+  }
+
+  // Insights tab: the Daily / Weekly switch. Only the part under the switch is redrawn, so the
+  // buttons keep keyboard focus.
+  function insightsAfterRender() {
+    const v = view();
+    const buttons = document.querySelectorAll(".ins-period [data-period]");
+    document.querySelector(".ins-period").addEventListener("click", event => {
+      const btn = event.target.closest("[data-period]");
+      if (!btn) return;
+      v.period = btn.dataset.period;
+      buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.period === v.period)));
+      document.getElementById("ins-body").innerHTML = insightsBodyHtml();
+      document.getElementById("ins-status").textContent = `Now showing ${PERIODS[v.period].label.toLowerCase()} totals.`;
+    });
+
+    // The chart style buttons live inside the part that gets redrawn, so listen on the part that
+    // stays (#ins-body). Only the chart is redrawn, so keyboard focus stays on the button.
+    document.getElementById("ins-body").addEventListener("click", event => {
+      const btn = event.target.closest("[data-mode]");
+      if (!btn) return;
+      v.chartMode = btn.dataset.mode;
+      document.querySelectorAll("#ins-body [data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === v.chartMode)));
+      document.getElementById("ins-chart-area").innerHTML = chartAreaHtml(PERIODS[v.period] || PERIODS.daily);
+      document.getElementById("ins-status").textContent = `Chart style: ${MODES.find(m => m.key === v.chartMode).label.toLowerCase()}.`;
+    });
+  }
+
+  // Cases tab: search and menus. Only the table is redrawn when something changes, so the
+  // search box keeps keyboard focus while you type.
+  function casesAfterRender() {
     const v = view();
 
     function refresh() {
       const list = visibleCases();
       document.getElementById("qt-table").innerHTML = tableHtml(list);
       document.getElementById("qt-count").textContent = countText(list.length);
-      document.getElementById("qk").innerHTML = kpisHtml();
+      document.querySelector(".subtab-n").textContent = allCases().length;
     }
 
     document.getElementById("qf-search").addEventListener("input", event => { v.search = event.target.value; refresh(); });
@@ -545,7 +876,7 @@
       <section class="panel" aria-labelledby="ev-title" data-read>
         <h2 id="ev-title">Evidence on file</h2>
         ${c.evidence.length ? `<ul class="evidence">${c.evidence.map(e => `<li>${icon("document")}<span><strong>${esc(e.label)}</strong><br>${esc(e.note)}</span></li>`).join("")}</ul>` : `<p class="muted">Nothing attached yet.</p>`}
-        <p class="honesty">${icon("lock")}<span>Made-up samples only. Only what a customer chooses to share is kept, and no real voiceprints or face data are ever stored.</span></p>
+        <p class="honesty">${icon("lock")}<span>Only what a customer chooses to share is kept. No real voiceprints or face data are ever stored.</span></p>
       </section>`;
   }
 
@@ -565,7 +896,7 @@
         <h2 id="stand-title">Where this stands</h2>
         <p class="standing-outcome">${outcomeHtml(c.outcome)}</p>
         <p>${esc(OUTCOMES[c.outcome] || "")}</p>
-        <p class="honesty">${icon("lock")}<span>View only. Nothing on this page needs a staff action.</span></p>
+        <p class="honesty">${icon("lock")}<span>The customer and the system handle every step.</span></p>
       </section>`;
   }
 
@@ -574,10 +905,10 @@
     // Only shown if the number matches a real case, so nothing typed into the address bar
     // ends up on the page.
     if (!c) {
-      return staffPageHtml("staff-queue", stubHtml("Case not found", "There is no case with that number.", "staff-queue", "Back to flagged activity"));
+      return staffPageHtml("staff-queue", stubHtml("Case not found", "There is no case with that number.", "staff-queue/cases", "Back to cases"));
     }
     return staffPageHtml("staff-queue", `
-      <a class="btn btn-secondary btn-small" href="#staff-queue">Back to flagged activity</a>
+      <a class="btn btn-secondary btn-small" href="#staff-queue/cases">Back to cases</a>
 
       <div class="staff-title case-title">
         <p class="eyebrow">Flagged activity</p>
