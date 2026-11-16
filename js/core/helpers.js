@@ -77,7 +77,7 @@ function slug(text) {
 function brandHtml(href, tag = "") {
   return `<a class="brand" href="${href}">
       <span class="brand-mark">${icon("shield")}</span>
-      <span class="brand-name">Verify the Caller</span>
+      <span class="brand-name">Pause & Prove</span>
       ${tag ? `<span class="brand-tag">${tag}</span>` : ""}
     </a>`;
 }
