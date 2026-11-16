@@ -143,9 +143,10 @@ h1:focus, main:focus { outline: none; }
 
 /* ---------- Text size buttons ---------- */
 
-.text-size { display: inline-flex; align-items: center; gap: .25rem; }
+/* The language buttons (i18n.js) share this look: same 48px tap targets and "pressed" style */
+.text-size, .lang-switch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
 .text-size-label { margin-right: .25rem; color: var(--muted); font-size: 1rem; }
-.text-size button {
+.text-size button, .lang-switch button {
   min-width: 48px; min-height: 48px; padding: 0 .5rem; cursor: pointer; line-height: 1;
   background: var(--surface); color: var(--text); font-weight: 700;
   border: 2px solid var(--field-border); border-radius: var(--radius);
@@ -153,7 +154,8 @@ h1:focus, main:focus { outline: none; }
 .text-size [data-size="normal"] { font-size: 1rem; }
 .text-size [data-size="large"] { font-size: 1.125rem; }
 .text-size [data-size="larger"] { font-size: 1.3rem; }
-.text-size button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.text-size button[aria-pressed="true"], .lang-switch button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.lang-switch button { font-size: 1rem; padding: 0 .75rem; }   /* words, not "A", so a little wider */
 
 /* ---------- App header (customer and staff) ---------- */
 

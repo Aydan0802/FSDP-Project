@@ -196,3 +196,22 @@ test("works in a browser the same way (files loaded as plain scripts)", () => {
   const fromBrowser = vm.runInContext(`TextDetector.checkMessage(${JSON.stringify(text)})`, sandbox);
   assert.deepEqual(JSON.parse(JSON.stringify(fromBrowser)), JSON.parse(JSON.stringify(checkMessage(text))));
 });
+
+test("options.lang writes the words in the customer's language, without changing the result", () => {
+  const text = "Your card has been suspended. Tap here to verify your details: card-verify.example";
+  const plain = checkMessage(text);
+  for (const lang of ["zh", "ms"]) {
+    const r = checkMessage(text, { lang });
+    // Same detection: risk, kind, sureness, points, phrases and the message's own language
+    assert.equal(r.risk, plain.risk);
+    assert.equal(r.type, plain.type);
+    assert.equal(r.confidence, plain.confidence);
+    assert.equal(r.score, plain.score);
+    assert.equal(r.lang, "en");
+    assert.deepEqual(r.flags.map(f => f.phrase), plain.flags.map(f => f.phrase));
+    // Different words: the summary is in the chosen language
+    assert.notEqual(r.summary, plain.summary);
+  }
+  // A language we don't have falls back to the message's own language
+  assert.equal(checkMessage(text, { lang: "fr" }).summary, plain.summary);
+});

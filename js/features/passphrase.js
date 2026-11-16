@@ -15,6 +15,9 @@
 (function () {
   const data = PASSPHRASE_DATA;
   const esc = escapeHtml;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  // Note: "who" is kept as a translation key (the <option> value), so a saved passphrase's
+  // "who" is shown in whatever language the customer picks later.
 
   function myState() {
     if (!appState.passphrase) appState.passphrase = { list: data.saved.map(p => ({ ...p })), shown: -1 };
@@ -26,9 +29,9 @@
     return state.list.map((p, i) => {
       const shown = i === state.shown;
       return `<li class="pp-saved">
-          <span><strong>${esc(p.who)}</strong><br>
-            <span class="pp-word">${shown ? esc(p.word) : `<span aria-hidden="true">••••••</span><span class="visually-hidden">hidden</span>`}</span></span>
-          <button type="button" class="chip" data-show="${i}" aria-pressed="${shown}">${shown ? "Hide" : "Show"}<span class="visually-hidden"> the passphrase for ${esc(p.who)}</span></button>
+          <span><strong>${esc(t(p.who))}</strong><br>
+            <span class="pp-word">${shown ? esc(p.word) : `<span aria-hidden="true">••••••</span><span class="visually-hidden">${t("pp.hidden")}</span>`}</span></span>
+          <button type="button" class="chip" data-show="${i}" aria-pressed="${shown}">${shown ? t("pp.hide") : t("pp.show")}<span class="visually-hidden">${t("pp.forWho", { who: esc(t(p.who)) })}</span></button>
         </li>`;
     }).join("");
   }
@@ -37,29 +40,29 @@
     return customerPageHtml("", `<div class="narrow pp-screen">
       ${homeLinkHtml()}
       <section class="panel" data-read>
-        <h1 tabindex="-1">Family passphrase</h1>
-        <p class="lead">Agree on a secret word with your family. If someone calls saying they are your family and need money, ask for the word. An AI copy of their voice will not know it.</p>
+        <h1 tabindex="-1">${t("pp.title")}</h1>
+        <p class="lead">${t("pp.lead")}</p>
       </section>
 
       <section class="panel" aria-labelledby="pp-list-title">
-        <h2 id="pp-list-title">Your passphrases</h2>
+        <h2 id="pp-list-title">${t("pp.listTitle")}</h2>
         <ul id="pp-list">${listHtml()}</ul>
       </section>
 
       <form class="panel" id="pp-form" novalidate aria-labelledby="pp-add-title">
-        <h2 id="pp-add-title">Add a new one</h2>
+        <h2 id="pp-add-title">${t("pp.addTitle")}</h2>
         <div class="field">
-          <label for="pp-who">Who is it for?</label>
-          <select id="pp-who">${data.who.map(w => `<option>${w}</option>`).join("")}</select>
+          <label for="pp-who">${t("pp.whoLabel")}</label>
+          <select id="pp-who">${data.who.map(w => `<option value="${w}">${t(w)}</option>`).join("")}</select>
         </div>
         <div class="field">
-          <label for="pp-word">Secret word</label>
+          <label for="pp-word">${t("pp.wordLabel")}</label>
           <input type="text" id="pp-word" autocomplete="off" spellcheck="false" aria-describedby="pp-hint pp-error"
-            placeholder="For example: the name of your first pet">
+            placeholder="${t("pp.placeholder")}">
         </div>
-        <p class="meta" id="pp-hint">Pick something only your family knows. Never post it online.</p>
+        <p class="meta" id="pp-hint">${t("pp.hint")}</p>
         <p class="field-error" id="pp-error" role="alert"></p>
-        <div class="stack"><button type="submit" class="btn btn-primary">Save passphrase</button></div>
+        <div class="stack"><button type="submit" class="btn btn-primary">${t("pp.save")}</button></div>
       </form>
     </div>`);
   }
@@ -85,7 +88,7 @@
       event.preventDefault();
       const text = word.value.trim();
       if (text.length < data.minLength) {
-        error.textContent = `Please type a word with at least ${data.minLength} letters.`;
+        error.textContent = t("pp.err.short", { min: data.minLength });
         word.setAttribute("aria-invalid", "true");
         word.focus();
         return;
@@ -95,7 +98,7 @@
       word.removeAttribute("aria-invalid");
       error.textContent = "";
       list.innerHTML = listHtml();
-      showToast("Passphrase saved");
+      showToast(t("pp.saved"));
     });
   }
 

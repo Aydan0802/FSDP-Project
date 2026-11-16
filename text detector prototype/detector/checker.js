@@ -3,7 +3,8 @@
 // The message checker: looks for red flags in a message and returns a result for the
 // "Check a message" screen.  Owner: Aydan.
 //
-//   checkMessage(text) -> { risk, type, confidence, summary, flags, lang, score }
+//   checkMessage(text, { lang }) -> { risk, type, confidence, summary, flags, lang, score }
+//     (lang is optional: the language to write the summary and reasons in)
 //     risk        "low" | "medium" | "high"
 //     type        "impersonation" | "phishing" | "parcel" | "job" | "investment" | "love" | "none"
 //     confidence  "low" | "medium" | "high"   (how sure we are)
@@ -131,10 +132,14 @@
   }
 
   // ---------- Steps 3 and 4: points, risk, kind of scam, how sure ----------
-  function checkMessage(input) {
+  // options.lang ("en" | "zh" | "ms"): the language to write the summary and reasons in, for
+  // example the language the customer picked on the website. Without it, they are written in the
+  // message's own language. It never changes what is detected, only the words.
+  function checkMessage(input, options = {}) {
     const text = typeof input === "string" ? input : String(input == null ? "" : input);
     const lang = detectLanguage(text);
-    const words = WORDS[lang] || WORDS.en;
+    const outLang = WORDS[options.lang] ? options.lang : lang;
+    const words = WORDS[outLang] || WORDS.en;
     const say = key => (words[key] !== undefined ? words[key] : WORDS.en[key]);
 
     if (!text.trim()) {
@@ -190,7 +195,7 @@
     // "rule" is extra: the screen only needs phrase and reason; the evaluation counts rules
     const flags = kept.slice(0, MAX_FLAGS).map(k => ({
       phrase: k.phrase,
-      reason: k.rule.reason[lang] || k.rule.reason.en,
+      reason: k.rule.reason[outLang] || k.rule.reason.en,
       rule: k.rule.id
     }));
 

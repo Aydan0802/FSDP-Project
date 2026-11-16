@@ -11,6 +11,7 @@
 
 (function () {
   const data = LEARN_SIGNS_DATA;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
 
   function myState() {
     if (!appState.learnSigns) appState.learnSigns = { picked: "" };
@@ -23,13 +24,13 @@
     const right = picked === data.quiz.answer;
     return `<div class="verdict ${right ? "v-good" : "v-bad"}">
         ${icon(right ? "check" : "cross")}
-        <div><p><strong>${right ? "Correct" : "Not quite"}</strong></p><p>${right ? data.quiz.right : data.quiz.wrong}</p></div>
+        <div><p><strong>${right ? t("ls.correct") : t("ls.notQuite")}</strong></p><p>${right ? t(data.quiz.right) : t(data.quiz.wrong)}</p></div>
       </div>`;
   }
 
   function optionsHtml(picked) {
     return data.quiz.options.map(o =>
-      `<button type="button" class="btn btn-secondary ls-option" data-option="${o.id}" aria-pressed="${picked === o.id}">${o.text}</button>`).join("");
+      `<button type="button" class="btn btn-secondary ls-option" data-option="${o.id}" aria-pressed="${picked === o.id}">${t(o.text)}</button>`).join("");
   }
 
   function screenHtml() {
@@ -37,23 +38,23 @@
     return customerPageHtml("", `<div class="narrow ls-screen">
       ${homeLinkHtml()}
       <section data-read>
-        <h1 tabindex="-1">4 signs of a scam call</h1>
-        <p class="lead">If you notice even one of these, hang up.</p>
+        <h1 tabindex="-1">${t("ls.title")}</h1>
+        <p class="lead">${t("ls.lead")}</p>
         <ul class="ls-signs">
-          ${data.signs.map(s => `<li>${icon(s.icon)}<span><strong>${s.title}</strong>${s.text}</span></li>`).join("")}
+          ${data.signs.map(s => `<li>${icon(s.icon)}<span><strong>${t(s.title)}</strong>${t(s.text)}</span></li>`).join("")}
         </ul>
       </section>
 
       <section class="panel ls-quiz" aria-labelledby="ls-quiz-title" data-read>
-        <h2 id="ls-quiz-title">Try one</h2>
-        <p id="ls-question">${data.quiz.question}</p>
+        <h2 id="ls-quiz-title">${t("ls.tryOne")}</h2>
+        <p id="ls-question">${t(data.quiz.question)}</p>
         <div class="stack" role="group" aria-labelledby="ls-question" id="ls-options">${optionsHtml(picked)}</div>
         <div id="ls-feedback" aria-live="polite">${feedbackHtml(picked)}</div>
       </section>
 
       <aside class="ls-tip" aria-labelledby="ls-tip-title" data-read>
-        <h2 id="ls-tip-title">Good to know</h2>
-        <p>${data.tip}</p>
+        <h2 id="ls-tip-title">${t("ls.goodToKnow")}</h2>
+        <p>${t(data.tip)}</p>
       </aside>
     </div>`);
   }
