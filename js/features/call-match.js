@@ -14,6 +14,7 @@
 
 (function () {
   const esc = escapeHtml;
+  addTranslations(CALL_MATCH_DATA.text);   // this screen's English, Chinese and Malay words
 
   function freshState() {
     return { phase: "input", number: "", error: "", result: null };
@@ -32,49 +33,51 @@
   function inputHtml(state) {
     return `
       <section class="panel" data-read>
-        <h1 tabindex="-1">Is the bank really calling?</h1>
-        <p class="lead">Type the number that called you. We check it against the calls OCBC really made to you.</p>
+        <h1 tabindex="-1">${t("cm.title")}</h1>
+        <p class="lead">${t("cm.lead")}</p>
       </section>
       <form class="panel" id="cm-form" novalidate>
         <div class="field">
-          <label for="cm-number">Number that called you</label>
+          <label for="cm-number">${t("cm.numberLabel")}</label>
           <input type="tel" id="cm-number" inputmode="tel" autocomplete="off" value="${esc(state.number)}"
-            placeholder="For example: 6363 3333" aria-describedby="cm-error"${state.error ? ' aria-invalid="true"' : ""}>
+            placeholder="${t("cm.placeholder")}" aria-describedby="cm-error"${state.error ? ' aria-invalid="true"' : ""}>
         </div>
         <p class="field-error" id="cm-error" role="alert">${esc(state.error)}</p>
-        <div class="chips"><span class="chips-label">Try:</span>
+        <div class="chips"><span class="chips-label">${t("cm.try")}</span>
           ${CALL_MATCH_DATA.sampleNumbers.map(n => `<button type="button" class="chip" data-number="${n}">${n}</button>`).join("")}
         </div>
-        <div class="stack"><button type="submit" class="btn btn-primary">Check this number</button></div>
+        <div class="stack"><button type="submit" class="btn btn-primary">${t("cm.check")}</button></div>
       </form>`;
   }
 
+  // The call's team, time and about come from Jose's matchCall() data in English; their
+  // translations are looked up by the call's id (js/data/call-match-logic.js)
   function matchedHtml(call) {
     return `
       <section data-read>
-        <div class="verdict v-good">${icon("check")}<div><p><strong>OCBC called you</strong></p><h1 tabindex="-1">Yes, this was a real OCBC call</h1></div></div>
+        <div class="verdict v-good">${icon("check")}<div><p><strong>${t("cm.yes.tag")}</strong></p><h1 tabindex="-1">${t("cm.yes.title")}</h1></div></div>
         <div class="panel">
-          <div class="summary-row"><span>Officer</span><span>${esc(call.officer)}</span></div>
-          <div class="summary-row"><span>Team</span><span>${esc(call.team)}</span></div>
-          <div class="summary-row"><span>When</span><span>${esc(call.time)}</span></div>
-          <div class="summary-row"><span>About</span><span>${esc(call.about)}</span></div>
-          <p class="cm-warning">Even so, OCBC will never ask for your OTP or ask you to move money. If they do, hang up.</p>
+          <div class="summary-row"><span>${t("cm.officer")}</span><span>${esc(call.officer)}</span></div>
+          <div class="summary-row"><span>${t("cm.team")}</span><span>${esc(t(`cml.call.${call.id}.team`))}</span></div>
+          <div class="summary-row"><span>${t("cm.when")}</span><span>${esc(t(`cml.call.${call.id}.time`))}</span></div>
+          <div class="summary-row"><span>${t("cm.about")}</span><span>${esc(t(`cml.call.${call.id}.about`))}</span></div>
+          <p class="cm-warning">${t("cm.yes.warning")}</p>
         </div>
       </section>
-      <div class="stack"><button type="button" class="btn btn-secondary" data-cm="again">Check another number</button></div>`;
+      <div class="stack"><button type="button" class="btn btn-secondary" data-cm="again">${t("cm.again")}</button></div>`;
   }
 
   function noMatchHtml() {
     return `
       <section data-read>
-        <div class="verdict v-bad">${icon("warning")}<div><p><strong>No record</strong></p><h1 tabindex="-1">OCBC did not call you from this number</h1></div></div>
-        <div class="panel"><p>Scammers can make any number show on your phone. Hang up and call OCBC yourself.</p></div>
+        <div class="verdict v-bad">${icon("warning")}<div><p><strong>${t("cm.no.tag")}</strong></p><h1 tabindex="-1">${t("cm.no.title")}</h1></div></div>
+        <div class="panel"><p>${t("cm.no.text")}</p></div>
       </section>
       <div class="stack">
-        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
-        <a class="btn btn-secondary" href="#caller-check">Check if the caller is even a real person</a>
-        <a class="btn btn-secondary" href="#report/call">Report this number</a>
-        <button type="button" class="btn btn-link" data-cm="again">Check another number</button>
+        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
+        <a class="btn btn-secondary" href="#caller-check">${t("cm.no.callerCheck")}</a>
+        <a class="btn btn-secondary" href="#report/call">${t("cm.no.report")}</a>
+        <button type="button" class="btn btn-link" data-cm="again">${t("cm.again")}</button>
       </div>`;
   }
 
@@ -109,7 +112,7 @@
     form.addEventListener("submit", event => {
       event.preventDefault();
       if (box.value.replace(/\D/g, "").length < 8) {
-        state.error = "Please type the 8-digit number that called you.";
+        state.error = t("cm.err.number");
         box.setAttribute("aria-invalid", "true");
         document.getElementById("cm-error").textContent = state.error;
         box.focus();

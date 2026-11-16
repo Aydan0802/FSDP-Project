@@ -20,6 +20,10 @@
 // private to it and can't clash with a teammate's file.
 
 (function () {
+  // This screen's words in English, Chinese and Malay. DATA below holds their keys (e.g.
+  // "pv.q.phone"), and t() turns a key into words in the customer's language (js/core/i18n.js).
+  addTranslations(PAUSE_VERIFY_DATA.text);
+
   // ---------- Made-up data ----------
 
   // Everything the screen shows that is not layout: how long the break lasts, the example
@@ -34,8 +38,8 @@
     sampleTransfer: {
       amount: "S$8,000",
       reasons: [
-        "You have never sent money to this person before.",
-        "S$8,000 is much more than you usually send."
+        "pv.sample.newPerson",
+        "pv.sample.bigAmount"
       ]
     },
 
@@ -47,58 +51,58 @@
       {
         id: "phone",
         type: "choice",
-        text: "Is someone on the phone with you right now?",
+        text: "pv.q.phone",
         riskyAnswer: "yes",
-        playback: "Someone is on the phone with you right now."
+        playback: "pv.q.phone.playback"
       },
       {
         id: "heard",
         type: "lines",
-        text: "Did anyone say any of these to you?",
-        hint: "Tap every one you heard, by phone or by message. If you heard none of them, just press Next.",
+        text: "pv.q.heard",
+        hint: "pv.q.heard.hint",
         lines: [
-          { id: "danger", text: "Your account is in danger" },
-          { id: "safe-account", text: "Move your money to a safe account" },
-          { id: "secret", text: "Don't tell anyone, not even the bank" },
-          { id: "now", text: "You must do it now" }
+          { id: "danger", text: "pv.line.danger" },
+          { id: "safe-account", text: "pv.line.safeAccount" },
+          { id: "secret", text: "pv.line.secret" },
+          { id: "now", text: "pv.line.now" }
         ]
       },
       {
         id: "met",
         type: "choice",
-        text: "Have you met the person you are sending money to, face to face?",
+        text: "pv.q.met",
         riskyAnswer: "no",
-        playback: "You have never met this person face to face."
+        playback: "pv.q.met.playback"
       }
     ],
 
     // The Yes / No / Not sure buttons for "choice" questions
     choices: [
-      { value: "yes", label: "Yes" },
-      { value: "no", label: "No" },
-      { value: "unsure", label: "Not sure" }
+      { value: "yes", label: "pv.choice.yes" },
+      { value: "no", label: "pv.choice.no" },
+      { value: "unsure", label: "pv.choice.unsure" }
     ],
 
     // The three results. Which one is shown depends on how many warning signs the answers gave:
     // 2 or more is "scam", exactly 1 is "careful", none is "clear".
     outcomes: {
       scam: {
-        label: "Looks like a scam",
+        label: "pv.outcome.scam.label",
         icon: "warning",
-        title: "This looks like a scam",
-        text: "These are the biggest signs of a scam. A real bank officer will never ask you to keep a secret or to move money to a \"safe account\"."
+        title: "pv.outcome.scam.title",
+        text: "pv.outcome.scam.text"
       },
       careful: {
-        label: "Be careful",
+        label: "pv.outcome.careful.label",
         icon: "question",
-        title: "Please be careful",
-        text: "This is one sign of a scam. Check with someone you trust before you send any money."
+        title: "pv.outcome.careful.title",
+        text: "pv.outcome.careful.text"
       },
       clear: {
-        label: "No warning signs",
+        label: "pv.outcome.clear.label",
         icon: "check",
-        title: "We did not find any warning signs",
-        text: "Your answers did not show any signs of a scam. If anything still feels wrong, it is okay to cancel."
+        title: "pv.outcome.clear.title",
+        text: "pv.outcome.clear.text"
       }
     }
   };
@@ -130,12 +134,12 @@
     const signs = [];
     DATA.questions.forEach(question => {
       if (question.type === "choice" && state.answers[question.id] === question.riskyAnswer) {
-        signs.push(question.playback);
+        signs.push(t(question.playback));
       }
       if (question.type === "lines") {
         question.lines
           .filter(line => state.heard.includes(line.id))
-          .forEach(line => signs.push(`Someone told you: "${line.text}".`));
+          .forEach(line => signs.push(t("pv.toldYou", { line: t(line.text) })));
       }
     });
     return signs;
@@ -177,13 +181,13 @@
     const small = appState.pauseVerify.step > 0 ? " pv-hero--small" : "";
     return `
       <section class="pv-hero${small}" data-read>
-        <p class="pv-pill">Transfer paused</p>
-        <h1 tabindex="-1">Wait ah, let's take a kopi break</h1>
+        <p class="pv-pill">${t("pv.pill")}</p>
+        <h1 tabindex="-1">${t("pv.title")}</h1>
         ${cupHtml()}
         <p class="pv-time" id="pv-time" role="timer">${timeText(secondsLeft())}</p>
-        <p class="pv-time-label" id="pv-time-label">until your kopi break ends and you can decide</p>
+        <p class="pv-time-label" id="pv-time-label">${t("pv.timeLabel")}</p>
         <div class="pv-bar" aria-hidden="true"><span id="pv-bar-fill"></span></div>
-        <p class="pv-safe">${icon("lock")}<span>Your money is safe and still in your account.</span></p>
+        <p class="pv-safe">${icon("lock")}<span>${t("pv.safe")}</span></p>
       </section>
       <div class="pv-tiles" aria-hidden="true"></div>`;
   }
@@ -191,7 +195,7 @@
   // The red note under every question: scammers coach people to lie to the bank
   function coachHtml() {
     return `<aside class="pv-coach">${icon("warning")}
-        <p>If someone told you what to answer here, that is a scam. A real bank officer will never do that.</p>
+        <p>${t("pv.coach")}</p>
       </aside>`;
   }
 
@@ -199,12 +203,17 @@
   // (appState.riskScorer.lastResult, a Medium or High result), its real amount and reasons are
   // used. Otherwise (opened straight from the address bar) the made-up DATA.sampleTransfer.
   // (Connected on frontend-update.)
+  // The reasons come back as words in the customer's language: the made-up ones are keys, and
+  // the risk scorer's reasons (English) are looked up by signal id, the same way its own screen does.
   function stoppedTransfer() {
     const last = appState.riskScorer && appState.riskScorer.lastResult;
     const sample = last && RISK_SCORER_DATA.samples.find(s => s.id === last.sampleId);
-    if (!sample || last.band === "low" || !last.reasons.length) return DATA.sampleTransfer;
+    if (!sample || last.band === "low" || !last.reasons.length) {
+      return { amount: DATA.sampleTransfer.amount, reasons: DATA.sampleTransfer.reasons.map(key => t(key)) };
+    }
     const amount = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 }).format(sample.transfer.amount);
-    return { amount: `S$${amount}`, reasons: last.reasons };
+    const reasons = last.signals.slice(0, last.reasons.length).map(s => t(`rs.signal.${s.id}.reason`));
+    return { amount: `S$${amount}`, reasons };
   }
 
   // Step 0: why the transfer was stopped
@@ -212,14 +221,14 @@
     const transfer = stoppedTransfer();
     return `
       <section class="pv-card" data-read>
-        <h2 tabindex="-1" id="pv-step-title">Why we stopped your ${transfer.amount} transfer</h2>
+        <h2 tabindex="-1" id="pv-step-title">${t("pv.why", { amount: transfer.amount })}</h2>
         <ul class="pv-reasons">
           ${transfer.reasons.map(reason => `<li>${icon("warning")}<span>${escapeHtml(reason)}</span></li>`).join("")}
         </ul>
-        <p>We will ask you ${DATA.questions.length} quick questions while you wait.</p>
+        <p>${t("pv.askCount", { count: DATA.questions.length })}</p>
         <div class="pv-actions">
-          <button type="button" class="btn btn-primary" data-pv="start">Okay, ask me ${icon("arrow")}</button>
-          <button type="button" class="btn btn-link" data-pv="cancel">Cancel this transfer</button>
+          <button type="button" class="btn btn-primary" data-pv="start">${t("pv.okayAsk")} ${icon("arrow")}</button>
+          <button type="button" class="btn btn-link" data-pv="cancel">${t("pv.cancel")}</button>
         </div>
       </section>`;
   }
@@ -229,21 +238,21 @@
     const picked = appState.pauseVerify.answers[question.id];
     return `<div class="pv-answers">
         ${DATA.choices.map(choice =>
-          `<button type="button" class="btn btn-secondary" data-pv="answer" data-value="${choice.value}" aria-pressed="${choice.value === picked}">${choice.label}</button>`).join("")}
+          `<button type="button" class="btn btn-secondary" data-pv="answer" data-value="${choice.value}" aria-pressed="${choice.value === picked}">${t(choice.label)}</button>`).join("")}
       </div>`;
   }
 
   // The kopitiam menu board: tap every line you heard. aria-pressed says which are ticked.
   function linesHtml(question) {
     const heard = appState.pauseVerify.heard;
-    return `<p class="pv-hint">${question.hint}</p>
+    return `<p class="pv-hint">${t(question.hint)}</p>
       <div class="pv-lines">
         ${question.lines.map(line =>
           `<button type="button" class="pv-line" data-pv="toggle" data-line="${line.id}" aria-pressed="${heard.includes(line.id)}">
-            <span class="pv-tick">${icon("check")}</span><span>"${line.text}"</span>
+            <span class="pv-tick">${icon("check")}</span><span>"${t(line.text)}"</span>
           </button>`).join("")}
       </div>
-      <button type="button" class="btn btn-primary" data-pv="next">Next ${icon("arrow")}</button>`;
+      <button type="button" class="btn btn-primary" data-pv="next">${t("pv.next")} ${icon("arrow")}</button>`;
   }
 
   // Steps 1 to N: one question per screen
@@ -251,19 +260,19 @@
     const board = question.type === "lines" ? " pv-board" : "";
     return `
       <section class="pv-card${board}" data-read>
-        <p class="pv-count">Question ${number} of ${DATA.questions.length}</p>
-        <h2 tabindex="-1" id="pv-step-title">${question.text}</h2>
+        <p class="pv-count">${t("pv.count", { number, total: DATA.questions.length })}</p>
+        <h2 tabindex="-1" id="pv-step-title">${t(question.text)}</h2>
         ${question.type === "lines" ? linesHtml(question) : choiceHtml(question)}
       </section>
       ${coachHtml()}
-      <button type="button" class="btn btn-link" data-pv="back">Back</button>`;
+      <button type="button" class="btn btn-link" data-pv="back">${t("pv.back")}</button>`;
   }
 
   // The "continue" button only works once the kopi break is over
   function continueHtml(label, style) {
     const waiting = secondsLeft() > 0;
     return `<button type="button" class="btn ${style}" data-pv="continue"${waiting ? " disabled" : ""}>${label}</button>
-      <p class="pv-note" id="pv-wait-note"${waiting ? "" : " hidden"}>You can continue when the kopi break ends.</p>`;
+      <p class="pv-note" id="pv-wait-note"${waiting ? "" : " hidden"}>${t("pv.waitNote")}</p>`;
   }
 
   // Step N + 1: the customer's own answers played back, the result, and what to do now
@@ -274,27 +283,27 @@
     const risky = key !== "clear";
     return `
       <section class="pv-card" data-read>
-        <p class="pv-result pv-result--${key}">${icon(outcome.icon)}${outcome.label}</p>
-        <h2 tabindex="-1" id="pv-step-title">${outcome.title}</h2>
-        ${signs.length ? `<h3>Here is what you told us</h3>
+        <p class="pv-result pv-result--${key}">${icon(outcome.icon)}${t(outcome.label)}</p>
+        <h2 tabindex="-1" id="pv-step-title">${t(outcome.title)}</h2>
+        ${signs.length ? `<h3>${t("pv.toldUs")}</h3>
           <ul class="pv-signs">${signs.map(sign => `<li>${icon("flag")}<span>${sign}</span></li>`).join("")}</ul>` : ""}
-        <p class="pv-verdict">${outcome.text}</p>
+        <p class="pv-verdict">${t(outcome.text)}</p>
       </section>
       <section class="pv-card" data-read>
-        <h2>What to do now</h2>
-        ${risky ? `<p>Hang up the call. It is okay, a real bank officer will not mind.</p>` : ""}
+        <h2>${t("pv.whatNow")}</h2>
+        ${risky ? `<p>${t("pv.hangUp")}</p>` : ""}
         <div class="pv-actions">
           ${risky ? `
-            <button type="button" class="btn btn-primary" data-pv="cancel">Cancel this transfer</button>
-            <a class="btn btn-secondary" href="#call-match">Check if the bank is really calling</a>
-            <a class="btn btn-secondary" href="#passphrase">Ask for my family passphrase</a>
-            <a class="btn btn-secondary" href="#report">Report this scam</a>
-            ${continueHtml("I am sure, continue with the transfer", "btn-link")}` : `
-            ${continueHtml("Continue with the transfer", "btn-primary")}
-            <button type="button" class="btn btn-secondary" data-pv="cancel">Cancel this transfer</button>`}
+            <button type="button" class="btn btn-primary" data-pv="cancel">${t("pv.cancel")}</button>
+            <a class="btn btn-secondary" href="#call-match">${t("pv.callMatch")}</a>
+            <a class="btn btn-secondary" href="#passphrase">${t("pv.passphrase")}</a>
+            <a class="btn btn-secondary" href="#report">${t("pv.report")}</a>
+            ${continueHtml(t("pv.continueSure"), "btn-link")}` : `
+            ${continueHtml(t("pv.continue"), "btn-primary")}
+            <button type="button" class="btn btn-secondary" data-pv="cancel">${t("pv.cancel")}</button>`}
         </div>
       </section>
-      <button type="button" class="btn btn-link" data-pv="back">Back</button>`;
+      <button type="button" class="btn btn-link" data-pv="back">${t("pv.back")}</button>`;
   }
 
   // After "Cancel" or "Continue": a short ending. The whole screen is replaced, so it has its own h1.
@@ -302,15 +311,15 @@
     const cancelled = appState.pauseVerify.done === "cancelled";
     return `
       <section class="pv-card pv-done" data-read>
-        <p class="pv-result pv-result--clear">${icon("check")}${cancelled ? "Cancelled" : "Sent"}</p>
-        <h1 tabindex="-1">${cancelled ? "Your transfer is cancelled" : "Your transfer is on its way"}</h1>
+        <p class="pv-result pv-result--clear">${icon("check")}${cancelled ? t("pv.done.cancelledTag") : t("pv.done.sentTag")}</p>
+        <h1 tabindex="-1">${cancelled ? t("pv.done.cancelledTitle") : t("pv.done.sentTitle")}</h1>
         <p>${cancelled
-          ? "No money has left your account. If someone is still pressuring you, hang up and tell the bank."
-          : "This is a demo, so no real money was sent."}</p>
+          ? t("pv.done.cancelledText")
+          : t("pv.done.sentText")}</p>
         <div class="pv-actions">
-          <a class="btn btn-primary" href="#customer">Back to home</a>
-          ${cancelled ? `<a class="btn btn-secondary" href="#report">Report a scam</a>` : ""}
-          <button type="button" class="btn btn-link" data-pv="restart">Start the demo again</button>
+          <a class="btn btn-primary" href="#customer">${t("common.backHome")}</a>
+          ${cancelled ? `<a class="btn btn-secondary" href="#report">${t("pv.reportScam")}</a>` : ""}
+          <button type="button" class="btn btn-link" data-pv="restart">${t("pv.restart")}</button>
         </div>
       </section>`;
   }
@@ -346,7 +355,7 @@
 
     // The break is over: say so, and switch on any "continue" button
     stopTimer();
-    document.getElementById("pv-time-label").textContent = "Your kopi break is over. Take your time to decide.";
+    document.getElementById("pv-time-label").textContent = t("pv.breakOver");
     document.querySelectorAll('[data-pv="continue"]').forEach(button => { button.disabled = false; });
     const note = document.getElementById("pv-wait-note");
     if (note) note.hidden = true;
@@ -354,7 +363,7 @@
     const live = document.getElementById("pv-live");
     if (live && !appState.pauseVerify.announced) {
       appState.pauseVerify.announced = true;
-      live.textContent = "Your kopi break is over. You can decide now.";
+      live.textContent = t("pv.breakOverLive");
     }
   }
 

@@ -33,8 +33,14 @@
 //              The customer home screen shows these under "My recent checks".
 // Everything is inside (function () { ... })(); so its names stay private to this file.
 
+// Languages: the screen's words come from t() (js/core/i18n.js), with the words in
+// ANALYSER_DATA.text. A Chinese or Malay example still gets its result in its own language
+// (see exampleResultHtml). "label" and the history's "when" are saved already translated,
+// because the home screen shows them as they are.
+
 (function () {
   const data = ANALYSER_DATA;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
   const STEP_MS = 1000;   // how long each "checking" step shows, so people see it happen
 
   // The icon that goes with each risk level (icon + words, never colour alone)
@@ -131,7 +137,7 @@
   function addToHistory(state) {
     const o = state.outcome;
     if (o.kind === "error") return;
-    const entry = { kind: o.kind, what: state.fileName || state.label, when: `Today ${timeNow()}` };
+    const entry = { kind: o.kind, what: state.fileName || state.label, when: t("an.today", { time: timeNow() }) };
     if (o.kind === "message") entry.risk = o.exampleId ? findExample(o.exampleId).result.risk : o.scan.risk;
     else if (o.kind === "voice") entry.result = o.result;
     else entry.result = o.evidence.result;
@@ -159,10 +165,10 @@
   // ---------- Phase 1: add something ----------
 
   function sampleButtonsHtml() {
-    const voice = `<button type="button" class="chip" data-sample="voice">${icon("wave")}Sample voice message</button>`;
-    const message = `<button type="button" class="chip" data-sample="message">${icon("chat")}Sample SMS</button>`;
+    const voice = `<button type="button" class="chip" data-sample="voice">${icon("wave")}${t("an.sample.voice")}</button>`;
+    const message = `<button type="button" class="chip" data-sample="message">${icon("chat")}${t("an.sample.sms")}</button>`;
     const evidence = EVIDENCE_CHECKER.samples.map((s, i) =>
-      `<button type="button" class="chip" data-sample="evidence" data-i="${i}">${icon(EVIDENCE_CHECKER.kind(s.kind).icon)}${esc(s.label)}</button>`).join("");
+      `<button type="button" class="chip" data-sample="evidence" data-i="${i}">${icon(EVIDENCE_CHECKER.kind(s.kind).icon)}${esc(t(s.label))}</button>`).join("");
     return message + voice + evidence;
   }
 
@@ -171,55 +177,55 @@
     return `
       <section class="panel">
         <div data-read>
-          <h1 tabindex="-1">Check anything you are not sure about</h1>
-          <p class="lead">Add a message, a call recording, a screenshot or a letter. You do not need to pick what it is. We will work it out.</p>
+          <h1 tabindex="-1">${t("an.title")}</h1>
+          <p class="lead">${t("an.lead")}</p>
         </div>
         <label class="an-drop" id="an-drop">
           ${icon("upload")}
-          <strong>Tap here to add a file</strong>
-          <span>or drag it into this box</span>
+          <strong>${t("an.drop.title")}</strong>
+          <span>${t("an.drop.sub")}</span>
           <input type="file" id="an-file" class="visually-hidden" accept="audio/*,video/*,image/*,.pdf,.doc,.docx,.txt">
         </label>
-        <p class="an-or"><span>or</span></p>
+        <p class="an-or"><span>${t("an.or")}</span></p>
         <form id="an-form" novalidate>
           <div class="field">
-            <label for="an-text">Paste or type the message</label>
+            <label for="an-text">${t("an.textLabel")}</label>
             <textarea id="an-text" name="message" rows="5" spellcheck="false" autocomplete="off"
-              placeholder="For example: Your account is locked. Tap this link..."
+              placeholder="${t("an.placeholder")}"
               aria-describedby="an-count an-text-error"${state.error ? ' aria-invalid="true"' : ""}>${esc(state.text)}</textarea>
           </div>
           <p class="an-count" id="an-count"></p>
           <p class="field-error" id="an-text-error" role="alert">${esc(state.error)}</p>
-          <button type="submit" class="btn btn-primary">Check this message ${icon("arrow")}</button>
+          <button type="submit" class="btn btn-primary">${t("an.checkMessage")} ${icon("arrow")}</button>
         </form>
-        <p class="an-privacy">${icon("lock")}<span>Your file stays on this device. Recordings, pictures and documents are never opened or uploaded.</span></p>
+        <p class="an-privacy">${icon("lock")}<span>${t("an.privacy")}</span></p>
       </section>
 
       <section class="panel" aria-labelledby="an-samples-title">
-        <h2 id="an-samples-title">No file? Try a sample</h2>
+        <h2 id="an-samples-title">${t("an.samplesTitle")}</h2>
         <div class="chips">${sampleButtonsHtml()}</div>
         <details class="an-demo">
-          <summary>More message examples</summary>
+          <summary>${t("an.moreExamples")}</summary>
           <ul class="an-chips">
-            ${data.examples.map(ex => `<li><button type="button" class="chip" data-example="${ex.id}" lang="${ex.lang}">${esc(ex.chip)}</button></li>`).join("")}
+            ${data.examples.map(ex => `<li><button type="button" class="chip" data-example="${ex.id}" lang="${exampleLang(ex)}">${esc(exampleChip(ex))}</button></li>`).join("")}
           </ul>
         </details>
       </section>
 
       <details class="an-demo">
-        <summary>Demo only: pick the result the next voice check shows</summary>
+        <summary>${t("an.demoVoice")}</summary>
         <fieldset class="an-demo-row">
-          <legend class="visually-hidden">Result for the next voice check</legend>
+          <legend class="visually-hidden">${t("an.demoVoiceLegend")}</legend>
           ${Object.keys(data.voiceResults).map(key => `<label class="an-pick">
               <input type="radio" name="an-voice-demo" value="${key}"${key === state.voiceDemo ? " checked" : ""}>${badge(key)}
             </label>`).join("")}
         </fieldset>
       </details>
       <details class="an-demo">
-        <summary>Demo only: show the error screens</summary>
+        <summary>${t("an.demoErrors")}</summary>
         <div class="an-demo-row">
-          <button type="button" class="btn btn-secondary btn-small" data-demo="fail">Check failed</button>
-          <button type="button" class="btn btn-secondary btn-small" data-demo="long">Message too long</button>
+          <button type="button" class="btn btn-secondary btn-small" data-demo="fail">${t("an.demo.fail")}</button>
+          <button type="button" class="btn btn-secondary btn-small" data-demo="long">${t("an.demo.long")}</button>
         </div>
       </details>`;
   }
@@ -230,14 +236,15 @@
     const state = myState();
     const info = kindInfo(state.kind);
     const what = state.fileName || state.label;
-    return `<div class="an-detected">${icon(info.icon)}<span><strong>We found: ${info.label}</strong><small>${esc(what)}</small></span></div>`;
+    return `<div class="an-detected">${icon(info.icon)}<span><strong>${t("an.found", { kind: t(info.label) })}</strong><small>${esc(what)}</small></span></div>`;
   }
 
+  // steps are translation keys (from data.kinds here, or from Yan Lin's evidence checker)
   function progressItemsHtml(steps, at) {
     return steps.map((text, i) => {
       const stage = i < at ? "done" : i === at ? "now" : "";
       const mark = i < at ? icon("check") : i === at ? '<span class="spin" aria-hidden="true"></span>' : '<span class="dot" aria-hidden="true"></span>';
-      return `<li class="${stage}">${mark}<span>${text}${i < at ? '<span class="visually-hidden"> (done)</span>' : ""}</span></li>`;
+      return `<li class="${stage}">${mark}<span>${t(text)}${i < at ? `<span class="visually-hidden">${t("an.done")}</span>` : ""}</span></li>`;
     }).join("");
   }
 
@@ -246,8 +253,8 @@
     return `
       <section class="panel" data-read>
         ${detectedHtml()}
-        <h1 tabindex="-1">Checking it now…</h1>
-        <p>This takes a few seconds.</p>
+        <h1 tabindex="-1">${t("an.checking")}</h1>
+        <p>${t("an.fewSeconds")}</p>
         <ul class="progress-list" id="an-progress">${progressItemsHtml(kindInfo(state.kind).steps, state.step)}</ul>
       </section>`;
   }
@@ -319,80 +326,99 @@
     return `
       <div class="stack an-actions">
         ${worrying ? `
-          <a class="btn btn-primary" href="${report}">${icon("flag")}Report this to OCBC</a>
-          <a class="btn btn-secondary" href="#freeze">${icon("lock")}I already sent money or a code</a>` : ""}
+          <a class="btn btn-primary" href="${report}">${icon("flag")}${t("an.report")}</a>
+          <a class="btn btn-secondary" href="#freeze">${icon("lock")}${t("an.sentMoney")}</a>` : ""}
         ${kind === "voice" ? `
-          <a class="btn btn-secondary" href="#caller-check">${icon("user")}Is the caller a real person?</a>
-          <a class="btn btn-secondary" href="#call-match">${icon("shield")}Is the bank really calling?</a>` : ""}
-        <button type="button" class="btn btn-link" data-action="again">Check something else</button>
+          <a class="btn btn-secondary" href="#caller-check">${icon("user")}${t("an.callerCheck")}</a>
+          <a class="btn btn-secondary" href="#call-match">${icon("shield")}${t("an.callMatch")}</a>` : ""}
+        <button type="button" class="btn btn-link" data-action="again">${t("an.again")}</button>
       </div>`;
   }
 
+  // steps here are words already (callers put keys through t() first)
   function stepsListHtml(steps) {
     return `<ol class="an-steps">${steps.map(step => `<li>${esc(step)}</li>`).join("")}</ol>`;
   }
 
-  // A message that matched one of the examples: its hand-written result, in its own language
+  // ---------- Which language an example's result is in ----------
+  // A Chinese or Malay example is a sample message in that language, so its result stays in
+  // that language (data.labels.zh / .ms and its own words). An English example's result follows
+  // the language the customer picked: its words are translation keys, looked up with t().
+  function exampleLang(example) {
+    return example.lang === "en" ? getLocale() : example.lang;
+  }
+  function exampleSay(example) {
+    return example.lang === "en" ? t : words => words;
+  }
+  function exampleChip(example) {
+    return exampleSay(example)(example.chip);
+  }
+
+  // A message that matched one of the examples: its hand-written result (see exampleSay above)
   function exampleResultHtml(example) {
     const r = example.result;
+    const say = exampleSay(example);
+    const lang = exampleLang(example);
     const words = data.labels[example.lang] || data.labels.en;
-    const typeName = words.types[r.type] || data.labels.en.types[r.type];
-    const steps = r.steps || data.nextSteps[r.type] || [];
+    const typeName = words.types[r.type] ? say(words.types[r.type]) : t(data.labels.en.types[r.type]);
+    const steps = r.steps || (data.nextSteps[r.type] || []).map(key => t(key));
+    const flags = r.flags.map(f => ({ ...f, reason: say(f.reason) }));
     return `
       <section data-read>
         ${detectedHtml()}
-        <div class="verdict ${RISK_BOX[r.risk]}" lang="${example.lang}">
+        <div class="verdict ${RISK_BOX[r.risk]}" lang="${lang}">
           ${icon(RISK_ICONS[r.risk])}
-          <div><p><strong>${words.risk[r.risk]}</strong> · ${words.looksLike}</p><h1 tabindex="-1">${esc(typeName)}</h1></div>
+          <div><p><strong>${say(words.risk[r.risk])}</strong> · ${say(words.looksLike)}</p><h1 tabindex="-1">${esc(typeName)}</h1></div>
         </div>
       </section>
-      <section class="panel an-result" aria-labelledby="an-why-title" lang="${example.lang}">
-        <div class="an-result-top"><h2 id="an-why-title">${words.flagsTitle}</h2><span class="an-demo-tag" lang="en">Demo result</span></div>
+      <section class="panel an-result" aria-labelledby="an-why-title" lang="${lang}">
+        <div class="an-result-top"><h2 id="an-why-title">${say(words.flagsTitle)}</h2><span class="an-demo-tag" lang="${getLocale()}">${t("an.demoTag")}</span></div>
         <div data-read>
-          <p class="an-summary">${esc(r.summary)}</p>
-          <p class="an-sure">${words.howSure}: <strong>${words.sure[r.confidence]}</strong>${dotsHtml(r.confidence)}</p>
+          <p class="an-summary">${esc(say(r.summary))}</p>
+          <p class="an-sure">${say(words.howSure)}: <strong>${say(words.sure[r.confidence])}</strong>${dotsHtml(r.confidence)}</p>
         </div>
-        ${r.flags.length
-          ? highlightedHtml(example.text, r.flags)
+        ${flags.length
+          ? highlightedHtml(example.text, flags)
           : `<blockquote class="an-message">${esc(example.text)}</blockquote>
-             <p class="an-none">${icon("check")}<span>${words.noFlags}</span></p>`}
+             <p class="an-none">${icon("check")}<span>${say(words.noFlags)}</span></p>`}
       </section>
-      <section class="panel" aria-labelledby="an-todo-title" lang="${example.lang}">
+      <section class="panel" aria-labelledby="an-todo-title" lang="${lang}">
         <div data-read>
-          <h2 id="an-todo-title">${words.stepsTitle}</h2>
+          <h2 id="an-todo-title">${say(words.stepsTitle)}</h2>
           ${stepsListHtml(steps)}
         </div>
-        <div lang="en">${actionsHtml("message", r.risk !== "low")}</div>
-        <p class="an-honesty">${icon("question")}<span>${words.honesty}</span></p>
+        <div lang="${getLocale()}">${actionsHtml("message", r.risk !== "low")}</div>
+        <p class="an-honesty">${icon("question")}<span>${say(words.honesty)}</span></p>
       </section>`;
   }
 
   // A typed or pasted message: the result of the real phrase scan
   function scanResultHtml(outcome) {
-    const { risk, flags } = outcome.scan;
+    const { risk } = outcome.scan;
+    const flags = outcome.scan.flags.map(f => ({ ...f, reason: t(f.reason) }));
     const words = data.labels.en;
     return `
       <section data-read>
         ${detectedHtml()}
         <div class="verdict ${RISK_BOX[risk]}">
           ${icon(RISK_ICONS[risk])}
-          <div><p><strong>${words.risk[risk]}</strong></p><h1 tabindex="-1">${data.scan.titles[risk]}</h1></div>
+          <div><p><strong>${t(words.risk[risk])}</strong></p><h1 tabindex="-1">${t(data.scan.titles[risk])}</h1></div>
         </div>
       </section>
       <section class="panel an-result" aria-labelledby="an-why-title">
-        <h2 id="an-why-title">Why we think so</h2>
+        <h2 id="an-why-title">${t("an.why")}</h2>
         ${flags.length
           ? highlightedHtml(outcome.text, flags)
           : `<blockquote class="an-message">${esc(outcome.text)}</blockquote>
-             <ul class="reasons" data-read>${data.scan.noSigns.map(x => `<li>${icon("check")}<span>${x}</span></li>`).join("")}</ul>`}
+             <ul class="reasons" data-read>${data.scan.noSigns.map(x => `<li>${icon("check")}<span>${t(x)}</span></li>`).join("")}</ul>`}
       </section>
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
-          <h2 id="an-todo-title">What to do now</h2>
-          ${stepsListHtml(data.scan.steps[risk])}
+          <h2 id="an-todo-title">${t("an.stepsTitle")}</h2>
+          ${stepsListHtml(data.scan.steps[risk].map(key => t(key)))}
         </div>
         ${actionsHtml("message", risk !== "low")}
-        <p class="an-honesty">${icon("question")}<span>${words.honesty}</span></p>
+        <p class="an-honesty">${icon("question")}<span>${t(words.honesty)}</span></p>
       </section>`;
   }
 
@@ -400,14 +426,14 @@
   function timelineHtml(parts) {
     return `
       <div class="an-timeline-box">
-        <h3>Which parts sound AI-made</h3>
+        <h3>${t("an.timeline.title")}</h3>
         <ol class="an-timeline">
           ${parts.map((ai, i) => `<li${ai ? ' class="is-ai"' : ""}>
               <span aria-hidden="true">${i * 5}s</span>
-              <span class="visually-hidden">Seconds ${i * 5} to ${i * 5 + 5}: ${ai ? "sounds AI-made" : "sounds natural"}</span>
+              <span class="visually-hidden">${t("an.timeline.part", { from: i * 5, to: i * 5 + 5, what: ai ? t("an.timeline.ai") : t("an.timeline.natural") })}</span>
             </li>`).join("")}
         </ol>
-        <p class="meta an-key"><span class="an-key-swatch" aria-hidden="true"></span>Sounds AI-made</p>
+        <p class="meta an-key"><span class="an-key-swatch" aria-hidden="true"></span>${t("an.timeline.key")}</p>
       </div>`;
   }
 
@@ -417,51 +443,51 @@
       <section data-read>
         ${detectedHtml()}
         <div class="verdict ${RESULT_BOX[key]}">
-          <div>${badge(key)}<h1 tabindex="-1">${v.title}</h1></div>
+          <div>${badge(key)}<h1 tabindex="-1">${t(v.title)}</h1></div>
         </div>
       </section>
       <section class="panel an-result an-voice an-voice--${key}" aria-labelledby="an-why-title">
-        <div class="an-result-top"><h2 id="an-why-title">Why we think so</h2><span class="an-demo-tag">Demo result</span></div>
+        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2><span class="an-demo-tag">${t("an.demoTag")}</span></div>
         <div data-read>
           ${v.chance === null
-            ? `<p class="an-chance-none">No number this time: the clip didn't give a clear answer.</p>`
-            : `<p class="an-chance"><span class="an-chance-num">${v.chance}%</span><span>chance the voice is AI-made</span></p>
+            ? `<p class="an-chance-none">${t("an.chanceNone")}</p>`
+            : `<p class="an-chance"><span class="an-chance-num">${v.chance}%</span><span>${t("an.chance")}</span></p>
                <div class="an-meter" aria-hidden="true"><span style="--w: ${v.chance}%"></span></div>`}
-          <p class="an-sure">How sure we are: <strong>${v.sure}</strong></p>
+          <p class="an-sure">${t("an.howSure")}: <strong>${t(v.sure)}</strong></p>
         </div>
         ${v.timeline ? timelineHtml(v.timeline) : ""}
-        <ul class="reasons" data-read>${v.reasons.map(reason => `<li>${icon(key === "real" ? "check" : "flag")}<span>${reason}</span></li>`).join("")}</ul>
+        <ul class="reasons" data-read>${v.reasons.map(reason => `<li>${icon(key === "real" ? "check" : "flag")}<span>${t(reason)}</span></li>`).join("")}</ul>
       </section>
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
-          <h2 id="an-todo-title">What to do now</h2>
-          <p class="an-extra">${icon("warning")}<span>${v.extra}</span></p>
+          <h2 id="an-todo-title">${t("an.stepsTitle")}</h2>
+          <p class="an-extra">${icon("warning")}<span>${t(v.extra)}</span></p>
         </div>
         ${actionsHtml("voice", key !== "real")}
-        <p class="an-honesty">${icon("question")}<span>The voice check is one warning sign, not proof. A real voice can still belong to a scammer.</span></p>
+        <p class="an-honesty">${icon("question")}<span>${t("an.voiceHonesty")}</span></p>
       </section>`;
   }
 
-  // A screenshot or document: Yan Lin's evidence checker result
+  // A screenshot or document: Yan Lin's evidence checker result (its words are translation keys)
   function evidenceResultHtml(r) {
     return `
       <section data-read>
         ${detectedHtml()}
         <div class="verdict ${RESULT_BOX[r.result]}">
-          <div>${badge(r.result)}<h1 tabindex="-1">${esc(r.title)}</h1></div>
+          <div>${badge(r.result)}<h1 tabindex="-1">${esc(t(r.title))}</h1></div>
         </div>
       </section>
       <section class="panel" aria-labelledby="an-why-title">
-        <div class="an-result-top"><h2 id="an-why-title">Why we think so</h2><span class="an-demo-tag">Demo result</span></div>
-        <ul class="reasons" data-read>${r.reasons.map(x => `<li>${icon("flag")}<span>${esc(x)}</span></li>`).join("")}</ul>
+        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2><span class="an-demo-tag">${t("an.demoTag")}</span></div>
+        <ul class="reasons" data-read>${r.reasons.map(x => `<li>${icon("flag")}<span>${esc(t(x))}</span></li>`).join("")}</ul>
       </section>
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
-          <h2 id="an-todo-title">What to do now</h2>
-          ${stepsListHtml(r.steps)}
+          <h2 id="an-todo-title">${t("an.stepsTitle")}</h2>
+          ${stepsListHtml(r.steps.map(key => t(key)))}
         </div>
         ${actionsHtml(myState().kind, r.result !== "real")}
-        <p class="an-honesty">${icon("question")}<span>These are warning signs, not proof. If you're unsure, ask the bank.</span></p>
+        <p class="an-honesty">${icon("question")}<span>${t("an.evidenceHonesty")}</span></p>
       </section>`;
   }
 
@@ -470,13 +496,13 @@
     return `
       <section class="panel" data-read>
         <span class="an-error-icon">${icon("warning")}</span>
-        <h1 tabindex="-1">We couldn't check this</h1>
-        <p>Something went wrong on our side. Nothing was saved or sent. Please try again in a moment.</p>
-        <p class="meta">Need help now? Call the Anti-Scam Helpline on 1799.</p>
+        <h1 tabindex="-1">${t("an.error.title")}</h1>
+        <p>${t("an.error.text")}</p>
+        <p class="meta">${t("an.error.help")}</p>
       </section>
       <div class="stack">
-        <button type="button" class="btn btn-primary" data-action="retry">Try again</button>
-        <button type="button" class="btn btn-link" data-action="again">Check something else</button>
+        <button type="button" class="btn btn-primary" data-action="retry">${t("an.retry")}</button>
+        <button type="button" class="btn btn-link" data-action="again">${t("an.again")}</button>
       </div>`;
   }
 
@@ -567,22 +593,22 @@
     if (!file) return;
     const kind = detectKind(file);
     if (kind !== "message") {
-      startCheck({ kind, label: kindInfo(kind).label, fileName: file.name });
+      startCheck({ kind, label: t(kindInfo(kind).label), fileName: file.name });
       return;
     }
     let text = "";
     try {
       text = await file.text();
     } catch (e) {
-      showTextError("We could not read that file. Please paste the message instead.");
+      showTextError(t("an.err.read"));
       return;
     }
-    if (!text.trim()) { showTextError("That file is empty. Please paste the message instead."); return; }
+    if (!text.trim()) { showTextError(t("an.err.empty")); return; }
     if (text.length > data.maxLength) {
-      showTextError(`That file is too long. Please paste up to ${count(data.maxLength)} characters instead.`);
+      showTextError(t("an.err.fileLong", { max: count(data.maxLength) }));
       return;
     }
-    startCheck({ kind: "message", label: "Text message", fileName: file.name, text });
+    startCheck({ kind: "message", label: t("an.kind.message"), fileName: file.name, text });
   }
 
   function wireInput() {
@@ -597,10 +623,10 @@
       const n = box.value.length;
       const tooLong = n > data.maxLength;
       const counter = document.getElementById("an-count");
-      counter.textContent = `${count(n)} / ${count(data.maxLength)} characters`;
+      counter.textContent = t("an.count", { n: count(n), max: count(data.maxLength) });
       counter.classList.toggle("an-count--over", tooLong);
       if (tooLong) {
-        showTextError(`This is ${count(n - data.maxLength)} characters too long. Please shorten it to ${count(data.maxLength)} characters or fewer.`);
+        showTextError(t("an.err.tooLong", { over: count(n - data.maxLength), max: count(data.maxLength) }));
         box.focus();
       } else if (state.error && box.value.trim()) {
         showTextError("");
@@ -611,9 +637,9 @@
 
     document.getElementById("an-form").addEventListener("submit", event => {
       event.preventDefault();
-      if (!box.value.trim()) { showTextError("Please paste a message, add a file, or try a sample."); return; }
+      if (!box.value.trim()) { showTextError(t("an.err.nothing")); return; }
       if (box.value.length > data.maxLength) { update(); return; }
-      startCheck({ kind: "message", label: "Pasted message", text: box.value });
+      startCheck({ kind: "message", label: t("an.label.pasted"), text: box.value });
     });
 
     // Adding a file: tap to pick, or drag it onto the box
@@ -638,19 +664,19 @@
         const which = button.dataset.sample;
         if (which === "message") {
           const example = findExample(data.sampleMessageId);
-          startCheck({ kind: "message", label: "Sample SMS", text: example.text });
+          startCheck({ kind: "message", label: t("an.sample.sms"), text: example.text });
         } else if (which === "voice") {
-          startCheck({ kind: "voice", label: "Sample voice message", fileName: data.sampleClipName });
+          startCheck({ kind: "voice", label: t("an.sample.voice"), fileName: data.sampleClipName });
         } else {
           const s = EVIDENCE_CHECKER.samples[Number(button.dataset.i)];
-          startCheck({ kind: s.kind, label: s.label, fileName: s.name });
+          startCheck({ kind: s.kind, label: t(s.label), fileName: s.name });
         }
       });
     });
     document.querySelectorAll("[data-example]").forEach(chip => {
       chip.addEventListener("click", () => {
         const example = findExample(chip.dataset.example);
-        startCheck({ kind: "message", label: `Example: ${example.chip}`, text: example.text });
+        startCheck({ kind: "message", label: t("an.label.example", { chip: exampleChip(example) }), text: example.text });
       });
     });
 
@@ -664,7 +690,7 @@
       button.addEventListener("click", () => {
         if (button.dataset.demo === "fail") {
           const text = box.value.trim() || data.examples[0].text;
-          startCheck({ kind: "message", label: "Pasted message", text, fail: true });
+          startCheck({ kind: "message", label: t("an.label.pasted"), text, fail: true });
         } else {
           box.value = `${data.examples[0].text} `.repeat(15);   // well over 2,000 characters
           update();
@@ -698,7 +724,7 @@
       const phase = myState().phase;
       if (phase === "input") wireInput();
       if (phase === "result") wireResult();
-      if (phase === "analysing") document.getElementById("an-status").textContent = "Checking. Please wait.";
+      if (phase === "analysing") document.getElementById("an-status").textContent = t("an.status");
     }
   });
 })();

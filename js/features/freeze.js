@@ -4,6 +4,7 @@
 // Owner: Jose. Built on frontend-update from the senior flow preview (it was a stub).
 // One big button stops all payments (in the demo, nothing really happens), then the customer
 // is told to call OCBC and press 8. A "Call OCBC" bar stays at the bottom of the screen.
+// Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
 //
 // What it remembers (appState.freeze, cleared by #reset):
 //   frozen     true once the customer has pressed the button. It stays frozen for this visit.
@@ -12,6 +13,7 @@
 
 (function () {
   const data = FREEZE_DATA;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
 
   function myState() {
     if (!appState.freeze) appState.freeze = { frozen: false, frozenAt: "" };
@@ -21,12 +23,12 @@
   function askHtml() {
     return `
       <section class="panel" data-read>
-        <p class="calm">${icon("heart")}Stay calm. Do this first.</p>
-        <h1 tabindex="-1">Freeze your accounts now.</h1>
-        <p>This stops any more money from leaving. You can unfreeze them later with the bank.</p>
+        <p class="calm">${icon("heart")}${t("fr.calm")}</p>
+        <h1 tabindex="-1">${t("fr.title")}</h1>
+        <p>${t("fr.why")}</p>
         <div class="stack">
-          <button type="button" class="btn btn-primary" id="freeze-now">${icon("lock")}Freeze my accounts</button>
-          <a class="btn btn-link" href="${OCBC_TEL}">Or call OCBC ${OCBC_PHONE} and press ${data.hotlineKey}</a>
+          <button type="button" class="btn btn-primary" id="freeze-now">${icon("lock")}${t("fr.button")}</button>
+          <a class="btn btn-link" href="${OCBC_TEL}">${t("fr.orCall", { phone: OCBC_PHONE, key: data.hotlineKey })}</a>
         </div>
       </section>`;
   }
@@ -36,18 +38,18 @@
     return `
       <section class="panel" data-read>
         <div class="done-mark">${icon("lock")}</div>
-        <h1 tabindex="-1">Your accounts are frozen.</h1>
-        <p>No more money can leave your accounts. Now call OCBC on ${OCBC_PHONE} and press ${data.hotlineKey}. Tell them what happened.</p>
+        <h1 tabindex="-1">${t("fr.done.title")}</h1>
+        <p>${t("fr.done.text", { phone: OCBC_PHONE, key: data.hotlineKey })}</p>
         <ul class="reasons">
-          ${data.frozenItems.map(item => `<li>${icon("lock")}<span>${item}</span></li>`).join("")}
+          ${data.frozenItems.map(key => `<li>${icon("lock")}<span>${t(key)}</span></li>`).join("")}
         </ul>
         <div class="stack">
-          <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
-          <a class="btn btn-secondary" href="#report/sent">Write down what happened</a>
-          <a class="btn btn-link" href="#customer">Back to home</a>
+          <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
+          <a class="btn btn-secondary" href="#report/sent">${t("fr.writeDown")}</a>
+          <a class="btn btn-link" href="#customer">${t("common.backHome")}</a>
         </div>
       </section>
-      <p class="note">Demo only: nothing is really frozen. Frozen at ${state.frozenAt} in this demo.</p>`;
+      <p class="note">${t("fr.demo", { time: state.frozenAt })}</p>`;
   }
 
   function screenHtml() {

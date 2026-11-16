@@ -4,7 +4,7 @@ Owner: Jose. Jira epic FSDP-97.
 The numbers below live in one place in the code: `RISK_SCORER_DATA.config` in
 [`js/data/risk-scorer.js`](../js/data/risk-scorer.js). If this document and that file ever disagree, the file wins.
 
-**Status: working version, approved by Jose on 12 Nov 2026. Still to be reviewed by the team (FSDP-130); the weights may change.**
+**Status: working version used in the ASG1 prototype (set by Jose on 12 Nov 2026). Team review of the weights is still pending (FSDP-130), so they may change.**
 
 ## R-1 (FSDP-130): Risk signals and weights
 
