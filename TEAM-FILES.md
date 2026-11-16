@@ -33,6 +33,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | `js/features/call-match-logic.js` | `matchCall()` only, no screen (stub). **Yan Lin's screen uses it: keep its name, inputs and return shape.** |
 | `js/data/risk-scorer.js`, `js/data/report.js`, `js/data/freeze.js`, `js/data/call-match-logic.js` | Made-up data (the fake OCBC outbound call list goes in `call-match-logic.js`) |
 | `css/features/risk-scorer.css`, `css/features/report.css`, `css/features/freeze.css`, `css/features/call-match-logic.css` | Styles |
+| `js/core/i18n.js` | Language switcher (English / 中文 / Bahasa Melayu): `t()`, `setLanguage()`, `getLanguage()`, `addTranslations()`. Everyone uses it; see "How to translate your screen" below. |
 
 ## Yan Lin
 
@@ -63,6 +64,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | `js/core/state.js` | `appState`, `signIn()`, `signOut()`, `resetState()` |
 | `js/core/a11y.js` | Text size, read aloud, focus to heading, skip link |
 | `js/core/router.js` | `registerRoute()`, drawing screens, `#reset` |
+| `js/core/i18n.js` | Languages: `t()` and the language buttons. Owned by Jose; loads first, before `helpers.js`. |
 
 ## Rules for everyone
 
@@ -73,3 +75,20 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 - Show results with icon + words (`badge()`), never colour alone. Give every screen one `<h1 tabindex="-1">`.
 - Mark what Read aloud should read with `data-read`.
 - Visit `#reset` to clear the demo and go back to sign in.
+
+## How to translate your screen
+
+The customer header has English / 中文 / Bahasa Melayu buttons. The header, the menu and Jose's screens already
+switch; yours stays in English until you do this. Everything stays in **your own files**:
+
+```js
+// 1. js/data/your-feature.js: add your words, with keys that start with your feature's short name
+const PAUSE_VERIFY_DATA = { /* ...your data... */ text: { en: { "pv.title": "Pause and check" }, zh: { "pv.title": "先停一停，确认一下" }, ms: { "pv.title": "Berhenti dan semak" } } };
+// 2. js/features/your-feature.js, at the top of your (function () { ... })();
+addTranslations(PAUSE_VERIFY_DATA.text);
+// 3. In your HTML, use t() instead of the words:   <h1 tabindex="-1">${t("pv.title")}</h1>
+```
+
+A word missing in Chinese or Malay shows in English, with a warning in the console. Blanks work too:
+`t("common.callOcbcNumber", { phone: OCBC_PHONE })`. Copy `js/data/freeze.js` and `js/features/freeze.js` for a full example.
+Get a native speaker to check your Chinese and Malay before the demo.
