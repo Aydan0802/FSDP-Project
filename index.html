@@ -40,6 +40,9 @@
 
   <!-- Wei Ye -->
   <link rel="stylesheet" href="css/features/triage-console.css">
+  <!-- Added on frontend-update (senior flow): someone is calling now, is the caller a real person? -->
+  <link rel="stylesheet" href="css/features/calling-now.css">
+  <link rel="stylesheet" href="css/features/caller-check.css">
 </head>
 <body data-theme="clarity">
   <!-- The skip link and the demo banner stay on every screen. The router draws the current
@@ -80,6 +83,8 @@
   <script src="js/data/customer-home.js"></script>
   <!-- Wei Ye -->
   <script src="js/data/triage-console.js"></script>
+  <!-- Added on frontend-update (senior flow) -->
+  <script src="js/data/caller-check.js"></script>
 
   <!-- Feature screens, one file per feature -->
   <!-- Jiliana -->
@@ -91,6 +96,7 @@
   <script src="js/features/analyser.js"></script>
   <script src="js/features/coming-soon.js"></script>
   <!-- Jose (call-match-logic.js must load before Yan Lin's call-match.js, which uses it) -->
+  <script src="js/features/risk-scorer-logic.js"></script>
   <script src="js/features/risk-scorer.js"></script>
   <script src="js/features/report.js"></script>
   <script src="js/features/freeze.js"></script>
@@ -102,5 +108,8 @@
   <script src="js/features/real-person.js"></script>
   <!-- Wei Ye -->
   <script src="js/features/triage-console.js"></script>
+  <!-- Added on frontend-update (senior flow) -->
+  <script src="js/features/calling-now.js"></script>
+  <script src="js/features/caller-check.js"></script>
 </body>
 </html>

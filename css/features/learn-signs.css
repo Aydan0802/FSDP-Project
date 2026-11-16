@@ -1,0 +1,22 @@
+/* Feature: Learn the signs (four signs, a practice question, a tip).
+   Owner: Jiliana
+   Uses the Clarity variables only. */
+
+.ls-signs { display: grid; gap: .75rem; margin-top: 1rem; }
+.ls-signs li {
+  display: flex; gap: .875rem; padding: 1rem 1.125rem;
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+}
+.ls-signs .icon {
+  flex: none; width: 3rem; height: 3rem; padding: .7rem; border-radius: 14px;
+  background: var(--red-tint); color: var(--red-dark);
+}
+.ls-signs strong { display: block; font-size: 1.1875rem; }
+
+.ls-quiz { margin-top: 1.5rem; }
+.ls-option { justify-content: flex-start; text-align: left; }
+#ls-feedback:not(:empty) { margin-top: 1rem; }
+
+.ls-tip { padding: 1.5rem; background: var(--red-tint); border-radius: var(--radius-lg); }
+.ls-tip h2 { color: var(--red-dark); }
+.ls-tip p { margin: 0; }

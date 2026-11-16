@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en" data-size="normal" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verify the Caller – senior flow preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --font-body: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --bg: #F3F5F7; --card: #FFFFFF; --ink: #1F2A33; --muted: #55636D; --border: #E1E6EA;
+  --red: #C8102E; --red-dark: #9E0B22; --red-tint: #FCE8EA;
+  --green: #1D7346; --green-tint: #E5F4EC;
+  --mark: #FFE066; --mark-ink: #1F2A33;
+  --radius: 14px; --radius-lg: 22px;
+  --shadow: 0 1px 2px rgba(54,59,64,.06), 0 8px 24px rgba(54,59,64,.08);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { font-size: 112.5%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+html[data-size="large"] { font-size: 128%; }
+html[data-size="larger"] { font-size: 146%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); line-height: 1.5; }
+h1, h2, h3 { font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin: 0 0 .4em; }
+h1 { font-size: 1.75rem; } h2 { font-size: 1.3rem; } h3 { font-size: 1.05rem; }
+p { margin: 0 0 .8em; max-width: 60ch; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; border-radius: 8px; }
+h1:focus, h2:focus { outline: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Header ---------- */
+.banner { background: var(--ink); color: var(--bg); font-size: .78rem; text-align: center; padding: .35rem 1rem; }
+.app-header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--card); box-shadow: 0 1px 0 var(--border), 0 4px 16px rgba(54,59,64,.05); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--card); }
+.header-in { max-width: 46rem; margin: 0 auto; padding: .6rem 1rem; display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 800; text-decoration: none; margin-right: auto; }
+.brand-mark { width: 2rem; height: 2rem; border-radius: 10px; background: var(--red); color: #fff; display: grid; place-items: center; }
+.brand-mark svg { width: 1.1rem; height: 1.1rem; }
+.text-size { display: flex; gap: .25rem; align-items: center; }
+.text-size button, .read-btn { font: inherit; font-weight: 700; border: 1.5px solid var(--border); background: var(--card); color: var(--ink); border-radius: 999px; padding: .3rem .7rem; cursor: pointer; min-height: 2.5rem; }
+.text-size button[aria-pressed="true"] { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.read-btn { display: inline-flex; align-items: center; gap: .4rem; }
+.read-btn svg { width: 1.1rem; height: 1.1rem; }
+.read-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+main { max-width: 46rem; margin: 0 auto; padding: 1.25rem 1rem 6rem; }
+.card { background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1rem; }
+.icon { width: 1.4rem; height: 1.4rem; flex: none; }
+
+/* ---------- Buttons ---------- */
+.btn { font: inherit; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 3.25rem; padding: .7rem 1.4rem; border-radius: 999px; border: 2px solid transparent; text-decoration: none; cursor: pointer; text-align: center; }
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:hover { background: var(--red-dark); }
+.btn-secondary { background: var(--card); color: var(--ink); border-color: var(--ink); }
+.btn-link { background: none; color: var(--ink); text-decoration: underline; min-height: 2.75rem; padding: .4rem .5rem; }
+.btn-block { display: flex; width: 100%; }
+.stack { display: grid; gap: .75rem; margin-top: 1rem; }
+
+/* ---------- Home: the help-now panel (the one loud thing on the page) ---------- */
+.hello h1 { margin-bottom: .2rem; }
+.hello p { color: var(--muted); }
+.help-now { background: var(--red-tint); border: 2px solid var(--red); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+.help-now h2 { color: var(--red-dark); font-size: 1.45rem; }
+.big-choice { display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left; font: inherit; color: var(--ink); background: var(--card); border: 2px solid var(--red); border-radius: var(--radius); padding: 1rem 1.1rem; text-decoration: none; cursor: pointer; min-height: 4.5rem; }
+.big-choice:hover { background: var(--bg); }
+.big-choice .icon-wrap { width: 3rem; height: 3rem; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; flex: none; }
+.big-choice .icon-wrap svg { width: 1.5rem; height: 1.5rem; }
+.big-choice strong { display: block; font-size: 1.15rem; }
+.big-choice span.sub { color: var(--muted); font-size: .9rem; }
+.big-choice .chev { margin-left: auto; width: 1.4rem; height: 1.4rem; color: var(--red); flex: none; }
+.call-line { margin: 1rem 0 0; font-weight: 600; }
+.call-line a { font-weight: 800; color: var(--red-dark); white-space: nowrap; }
+
+.group-title { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin: 1.75rem 0 .25rem; }
+.group-sub { color: var(--muted); margin-bottom: .8rem; }
+.tiles { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .6rem; }
+.tile { display: flex; align-items: center; gap: .8rem; padding: .9rem 1rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); text-decoration: none; min-height: 4rem; border: 2px solid transparent; }
+.tile:hover { border-color: var(--border); }
+.tile .icon { color: var(--red); }
+.tile strong { display: block; }
+.tile span.sub { display: block; font-size: .88rem; color: var(--muted); }
+
+details.recent { margin-top: 1.25rem; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }
+details.recent summary { cursor: pointer; padding: 1rem; font-weight: 700; min-height: 3rem; }
+details.recent ul { list-style: none; margin: 0; padding: 0 1rem 1rem; display: grid; gap: .6rem; }
+details.recent li { display: flex; justify-content: space-between; gap: 1rem; align-items: center; border-top: 1px solid var(--border); padding-top: .6rem; }
+.badge { display: inline-flex; align-items: center; gap: .3rem; font-weight: 700; font-size: .85rem; padding: .2rem .6rem; border-radius: 999px; white-space: nowrap; }
+.badge svg { width: 1rem; height: 1rem; }
+.badge-bad { background: var(--red-tint); color: var(--red-dark); }
+.badge-unsure { background: var(--bg); color: var(--ink); border: 1px solid var(--border); }
+
+/* ---------- Stress flow ---------- */
+.flow-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
+.step-dots { display: flex; gap: .35rem; align-items: center; color: var(--muted); font-weight: 600; font-size: .9rem; }
+.step-dots i { width: .7rem; height: .7rem; border-radius: 50%; background: var(--border); display: inline-block; }
+.step-dots i.on { background: var(--red); }
+.calm { display: inline-flex; align-items: center; gap: .4rem; background: var(--green-tint); color: var(--green); font-weight: 700; padding: .3rem .8rem; border-radius: 999px; margin-bottom: .75rem; }
+.calm svg { width: 1.1rem; height: 1.1rem; }
+.flow h1 { font-size: 2rem; }
+.rules { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .5rem; }
+.rules li { display: flex; gap: .6rem; align-items: flex-start; font-weight: 600; font-size: 1.05rem; }
+.rules li svg { color: var(--red); margin-top: .15rem; }
+.answer-btns .btn { min-height: 4rem; font-size: 1.15rem; }
+.done-mark { width: 4rem; height: 4rem; border-radius: 50%; background: var(--green-tint); color: var(--green); display: grid; place-items: center; margin-bottom: .75rem; }
+.done-mark svg { width: 2rem; height: 2rem; }
+.call-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--card); box-shadow: 0 -1px 0 var(--border), 0 -6px 18px rgba(54,59,64,.08); padding: .7rem 1rem calc(.7rem + env(safe-area-inset-bottom, 0px)); }
+.call-bar .in { max-width: 46rem; margin: 0 auto; display: flex; align-items: center; gap: .75rem; justify-content: space-between; flex-wrap: wrap; }
+.call-bar p { margin: 0; font-weight: 600; font-size: .92rem; }
+
+/* ---------- Read-along highlighting ---------- */
+.w { border-radius: 4px; transition: background-color .08s; }
+.w.now { background: var(--mark); color: var(--mark-ink); box-shadow: 0 0 0 2px var(--mark); }
+.reading [data-read] { outline: 2px dashed var(--border); outline-offset: 6px; border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { .w { transition: none; } }
+
+.note { font-size: .82rem; color: var(--muted); border-top: 1px solid var(--border); margin-top: 2rem; padding-top: 1rem; }
+:root { --amber: #7A4F00; --amber-tint: #FFF3D1; }
+.page-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .5rem; }
+.lead { color: var(--muted); font-size: 1.05rem; }
+.tile-wide { grid-column: 1 / -1; border-color: var(--red); }
+.tile-wide .icon { width: 1.8rem; height: 1.8rem; }
+
+/* One drop box for everything */
+.drop { display: grid; place-items: center; text-align: center; gap: .4rem; border: 2.5px dashed var(--field, #6B7A84); border-radius: var(--radius-lg); padding: 1.75rem 1rem; cursor: pointer; background: var(--bg); }
+.drop:hover, .drop.over { border-color: var(--red); background: var(--red-tint); }
+.drop .icon { width: 2.4rem; height: 2.4rem; color: var(--red); }
+.drop strong { font-size: 1.15rem; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop:focus-within { outline: 3px solid var(--red); outline-offset: 3px; }
+.or { text-align: center; color: var(--muted); font-weight: 700; margin: 1rem 0 .5rem; }
+label.field { display: block; font-weight: 700; margin: .9rem 0 .35rem; }
+textarea, input[type="text"], input[type="tel"], input[type="number"], select { font: inherit; width: 100%; padding: .75rem .9rem; border: 2px solid #6B7A84; border-radius: 12px; background: var(--card); color: var(--ink); min-height: 3.25rem; }
+textarea { min-height: 7rem; resize: vertical; }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.chip { font: inherit; font-weight: 600; font-size: .92rem; border: 1.5px solid var(--border); background: var(--card); color: var(--ink); padding: .45rem .9rem; border-radius: 999px; cursor: pointer; min-height: 2.75rem; display: inline-flex; align-items: center; gap: .4rem; }
+.chip .icon { width: 1.1rem; height: 1.1rem; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.detected { display: flex; align-items: center; gap: .8rem; padding: .9rem 1rem; border-radius: var(--radius); background: var(--bg); margin-bottom: 1rem; }
+.detected .icon { width: 2rem; height: 2rem; color: var(--red); }
+.detected small { display: block; color: var(--muted); }
+.progress-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .6rem; }
+.progress-list li { display: flex; gap: .6rem; align-items: center; font-weight: 600; color: var(--muted); }
+.progress-list li.done { color: var(--ink); }
+.progress-list li.done .icon { color: var(--green); }
+.progress-list li.now { color: var(--ink); }
+.spin { width: 1.4rem; height: 1.4rem; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 1s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; border-top-color: var(--border); border-right-color: var(--red); } }
+.dot { width: 1.4rem; height: 1.4rem; border: 3px solid var(--border); border-radius: 50%; flex: none; }
+
+/* Results: always icon + words, never colour alone */
+.verdict { display: flex; gap: .9rem; align-items: flex-start; border-radius: var(--radius-lg); padding: 1.1rem 1.2rem; margin-bottom: 1rem; border: 2px solid; }
+.verdict .icon { width: 2.2rem; height: 2.2rem; }
+.verdict h1, .verdict h2 { margin: 0 0 .2rem; }
+.verdict p { margin: 0; }
+.v-bad { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.v-careful { background: var(--amber-tint); border-color: var(--amber); color: var(--amber); }
+.v-good { background: var(--green-tint); border-color: var(--green); color: var(--green); }
+.v-bad p, .v-careful p, .v-good p { color: var(--ink); }
+.reasons { list-style: none; padding: 0; margin: .5rem 0 1rem; display: grid; gap: .55rem; }
+.reasons li { display: flex; gap: .6rem; align-items: flex-start; }
+.reasons li .icon { margin-top: .1rem; color: var(--red); }
+.reasons li .pts { margin-left: auto; font-weight: 800; color: var(--muted); white-space: nowrap; }
+
+/* Risk score */
+.score { display: flex; align-items: baseline; gap: .5rem; }
+.score b { font-size: 3rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.meter { position: relative; height: 1rem; border-radius: 999px; background: linear-gradient(90deg, var(--green) 0 34%, #D99A00 34% 67%, var(--red) 67% 100%); margin: .9rem 0 .3rem; }
+.meter i { position: absolute; top: -.35rem; width: .5rem; height: 1.7rem; border-radius: 4px; background: var(--ink); border: 2px solid var(--card); transform: translateX(-50%); }
+.meter-scale { display: flex; justify-content: space-between; font-size: .82rem; color: var(--muted); font-weight: 600; }
+.summary-row { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-top: 1px solid var(--border); }
+.summary-row span:first-child { color: var(--muted); }
+.summary-row span:last-child { font-weight: 700; text-align: right; }
+
+/* Kopi break */
+.kopi { text-align: center; background: var(--card); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 1.25rem; margin-bottom: 1rem; }
+.kopi .cup { font-size: 3rem; line-height: 1; }
+.kopi .time { font-size: 2.6rem; font-weight: 800; letter-spacing: -.02em; margin: .3rem 0 0; }
+.bar { height: .6rem; border-radius: 999px; background: var(--border); overflow: hidden; margin: .6rem auto; max-width: 20rem; }
+.bar span { display: block; height: 100%; background: var(--red); }
+
+/* Caller check */
+.captcha { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin-top: 1rem; }
+.captcha button { font: inherit; font-size: 3rem; min-height: 6rem; border-radius: var(--radius); border: 2.5px solid var(--border); background: var(--card); cursor: pointer; }
+.captcha button:hover { border-color: var(--red); }
+.captcha button span { display: block; font-size: .95rem; font-weight: 700; color: var(--ink); }
+.big-code { font-size: 2.4rem; font-weight: 800; letter-spacing: .12em; text-align: center; background: var(--bg); border: 2px dashed var(--ink); border-radius: var(--radius); padding: 1rem; margin: 1rem 0; font-variant-numeric: tabular-nums; }
+.speak-code { text-align: center; color: var(--muted); margin-top: -.5rem; }
+.demo-switch { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; background: var(--bg); border: 1.5px dashed var(--border); border-radius: var(--radius); padding: .6rem .8rem; margin-bottom: 1rem; font-size: .9rem; }
+.demo-switch strong { margin-right: .25rem; }
+.split { display: grid; gap: 1rem; }
+@media (min-width: 44rem) { .split { grid-template-columns: 1fr 1fr; } }
+.caller-view { background: var(--ink); color: var(--bg); border-radius: var(--radius-lg); padding: 1rem 1.1rem; }
+.caller-view h2 { font-size: 1rem; color: var(--bg); }
+.caller-view ol { margin: 0; padding-left: 1.2rem; display: grid; gap: .4rem; font-size: .95rem; }
+.caller-view .tag { display: inline-block; font-size: .78rem; font-weight: 700; background: var(--bg); color: var(--ink); border-radius: 999px; padding: .1rem .55rem; margin-bottom: .5rem; }
+
+/* Passphrase, learn, report */
+.saved { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 0; border-top: 1px solid var(--border); }
+.saved code { font-family: inherit; font-weight: 800; letter-spacing: .08em; }
+.signs { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; }
+.signs li { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; display: flex; gap: .8rem; }
+.signs li .icon { color: var(--red); width: 1.8rem; height: 1.8rem; }
+.signs strong { display: block; font-size: 1.05rem; }
+.quiz-opt { display: block; width: 100%; text-align: left; }
+.error { color: var(--red-dark); font-weight: 700; margin-top: .5rem; }
+.ref { font-size: 1.6rem; font-weight: 800; letter-spacing: .05em; }
+.toast { position: fixed; left: 50%; bottom: 6rem; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: .7rem 1.1rem; border-radius: 999px; font-weight: 700; z-index: 20; box-shadow: var(--shadow); }
+.tiles li.wide { grid-column: 1 / -1; }
+.tile .chev-s { margin-left: auto; color: var(--muted); width: 1.2rem; height: 1.2rem; }
+.badge-good { background: var(--green-tint); color: var(--green); }
+.btn-secondary[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.btn .icon { width: 1.2rem; height: 1.2rem; }
+
+/* ================= Match the team's Clarity front end (light mode) =================
+   Same values as base.css + clarity.css + customer-home.css. Colours only, no content changes. */
+:root, :root[data-theme="light"] {
+  color-scheme: light;
+  --red: #ED1C24; --red-dark: #9E1B32; --red-tint: #FDEDEE;
+  --ink: #363B40; --muted: #3D525D; --slate-tint: #EEF2F4;
+  --bg: #F3F5F7; --card: #FFFFFF; --border: #E1E6EA;
+  --green: #363B40; --green-tint: #EEF2F4;
+  --amber: #9E1B32; --amber-tint: #FDEDEE;
+}
+:focus-visible { outline-color: var(--ink); }
+.banner { background: var(--slate-tint); color: var(--ink); border-bottom: 1px solid #C9D2D7; font-size: .85rem; }
+.text-size button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.text-size button, .read-btn { border: 2px solid #3D525D; }
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:hover { background: var(--red-dark); }
+.btn-secondary { border-color: #3D525D; }
+.btn-secondary:hover { background: var(--slate-tint); }
+.btn-link { color: var(--muted); }
+
+/* Help-now panel: the dark red urgent card with two soft circles */
+.help-now { position: relative; overflow: hidden; background: var(--red-dark); color: #fff; border: 0; box-shadow: 0 16px 40px rgba(158, 27, 50, .25); }
+.help-now::before, .help-now::after { content: ""; position: absolute; z-index: 0; border-radius: 50%; pointer-events: none; }
+.help-now::before { top: -9rem; right: -7rem; width: 22rem; height: 22rem; background: var(--red); opacity: .55; }
+.help-now::after { right: 7rem; bottom: -8rem; width: 12rem; height: 12rem; background: rgba(255, 255, 255, .07); }
+.help-now > * { position: relative; z-index: 1; }
+.help-now h2 { color: #fff; }
+.help-now { --red-focus: #fff; }
+.help-now :focus-visible { outline-color: #fff; }
+.big-choice { border: 0; background: #fff; color: var(--ink); box-shadow: 0 2px 6px rgba(0, 0, 0, .12); }
+.big-choice:hover { background: var(--red-tint); }
+.big-choice .icon-wrap { background: var(--red); }
+.big-choice span.sub { color: var(--muted); }
+.big-choice .chev { color: var(--red-dark); }
+.call-line { color: #fff; }
+.call-line a { color: #fff; }
+
+/* Tiles: icon in a soft red square, red border on hover */
+.tile { border: 2px solid transparent; color: var(--ink); transition: border-color .15s, transform .15s, box-shadow .15s; }
+.tile:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: 0 2px 4px rgba(54, 59, 64, .06), 0 14px 32px rgba(54, 59, 64, .12); }
+.tile > .icon:first-child { width: 3.25rem; height: 3.25rem; padding: .8rem; border-radius: 14px; background: var(--red-tint); color: var(--red-dark); box-sizing: border-box; }
+.tile-wide { border-color: var(--red); }
+.tile-wide > .icon:first-child { width: 3.25rem; height: 3.25rem; }
+.group-title { color: var(--ink); }
+
+/* Results follow the team's badges: solid dark red, red tint, or grey. Icon + words, never colour alone. */
+.v-bad { background: var(--red-dark); border-color: var(--red-dark); color: #fff; }
+.v-bad p, .v-bad h1, .v-bad h2 { color: #fff; }
+.v-careful { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.v-good { background: var(--slate-tint); border-color: #3D525D; color: var(--ink); }
+.badge-bad { background: var(--red-dark); color: #fff; }
+.badge-unsure { background: var(--red-tint); color: var(--red-dark); border: 0; }
+.badge-good { background: var(--slate-tint); color: var(--ink); }
+.calm { background: var(--red-tint); color: var(--red-dark); }
+.done-mark { background: var(--red-tint); color: var(--red-dark); }
+.progress-list li.done .icon { color: var(--red-dark); }
+.reasons li .icon { color: var(--red); }
+.meter { background: linear-gradient(90deg, #C9D2D7 0 34%, #F4A3A7 34% 67%, var(--red) 67% 100%); }
+.meter i { background: var(--ink); }
+.bar span { background: var(--red); }
+.error { color: var(--red-dark); }
+.chip[aria-pressed="true"], .btn-secondary[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.drop { border-color: #3D525D; background: #fff; }
+.drop:hover, .drop.over { border-color: var(--red); background: var(--red-tint); }
+.signs li .icon { color: var(--red); }
+.caller-view { background: var(--ink); color: #fff; }
+.caller-view h2 { color: #fff; }
+.call-bar { background: #fff; }
+.detected { background: #fff; box-shadow: var(--shadow); }
+.detected .icon { color: var(--red-dark); }
+
+/* ---------- Header like the team's site: icon circles + bottom menu ---------- */
+.header-in { flex-wrap: wrap; gap: .6rem; padding-bottom: .4rem; }
+.brand { font-size: 1.2rem; width: 100%; }
+.brand-mark { width: 2.75rem; height: 2.75rem; border-radius: 12px; background: var(--red); }
+.brand-mark svg { width: 1.5rem; height: 1.5rem; }
+.tools-row { display: flex; align-items: center; gap: .4rem; margin-left: auto; }
+.read-btn, .text-size button { width: 3rem; height: 3rem; min-height: 3rem; padding: 0; justify-content: center; border-radius: 999px; border: 2px solid #6B7A84; background: #fff; color: var(--ink); }
+.text-size button[data-size="larger"] { width: 3.6rem; }
+.read-btn svg { width: 1.3rem; height: 1.3rem; }
+.read-btn[aria-pressed="true"], .text-size button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.app-nav { width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .25rem; border-top: 1px solid var(--border); padding-top: .4rem; }
+.app-nav a { display: flex; flex-direction: column; align-items: center; gap: .1rem; min-height: 3.6rem; padding: .4rem; border-radius: 999px; text-decoration: none; font-weight: 600; color: var(--ink); }
+.app-nav a:hover { background: var(--slate-tint); }
+.app-nav a[aria-current="page"] { background: var(--red-tint); color: var(--red-dark); }
+.app-nav .icon { width: 1.5rem; height: 1.5rem; }
+@media (min-width: 48rem) {
+  .brand { width: auto; }
+  .app-nav { width: auto; border-top: 0; padding-top: 0; order: 2; }
+  .tools-row { order: 3; margin-left: 0; }
+}
+
+/* ---------- Greeting and tiles like the team's home page ---------- */
+.hello .eyebrow { color: var(--red-dark); font-weight: 700; margin: 0 0 .2rem; }
+.hello h1 { font-size: 2.2rem; }
+.hello p:last-child { font-size: 1.15rem; }
+.help-now { padding: 1.5rem; border-radius: 22px; }
+.tile { border-radius: 22px; padding: 1.1rem; min-height: 5.5rem; }
+.tile strong { font-size: 1.1rem; }
+.tile .chev-s { color: var(--ink); width: 1.5rem; height: 1.5rem; }
+details.recent { border-radius: 22px; }
+</style>
+</head>
+<body>
+<p class="banner">Student prototype preview. Not a real OCBC service. All results are made up.</p>
+<header class="app-header">
+  <div class="header-in">
+    <a class="brand" href="#home"><span class="brand-mark" id="brand-icon"></span>Verify the Caller</a>
+    <div class="tools-row">
+      <button type="button" class="read-btn" id="read-btn" aria-pressed="false"></button>
+      <div class="text-size" role="group" aria-label="Text size">
+        <button type="button" data-size="normal" aria-pressed="true">A<span class="visually-hidden"> normal text</span></button>
+        <button type="button" data-size="large" aria-pressed="false">A+<span class="visually-hidden"> large text</span></button>
+        <button type="button" data-size="larger" aria-pressed="false">A++<span class="visually-hidden"> extra large text</span></button>
+      </div>
+    </div>
+    <nav class="app-nav" aria-label="Main menu">
+      <a href="#home" data-nav="home"><span data-icon="home"></span>Home</a>
+      <a href="#report" data-nav="report"><span data-icon="flag"></span>My reports</a>
+      <a href="#learn" data-nav="learn"><span data-icon="question"></span>Help</a>
+    </nav>
+  </div>
+</header>
+<main id="app" tabindex="-1"></main>
+<div id="bar-slot"></div>
+<p class="visually-hidden" id="live" aria-live="polite"></p>
+<script>
+"use strict";
+
+// ================= Icons =================
+const ICONS = {
+  phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  wave: '<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 11v2"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  transfer: '<path d="M4 8h14l-3-3M20 16H6l3 3"/>',
+  document: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/>',
+  key: '<circle cx="8" cy="14" r="4"/><path d="M11 11l8-8M16 6l3 3"/>',
+  book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>',
+  flag: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
+  speaker: '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  arrow: '<path d="M9 5l7 7-7 7"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  check: '<path d="M5 12l5 5 9-10"/>',
+  cross: '<path d="M6 6l12 12M18 6L6 18"/>',
+  warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
+  heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  question: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17v.5"/>',
+  person: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  home: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+  arrowR: '<path d="M5 12h14M13 6l6 6-6 6"/>'
+};
+function icon(name, cls = "icon") {
+  return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
+}
+document.getElementById("brand-icon").innerHTML = icon("shield");
+document.querySelectorAll("[data-icon]").forEach(el => { el.outerHTML = icon(el.dataset.icon); });
+
+// Makes typed text safe to put inside HTML
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+const HOTLINE = "1800 363 3333";
+const HOTLINE_TEL = "tel:18003633333";
+
+// ================= Made-up data =================
+const CHECK_TOOLS = [
+  { icon: "upload", title: "Check a message, call or picture", sub: "Add anything: an SMS, a call recording, a screenshot or a letter. We work out what it is.", route: "check", wide: true },
+  { icon: "shield", title: "Is the bank really calling?", sub: "Match the caller to real OCBC calls", route: "call-match" },
+  { icon: "person", title: "Is the caller a real person?", sub: "A quick code check that AI voices fail", route: "human-check" },
+  { icon: "transfer", title: "Check a transfer first", sub: "See how risky it looks before you send", route: "transfer" }
+];
+const READY_TOOLS = [
+  { icon: "key", title: "Family passphrase", sub: "A secret word to test callers", route: "passphrase" },
+  { icon: "book", title: "Learn the signs", sub: "Real banks never ask for your OTP", route: "learn" },
+  { icon: "flag", title: "Report a scam", sub: "Tell the bank what happened", route: "report" }
+];
+
+// What each kind of upload is called, and what the checker looks at
+const KINDS = {
+  message: { label: "Text message", icon: "chat", steps: ["Reading the words", "Looking for scam phrases", "Checking links and phone numbers"] },
+  voice: { label: "Voice recording", icon: "wave", steps: ["Listening to the recording", "Checking if the voice was made by AI", "Looking for scam phrases"] },
+  screenshot: { label: "Screenshot or photo", icon: "image", steps: ["Reading the words in the picture", "Looking for signs it was edited", "Checking links and logos"] },
+  document: { label: "Letter or document", icon: "document", steps: ["Reading the document", "Checking the letterhead and signature", "Checking phone numbers and links"] }
+};
+
+// Scam phrases looked for in typed or pasted messages
+const PHRASES = [
+  [/safe account/i, "Asks you to move money to a \"safe account\""],
+  [/\b(otp|one[- ]time password|pin)\b/i, "Asks for your OTP or PIN"],
+  [/urgent|immediately|within \d+\s*(min|mins|minutes|hour|hours)|right now/i, "Rushes you to act now"],
+  [/https?:\/\/|www\.|bit\.ly/i, "Has a link for you to tap"],
+  [/police|\bmas\b|court|customs|\bica\b/i, "Says it is from the police or government"],
+  [/don'?t tell|do not tell|keep (this|it) (a )?secret|do not share this/i, "Tells you to keep it a secret"],
+  [/locked|suspended|frozen|suspicious login/i, "Says your account is in trouble"]
+];
+
+// Results for files. A real AI model would do this; the prototype uses fixed answers per kind.
+const FILE_RESULTS = {
+  voice: { level: "bad", title: "This voice was likely made by AI", reasons: ["There are no breathing sounds between sentences.", "The voice stays exactly the same, even when asking for money.", "The caller says your family member is in trouble and needs money now."] },
+  screenshot: { level: "bad", title: "This picture was likely edited", reasons: ["The numbers near the amount use a different font.", "The OCBC logo is blurry and the wrong shade of red.", "The link in it goes to ocbc-secure-sg.com, not ocbc.com."] },
+  document: { level: "careful", title: "Please be careful with this letter", reasons: ["The letterhead looks normal.", "But the phone number on it is not an OCBC number.", "It asks you to reply by WhatsApp. OCBC letters will not do that."] }
+};
+
+const SAMPLES = [
+  { kind: "message", label: "Sample SMS", text: "OCBC: Your account is locked due to a suspicious login. Verify within 30 mins at https://ocbc-sg-verify.co or your account will be closed. Do not share this with anyone." },
+  { kind: "voice", label: "Sample voice message", name: "voicemail_from_nephew.m4a" },
+  { kind: "screenshot", label: "Sample screenshot", name: "transfer_receipt.png" },
+  { kind: "document", label: "Sample letter", name: "OCBC_letter.pdf" }
+];
+
+// Calls OCBC really made to this customer (made up)
+const OUTBOUND = [
+  { digits: "63633333", officer: "Mr Tan Wei Ming", when: "today, 10:05am", why: "your new debit card" },
+  { digits: "65381111", officer: "Ms Nur Aisyah", when: "yesterday, 3:40pm", why: "your fixed deposit renewal" }
+];
+
+// Three transfers for the risk scorer demo
+const TRANSFERS = [
+  { id: "fees", label: "School fees for grandson", payee: "Lim Jun Hao", account: "OCBC 501-****-881", amount: 350,
+    factors: [["Paid this person 6 times before", 0], ["Amount is normal for you", 5], ["Daytime, from your usual phone", 7]] },
+  { id: "new", label: "New person, S$2,500", payee: "Kelvin Ong", account: "DBS 027-****-319", amount: 2500,
+    factors: [["You have never paid this person", 30], ["Amount is 4 times your usual", 15], ["Daytime, from your usual phone", 3]] },
+  { id: "safe", label: "\"Safe account\", S$8,000", payee: "OCBC Safe Acct Services", account: "UOB 451-****-702", amount: 8000,
+    factors: [["You have never paid this person", 30], ["Amount is 12 times your usual", 25], ["Account name says \"safe account\"", 20], ["Someone is on the phone with you", 12]] }
+];
+
+const CAPTCHA = [
+  { id: "kopi", emoji: "☕", name: "Cup of kopi" },
+  { id: "bus", emoji: "🚌", name: "Bus" },
+  { id: "umbrella", emoji: "☂️", name: "Umbrella" },
+  { id: "cat", emoji: "🐱", name: "Cat" }
+];
+
+// ================= What the app remembers (in memory only) =================
+function freshState() {
+  return {
+    check: { phase: "input", kind: "", name: "", text: "", step: 0, result: null, error: "" },
+    match: { phase: "input", number: "", result: null, error: "" },
+    transfer: { phase: "pick", pick: "", score: 0, factors: [], result: "" },
+    pause: { endsAt: 0, answer: "", done: "" },
+    human: { phase: "captcha", sim: "human", wrong: false, code: "", otp: "", log: [], left: 60 },
+    pass: { list: [{ who: "Grandson (Jun Hao)", word: "ondeh" }], shown: -1, who: "Son", word: "", error: "" },
+    learn: { picked: "" },
+    report: { phase: "form", what: "", lost: "", contact: "", amount: "", more: "", error: "", ref: "" },
+    frozen: false,
+    recent: [
+      { level: "bad", label: "Likely AI", what: "Voice message that sounded like my nephew", when: "2 Nov" },
+      { level: "careful", label: "Be careful", what: "Short voicemail about a parcel", when: "30 Oct" }
+    ]
+  };
+}
+let S = freshState();
+
+// Timers belonging to the screen on show. All are cleared when the screen changes.
+let timers = [];
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+function announce(text) { document.getElementById("live").textContent = text; }
+function toast(text) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = text; t.setAttribute("role", "status");
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// ================= Shared pieces =================
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+}
+function tilesHtml(list) {
+  return `<ul class="tiles">${list.map(t => `<li${t.wide ? ' class="wide"' : ""}><a class="tile ${t.wide ? "tile-wide" : ""}" href="#${t.route}">${icon(t.icon)}<span><strong>${t.title}</strong><span class="sub">${t.sub}</span></span>${icon("arrowR", "icon chev-s")}</a></li>`).join("")}</ul>`;
+}
+function pageTop() {
+  return `<div class="page-top"><a class="btn btn-link" href="#home">${icon("back")}Home</a></div>`;
+}
+const LEVELS = {
+  bad: { cls: "v-bad", icon: "warning", word: "Likely a scam" },
+  careful: { cls: "v-careful", icon: "question", word: "Be careful" },
+  good: { cls: "v-good", icon: "check", word: "No warning signs" }
+};
+function badge(level, label) {
+  const cls = level === "bad" ? "badge-bad" : level === "good" ? "badge-good" : "badge-unsure";
+  return `<span class="badge ${cls}">${icon(LEVELS[level].icon)}${label}</span>`;
+}
+
+// ================= Home =================
+function homeHtml() {
+  return `
+    <section class="hello" data-read>
+      <p class="eyebrow">${greeting()}</p>
+      <h1 tabindex="-1">Hello, Mdm Lim</h1>
+      <p>What would you like to do today?</p>
+    </section>
+
+    <section class="help-now" aria-labelledby="help-title" data-read>
+      <h2 id="help-title">Need help right now?</h2>
+      <div class="stack">
+        <a class="big-choice" href="#call-1">
+          <span class="icon-wrap">${icon("phone")}</span>
+          <span><strong>Someone is calling me now</strong><span class="sub">We will help you, one step at a time</span></span>
+          ${icon("arrow", "chev")}
+        </a>
+        <a class="big-choice" href="#freeze">
+          <span class="icon-wrap">${icon("lock")}</span>
+          <span><strong>I already sent money or gave a code</strong><span class="sub">Stop more money from leaving</span></span>
+          ${icon("arrow", "chev")}
+        </a>
+      </div>
+      <p class="call-line">Or call OCBC yourself: <a href="${HOTLINE_TEL}">${HOTLINE}</a></p>
+    </section>
+
+    <section aria-labelledby="check-title" data-read>
+      <h2 class="group-title" id="check-title">Not sure? Check it first</h2>
+      <p class="group-sub">Check something before you reply or pay.</p>
+      ${tilesHtml(CHECK_TOOLS)}
+    </section>
+
+    <section aria-labelledby="ready-title" data-read>
+      <h2 class="group-title" id="ready-title">Be ready next time</h2>
+      ${tilesHtml(READY_TOOLS)}
+    </section>
+
+    <details class="recent">
+      <summary>My recent checks (${S.recent.length})</summary>
+      <ul>${S.recent.map(r => `<li><span>${esc(r.what)}<br><small>${r.when}</small></span>${badge(r.level, r.label)}</li>`).join("")}</ul>
+    </details>`;
+}
+
+// ================= Stress flow: someone is calling now =================
+function flowTop(step) {
+  return `<div class="flow-top">
+    <a class="btn btn-link" href="#home">Leave</a>
+    <span class="step-dots" aria-label="Step ${step} of 2"><i class="on"></i><i class="${step >= 2 ? "on" : ""}"></i>&nbsp;Step ${step} of 2</span>
+  </div>`;
+}
+const CALL_SCREENS = {
+  "call-1": () => `
+    <div class="flow">${flowTop(1)}
+      <section class="card" data-read>
+        <p class="calm">${icon("heart")}You are doing the right thing</p>
+        <h1 tabindex="-1">Hang up the phone now.</h1>
+        <p>It is safe to hang up. A real bank officer will not mind.</p>
+        <ul class="rules">
+          <li>${icon("cross")}<span>Do not share any code.</span></li>
+          <li>${icon("cross")}<span>Do not send any money.</span></li>
+        </ul>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="#call-2">I have hung up</a>
+          <a class="btn btn-link" href="#human-check">I want to check who is calling first</a>
+        </div>
+      </section>
+    </div>`,
+  "call-2": () => `
+    <div class="flow">${flowTop(2)}
+      <section class="card" data-read>
+        <h1 tabindex="-1">Did you give a code or send money?</h1>
+        <p>It is okay if you did. We can still help.</p>
+        <div class="stack answer-btns">
+          <a class="btn btn-secondary btn-block" href="#call-safe">No, I did not</a>
+          <a class="btn btn-secondary btn-block" href="#freeze">Yes, I did</a>
+          <a class="btn btn-secondary btn-block" href="#freeze">I am not sure</a>
+        </div>
+      </section>
+      <a class="btn btn-link" href="#call-1">Back</a>
+    </div>`,
+  "call-safe": () => `
+    <div class="flow">
+      <section class="card" data-read>
+        <div class="done-mark">${icon("check")}</div>
+        <h1 tabindex="-1">Your money is safe.</h1>
+        <p>If you want to check with the bank, call OCBC yourself. Use the number on the back of your card. Never call back the number that called you.</p>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="${HOTLINE_TEL}">${icon("phone")}Call OCBC ${HOTLINE}</a>
+          <a class="btn btn-secondary btn-block" href="#report">Tell the bank about this call</a>
+          <a class="btn btn-link" href="#home">Back to home</a>
+        </div>
+      </section>
+    </div>`
+};
+
+// ================= Freeze my accounts =================
+function freezeHtml() {
+  if (S.frozen) return `
+    <div class="flow">
+      <section class="card" data-read>
+        <div class="done-mark">${icon("lock")}</div>
+        <h1 tabindex="-1">Your accounts are frozen.</h1>
+        <p>No more money can leave your accounts. Now call OCBC on ${HOTLINE} and press 8. Tell them what happened.</p>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="${HOTLINE_TEL}">${icon("phone")}Call OCBC ${HOTLINE}</a>
+          <a class="btn btn-secondary btn-block" href="#report">Write down what happened</a>
+          <a class="btn btn-link" href="#home">Back to home</a>
+        </div>
+      </section>
+      <p class="note">Demo only: nothing is really frozen.</p>
+    </div>`;
+  return `
+    <div class="flow">
+      <section class="card" data-read>
+        <p class="calm">${icon("heart")}Stay calm. Do this first.</p>
+        <h1 tabindex="-1">Freeze your accounts now.</h1>
+        <p>This stops any more money from leaving. You can unfreeze them later with the bank.</p>
+        <div class="stack">
+          <button type="button" class="btn btn-primary btn-block" data-act="freeze">${icon("lock")}Freeze my accounts</button>
+          <a class="btn btn-link" href="${HOTLINE_TEL}">Or call OCBC ${HOTLINE} and press 8</a>
+        </div>
+      </section>
+    </div>`;
+}
+
+// ================= Check anything (message + voice + screenshot + letter in one) =================
+function detectKind(file) {
+  const type = file.type || "";
+  const name = file.name.toLowerCase();
+  if (type.startsWith("audio/") || type.startsWith("video/") || /\.(mp3|m4a|wav|ogg|aac|amr|opus|mp4)$/.test(name)) return "voice";
+  if (type.startsWith("image/") || /\.(png|jpe?g|heic|webp|gif)$/.test(name)) return "screenshot";
+  if (type === "text/plain" || /\.txt$/.test(name)) return "message";
+  return "document";
+}
+function analyseText(text) {
+  const reasons = PHRASES.filter(([re]) => re.test(text)).map(([, why]) => why);
+  if (reasons.length >= 2) return { level: "bad", title: "This message is likely a scam", reasons };
+  if (reasons.length === 1) return { level: "careful", title: "Please be careful with this message", reasons };
+  return { level: "good", title: "We did not find scam signs", reasons: ["No requests for codes, money or secrecy.", "No links or rushing words."] };
+}
+function startCheck(kind, name, text) {
+  const c = S.check;
+  Object.assign(c, { phase: "analysing", kind, name, text, step: 0, error: "" });
+  c.result = kind === "message" ? analyseText(text) : FILE_RESULTS[kind];
+  refresh();
+  const tick = () => {
+    if (location.hash !== "#check") return;
+    c.step += 1;
+    if (c.step >= KINDS[kind].steps.length) {
+      c.phase = "result";
+      S.recent.unshift({ level: c.result.level, label: LEVELS[c.result.level].word, what: name || "Pasted message", when: "Today" });
+      announce(c.result.title);
+    }
+    refresh(c.phase === "result");
+    if (c.phase !== "result") later(tick, 1100);
+  };
+  later(tick, 1100);
+}
+function checkHtml() {
+  const c = S.check;
+  if (c.phase === "input") return `${pageTop()}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Check anything you are not sure about</h1>
+      <p class="lead">Add a message, a call recording, a screenshot or a letter. You do not need to pick what it is. We will work it out.</p>
+      <label class="drop" id="drop">
+        ${icon("upload")}
+        <strong>Tap here to add a file</strong>
+        <span>or drag it into this box</span>
+        <input type="file" id="file-in" accept="audio/*,image/*,video/*,.pdf,.doc,.docx,.txt">
+      </label>
+      <p class="or">or</p>
+      <label class="field" for="msg">Paste or type the message</label>
+      <textarea id="msg" placeholder="For example: Your account is locked. Tap this link...">${esc(c.text)}</textarea>
+      ${c.error ? `<p class="error" role="alert">${c.error}</p>` : ""}
+      <div class="stack"><button type="button" class="btn btn-primary btn-block" data-act="check-text">Check this message</button></div>
+    </section>
+    <section class="card">
+      <h2>No file? Try a sample</h2>
+      <div class="chips">${SAMPLES.map((s, i) => `<button type="button" class="chip" data-act="sample" data-i="${i}">${icon(KINDS[s.kind].icon)}${s.label}</button>`).join("")}</div>
+    </section>`;
+
+  const k = KINDS[c.kind];
+  const detected = `<div class="detected">${icon(k.icon)}<span><strong>We found: ${k.label}</strong><small>${esc(c.name || "Pasted message")}</small></span></div>`;
+  if (c.phase === "analysing") return `${pageTop()}
+    <section class="card" data-read>
+      ${detected}
+      <h1 tabindex="-1" id="step-title">Checking it now...</h1>
+      <p>This takes a few seconds.</p>
+      <ul class="progress-list">${k.steps.map((s, i) => `<li class="${i < c.step ? "done" : i === c.step ? "now" : ""}">${i < c.step ? icon("check") : i === c.step ? '<span class="spin" aria-hidden="true"></span>' : '<span class="dot" aria-hidden="true"></span>'}<span>${s}</span></li>`).join("")}</ul>
+    </section>`;
+
+  const r = c.result, L = LEVELS[r.level];
+  return `${pageTop()}
+    <section data-read>
+      ${detected}
+      <div class="verdict ${L.cls}">${icon(L.icon)}<div><p><strong>${L.word}</strong></p><h1 tabindex="-1" id="step-title">${r.title}</h1></div></div>
+      <div class="card">
+        <h2>Why we think so</h2>
+        <ul class="reasons">${r.reasons.map(x => `<li>${icon(r.level === "good" ? "check" : "flag")}<span>${esc(x)}</span></li>`).join("")}</ul>
+      </div>
+      <div class="card">
+        <h2>What to do now</h2>
+        ${r.level === "good"
+          ? `<p>If anything still feels wrong, call OCBC yourself before you reply or pay.</p>`
+          : `<p>Do not reply, tap links or send money. If you already did, freeze your accounts.</p>`}
+        <div class="stack">
+          ${r.level !== "good" ? `<a class="btn btn-primary btn-block" href="#report">Report this to OCBC</a><a class="btn btn-secondary btn-block" href="#freeze">I already sent money or a code</a>` : ""}
+          <button type="button" class="btn btn-secondary btn-block" data-act="check-again">Check something else</button>
+        </div>
+      </div>
+    </section>`;
+}
+
+// ================= Is the bank really calling? =================
+function matchHtml() {
+  const m = S.match;
+  if (m.phase === "input") return `${pageTop()}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Is the bank really calling?</h1>
+      <p class="lead">Type the number that called you. We check it against the calls OCBC really made to you.</p>
+      <label class="field" for="num">Number that called you</label>
+      <input type="tel" id="num" inputmode="tel" value="${esc(m.number)}" placeholder="For example: 6363 3333">
+      ${m.error ? `<p class="error" role="alert">${m.error}</p>` : ""}
+      <div class="chips"><span class="sub">Try:</span>
+        <button type="button" class="chip" data-act="num" data-v="+65 6363 3333">+65 6363 3333</button>
+        <button type="button" class="chip" data-act="num" data-v="+65 8123 9876">+65 8123 9876</button>
+      </div>
+      <div class="stack"><button type="button" class="btn btn-primary btn-block" data-act="match">Check this number</button></div>
+    </section>`;
+  const hit = m.result;
+  if (hit) return `${pageTop()}
+    <section data-read>
+      <div class="verdict v-good">${icon("check")}<div><p><strong>OCBC called you</strong></p><h1 tabindex="-1" id="step-title">Yes, this was a real OCBC call</h1></div></div>
+      <div class="card">
+        <div class="summary-row"><span>Officer</span><span>${hit.officer}</span></div>
+        <div class="summary-row"><span>When</span><span>${hit.when}</span></div>
+        <div class="summary-row"><span>About</span><span>${hit.why}</span></div>
+        <p style="margin-top:1rem">Even so, OCBC will never ask for your OTP or ask you to move money. If they do, hang up.</p>
+        <div class="stack"><button type="button" class="btn btn-secondary btn-block" data-act="match-again">Check another number</button></div>
+      </div>
+    </section>`;
+  return `${pageTop()}
+    <section data-read>
+      <div class="verdict v-bad">${icon("warning")}<div><p><strong>No record</strong></p><h1 tabindex="-1" id="step-title">OCBC did not call you from this number</h1></div></div>
+      <div class="card">
+        <p>Scammers can make any number show on your phone. Hang up and call OCBC yourself.</p>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="${HOTLINE_TEL}">${icon("phone")}Call OCBC ${HOTLINE}</a>
+          <a class="btn btn-secondary btn-block" href="#human-check">Check if the caller is even a real person</a>
+          <a class="btn btn-secondary btn-block" href="#report">Report this number</a>
+        </div>
+      </div>
+    </section>`;
+}
+
+// ================= Transfer risk scorer =================
+function money(n) { return "S$" + n.toLocaleString("en-SG"); }
+function levelFor(score) { return score >= 67 ? "bad" : score >= 34 ? "careful" : "good"; }
+function transferHtml() {
+  const t = S.transfer;
+  const picked = TRANSFERS.find(x => x.id === t.pick);
+  if (t.phase === "pick") return `${pageTop()}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Check a transfer before you send it</h1>
+      <p class="lead">Pick a transfer to see how risky it looks.</p>
+      <div class="chips">${TRANSFERS.map(x => `<button type="button" class="chip" data-act="pick" data-id="${x.id}" aria-pressed="${x.id === t.pick}">${x.label}</button>`).join("")}</div>
+      ${picked ? `
+        <div style="margin-top:1rem">
+          <div class="summary-row"><span>To</span><span>${picked.payee}</span></div>
+          <div class="summary-row"><span>Account</span><span>${picked.account}</span></div>
+          <div class="summary-row"><span>Amount</span><span>${money(picked.amount)}</span></div>
+        </div>
+        <div class="stack"><button type="button" class="btn btn-primary btn-block" data-act="score">Check the risk</button></div>` : ""}
+    </section>`;
+  if (t.phase === "scoring") return `${pageTop()}
+    <section class="card" data-read><h1 tabindex="-1" id="step-title">Checking this transfer...</h1>
+      <ul class="progress-list"><li class="now"><span class="spin" aria-hidden="true"></span><span>Comparing with how you usually send money</span></li></ul>
+    </section>`;
+  const lvl = levelFor(t.score), L = LEVELS[lvl];
+  const words = { good: "Low risk", careful: "Medium risk", bad: "High risk" }[lvl];
+  return `${pageTop()}
+    <section data-read>
+      <div class="verdict ${L.cls}">${icon(L.icon)}<div><p><strong>${words}</strong></p><h1 tabindex="-1" id="step-title">${money(picked.amount)} to ${picked.payee}</h1></div></div>
+      <div class="card">
+        <div class="score"><b>${t.score}</b><span>out of 100</span></div>
+        <div class="meter" role="img" aria-label="Risk score ${t.score} out of 100, ${words}"><i style="left:${t.score}%"></i></div>
+        <div class="meter-scale"><span>Low</span><span>Medium</span><span>High</span></div>
+        <h2 style="margin-top:1.2rem">What made the score</h2>
+        <ul class="reasons">${picked.factors.map(([why, pts]) => `<li>${icon(pts >= 10 ? "flag" : "check")}<span>${why}</span><span class="pts">+${pts}</span></li>`).join("")}</ul>
+      </div>
+      <div class="card">
+        ${lvl === "bad" ? `<p><strong>We paused this transfer.</strong> Your money has not left your account.</p>
+          <div class="stack"><a class="btn btn-primary btn-block" href="#pause">Take a kopi break and check</a><button type="button" class="btn btn-secondary btn-block" data-act="t-cancel">Cancel this transfer</button></div>`
+        : lvl === "careful" ? `<p>Check with someone you trust before you send. A new person asking for a big amount is a common scam.</p>
+          <div class="stack"><button type="button" class="btn btn-secondary btn-block" data-act="t-send">Send anyway</button><button type="button" class="btn btn-primary btn-block" data-act="t-cancel">Cancel and check first</button></div>`
+        : `<p>This looks like your usual transfers.</p><div class="stack"><button type="button" class="btn btn-primary btn-block" data-act="t-send">Send ${money(picked.amount)}</button></div>`}
+        <button type="button" class="btn btn-link" data-act="t-again">Try another transfer</button>
+      </div>
+    </section>`;
+}
+function transferDoneHtml(sent) {
+  return `${pageTop()}<section class="card" data-read>
+    <div class="done-mark">${icon("check")}</div>
+    <h1 tabindex="-1">${sent ? "Your transfer is on its way" : "Your transfer is cancelled"}</h1>
+    <p>${sent ? "This is a demo, so no real money was sent." : "No money has left your account."}</p>
+    <div class="stack"><a class="btn btn-primary btn-block" href="#home">Back to home</a>${sent ? "" : `<a class="btn btn-secondary btn-block" href="#report">Report a scam</a>`}</div>
+  </section>`;
+}
+
+// ================= Kopi break (pause and verify) =================
+const BREAK_SECONDS = 30;
+function pauseLeft() { return Math.max(0, Math.ceil((S.pause.endsAt - Date.now()) / 1000)); }
+function pauseHtml() {
+  const p = S.pause;
+  if (p.done) return transferDoneHtml(p.done === "sent");
+  if (!p.endsAt) p.endsAt = Date.now() + BREAK_SECONDS * 1000;
+  const left = pauseLeft();
+  const picked = TRANSFERS.find(x => x.id === S.transfer.pick) || TRANSFERS[2];
+  return `
+    <section class="kopi" data-read>
+      <p class="calm">${icon("lock")}Transfer paused. Your money is safe.</p>
+      <h1 tabindex="-1" id="step-title">Wait ah, let's take a kopi break</h1>
+      <div class="cup" aria-hidden="true">☕</div>
+      <p class="time" id="pv-time" role="timer">00:${String(left).padStart(2, "0")}</p>
+      <div class="bar" aria-hidden="true"><span id="pv-bar" style="width:${100 - left / BREAK_SECONDS * 100}%"></span></div>
+      <p id="pv-label">${left ? "until you can decide" : "Your kopi break is over. Take your time."}</p>
+    </section>
+    <section class="card" data-read>
+      <h2>Why we stopped ${money(picked.amount)}</h2>
+      <ul class="reasons">${picked.factors.filter(f => f[1] >= 12).map(([why]) => `<li>${icon("warning")}<span>${why}</span></li>`).join("")}</ul>
+      <h2>Is someone on the phone telling you to do this?</h2>
+      <div class="stack answer-btns">
+        <button type="button" class="btn btn-secondary btn-block" data-act="p-ans" data-v="yes" aria-pressed="${p.answer === "yes"}">Yes</button>
+        <button type="button" class="btn btn-secondary btn-block" data-act="p-ans" data-v="no" aria-pressed="${p.answer === "no"}">No</button>
+      </div>
+      ${p.answer === "yes" ? `<div class="verdict v-bad" style="margin-top:1rem">${icon("warning")}<div><p><strong>This is a scam sign</strong></p><p>A real bank officer will never tell you to move money. Hang up and cancel.</p></div></div>` : ""}
+      ${p.answer ? `<div class="stack">
+        <button type="button" class="btn btn-primary btn-block" data-act="p-cancel">Cancel this transfer</button>
+        <button type="button" class="btn btn-link" data-act="p-send" id="p-send" ${left ? "disabled" : ""}>I am sure, send it</button>
+        <p class="note" id="p-wait" ${left ? "" : "hidden"}>You can send it when the kopi break ends.</p>
+      </div>` : ""}
+    </section>`;
+}
+function tickPause() {
+  if (location.hash !== "#pause" || S.pause.done) return;
+  const left = pauseLeft();
+  const t = document.getElementById("pv-time");
+  if (!t) return;
+  t.textContent = "00:" + String(left).padStart(2, "0");
+  document.getElementById("pv-bar").style.width = `${100 - left / BREAK_SECONDS * 100}%`;
+  if (left > 0) { later(tickPause, 1000); return; }
+  document.getElementById("pv-label").textContent = "Your kopi break is over. Take your time.";
+  const send = document.getElementById("p-send"); if (send) send.disabled = false;
+  const wait = document.getElementById("p-wait"); if (wait) wait.hidden = true;
+  announce("Your kopi break is over.");
+}
+
+// ================= Is the caller a real person? (CAPTCHA handshake) =================
+function randomDigits(n) { let s = ""; for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 10); return s; }
+function humanHtml() {
+  const h = S.human;
+  const steps = { captcha: 1, code: 2, waiting: 3, otp: 4 };
+  const top = `${pageTop()}${steps[h.phase] ? `<p class="step-dots" style="margin-bottom:.75rem">${[1, 2, 3, 4].map(n => `<i class="${n <= steps[h.phase] ? "on" : ""}"></i>`).join("")}&nbsp;Step ${steps[h.phase]} of 4</p>` : ""}`;
+
+  if (h.phase === "captcha") return `${top}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">First, a quick check for you</h1>
+      <p class="lead">We give you a code to read to the caller. A real person can use it. A computer voice usually cannot.</p>
+      <h2>Tap the cup of kopi</h2>
+      ${h.wrong ? `<p class="error" role="alert">Not that one. Try again, there is no rush.</p>` : ""}
+      <div class="captcha">${CAPTCHA.map(c => `<button type="button" data-act="cap" data-id="${c.id}" aria-label="${c.name}">${c.emoji}<span>${c.name}</span></button>`).join("")}</div>
+    </section>`;
+
+  if (h.phase === "code") return `${top}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Read this code to the caller</h1>
+      <div class="big-code" aria-label="Code ${h.code.replace("-", "").split("").join(" ")}">${h.code}</div>
+      <p class="speak-code">Say it slowly: ${h.code.replace("-", "").split("").join(" ")}</p>
+      <p>Ask them to open the OCBC Verify page and type it in. They then solve a picture puzzle, like you did.</p>
+      <div class="stack">
+        <button type="button" class="btn btn-primary btn-block" data-act="told">I have told them the code</button>
+        <button type="button" class="btn btn-secondary btn-block" data-act="sms">Send the code by SMS instead</button>
+      </div>
+    </section>`;
+
+  if (h.phase === "waiting" || h.phase === "otp") {
+    const demo = `<div class="demo-switch" role="group" aria-label="Demo: who is the caller?"><strong>Demo, who is calling?</strong>
+      <button type="button" class="chip" data-act="sim" data-v="human" aria-pressed="${h.sim === "human"}">A real person</button>
+      <button type="button" class="chip" data-act="sim" data-v="ai" aria-pressed="${h.sim === "ai"}">An AI voice bot</button></div>`;
+    const callerView = `<aside class="caller-view" aria-label="What the caller sees (demo)"><span class="tag">Demo: the caller's screen</span>
+      <h2>OCBC Verify page</h2><ol>${h.log.map(l => `<li>${l}</li>`).join("") || "<li>Waiting for the caller to open the page...</li>"}</ol></aside>`;
+    const mine = h.phase === "waiting" ? `
+      <section class="card" data-read>
+        <h1 tabindex="-1" id="step-title">Waiting for the caller...</h1>
+        <p>They have <strong id="h-left">${h.left}</strong> seconds to type the code and solve the puzzle.</p>
+        <ul class="progress-list"><li class="now"><span class="spin" aria-hidden="true"></span><span>Waiting for the caller</span></li></ul>
+      </section>` : `
+      <section class="card" data-read>
+        <h1 tabindex="-1" id="step-title">The caller finished the check</h1>
+        <p>You and the caller now both have a 6-digit number. Ask them to read theirs to you.</p>
+        <div class="big-code">${h.otp.slice(0, 3)} ${h.otp.slice(3)}</div>
+        <h2>Does it match what they said?</h2>
+        <div class="stack answer-btns">
+          <button type="button" class="btn btn-secondary btn-block" data-act="otp" data-v="yes">Yes, it is the same</button>
+          <button type="button" class="btn btn-secondary btn-block" data-act="otp" data-v="no">No, it is different</button>
+        </div>
+      </section>`;
+    return `${top}${h.phase === "waiting" ? demo : ""}<div class="split">${mine}${callerView}</div>`;
+  }
+
+  if (h.phase === "matched") return `${pageTop()}
+    <section data-read>
+      <div class="verdict v-good">${icon("check")}<div><p><strong>Real person</strong></p><h1 tabindex="-1" id="step-title">The caller is a real person</h1></div></div>
+      <div class="card">
+        <p><strong>This does not show they are from OCBC.</strong> Scammers can be real people too.</p>
+        <p>Never share your OTP or send money because a caller asks.</p>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="#call-match">Check if OCBC is really calling</a>
+          <a class="btn btn-secondary btn-block" href="#home">Back to home</a>
+        </div>
+      </div>
+    </section>`;
+
+  return `${pageTop()}
+    <section data-read>
+      <div class="verdict v-bad">${icon("warning")}<div><p><strong>Check failed</strong></p><h1 tabindex="-1" id="step-title">The caller could not pass the check</h1></div></div>
+      <div class="card">
+        <p>${h.phase === "failed" ? "They could not solve the puzzle in time." : "Their number did not match yours."} This may be a computer (AI) voice, or someone you should not trust.</p>
+        <p><strong>Hang up now.</strong> Do not share any code or send money.</p>
+        <div class="stack">
+          <a class="btn btn-primary btn-block" href="${HOTLINE_TEL}">${icon("phone")}Call OCBC ${HOTLINE}</a>
+          <a class="btn btn-secondary btn-block" href="#report">Report this call</a>
+          <button type="button" class="btn btn-link" data-act="h-again">Start the check again</button>
+        </div>
+      </div>
+    </section>`;
+}
+// Plays out what the caller does on their side, so the demo shows both ends
+function runCaller() {
+  const h = S.human;
+  h.log = []; h.left = 60;
+  const script = h.sim === "human"
+    ? [[1500, `Typed code ${h.code}`], [1500, "Puzzle shown: tap the cup of kopi"], [2000, "Tapped the cup of kopi. Correct."]] 
+    : [[1200, `Typed code ${h.code}`], [1200, "Puzzle shown: tap the cup of kopi"], [1600, "Tapped the bus. Wrong."], [1600, "Tapped the umbrella. Wrong."], [1600, "Too many wrong tries. Check stopped."]];
+  let i = 0;
+  const step = () => {
+    if (location.hash !== "#human-check" || h.phase !== "waiting") return;
+    if (i < script.length) {
+      h.log.push(script[i][1]);
+      i++;
+      refresh(false);
+      if (i < script.length) later(step, script[i][0]);
+      else later(finish, 900);
+    }
+  };
+  const finish = () => {
+    if (h.phase !== "waiting") return;
+    if (h.sim === "human") { h.otp = randomDigits(6); h.log.push(`Their screen now shows: ${h.otp.slice(0, 3)} ${h.otp.slice(3)}`); h.phase = "otp"; announce("The caller finished the check."); }
+    else { h.phase = "failed"; announce("The caller could not pass the check."); }
+    refresh();
+  };
+  const countdown = () => {
+    if (h.phase !== "waiting" || location.hash !== "#human-check") return;
+    h.left = Math.max(0, h.left - 1);
+    const el = document.getElementById("h-left");
+    if (el) el.textContent = h.left;
+    if (h.left === 0) { h.phase = "failed"; refresh(); return; }
+    later(countdown, 1000);
+  };
+  later(step, script[0][0]);
+  later(countdown, 1000);
+}
+
+// ================= Family passphrase =================
+function passHtml() {
+  const p = S.pass;
+  return `${pageTop()}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Family passphrase</h1>
+      <p class="lead">Agree on a secret word with your family. If someone calls saying they are your family and need money, ask for the word. An AI copy of their voice will not know it.</p>
+    </section>
+    <section class="card">
+      <h2>Your passphrases</h2>
+      ${p.list.map((x, i) => `<div class="saved"><span><strong>${esc(x.who)}</strong><br><code>${i === p.shown ? esc(x.word) : "••••••"}</code></span>
+        <button type="button" class="chip" data-act="show" data-i="${i}">${i === p.shown ? "Hide" : "Show"}</button></div>`).join("")}
+    </section>
+    <section class="card">
+      <h2>Add a new one</h2>
+      <label class="field" for="who">Who is it for?</label>
+      <select id="who">${["Son", "Daughter", "Grandchild", "Husband or wife", "Someone else"].map(o => `<option ${o === p.who ? "selected" : ""}>${o}</option>`).join("")}</select>
+      <label class="field" for="word">Secret word</label>
+      <input type="text" id="word" value="${esc(p.word)}" autocomplete="off" placeholder="For example: the name of your first pet">
+      ${p.error ? `<p class="error" role="alert">${p.error}</p>` : ""}
+      <p class="note" style="border:0;margin-top:.5rem;padding:0">Pick something only your family knows. Never post it online.</p>
+      <div class="stack"><button type="button" class="btn btn-primary btn-block" data-act="save-pass">Save passphrase</button></div>
+    </section>`;
+}
+
+// ================= Learn the signs =================
+function learnHtml() {
+  const picked = S.learn.picked;
+  const signs = [
+    ["clock", "They rush you", "\"You must do it now, or your account will be closed.\" Real banks give you time."],
+    ["key", "They ask for your OTP or PIN", "OCBC will never ask for these. Not by phone, SMS or email."],
+    ["transfer", "They ask you to move money to a \"safe account\"", "There is no such thing. This is always a scam."],
+    ["lock", "They tell you to keep it a secret", "Scammers do not want you to ask your family or the bank."]
+  ];
+  const opts = [["a", "Move the money quickly to keep it safe"], ["b", "Hang up, then call the police or the bank yourself"], ["c", "Ask the caller for their staff number and continue"]];
+  return `${pageTop()}
+    <section data-read>
+      <h1 tabindex="-1" id="step-title">4 signs of a scam call</h1>
+      <p class="lead">If you notice even one of these, hang up.</p>
+      <ul class="signs">${signs.map(([ic, t, d]) => `<li>${icon(ic)}<span><strong>${t}</strong>${d}</span></li>`).join("")}</ul>
+    </section>
+    <section class="card" style="margin-top:1rem" data-read>
+      <h2>Try one</h2>
+      <p>A caller says he is from the police. He says you must move your money now to protect it. What do you do?</p>
+      <div class="stack">${opts.map(([id, t]) => `<button type="button" class="btn btn-secondary quiz-opt" data-act="quiz" data-v="${id}" aria-pressed="${picked === id}">${t}</button>`).join("")}</div>
+      ${picked ? (picked === "b"
+        ? `<div class="verdict v-good" style="margin-top:1rem">${icon("check")}<div><p><strong>Correct</strong></p><p>Always hang up and call back on a number you found yourself.</p></div></div>`
+        : `<div class="verdict v-bad" style="margin-top:1rem">${icon("cross")}<div><p><strong>Not quite</strong></p><p>The police and the bank will never ask you to move money. Hang up and call them yourself.</p></div></div>`) : ""}
+    </section>`;
+}
+
+// ================= Report a scam =================
+function reportHtml() {
+  const r = S.report;
+  if (r.phase === "sent") return `${pageTop()}
+    <section class="card" data-read>
+      <div class="done-mark">${icon("check")}</div>
+      <h1 tabindex="-1" id="step-title">Your report is sent</h1>
+      <p>Your report number is</p><p class="ref">${r.ref}</p>
+      <p>An OCBC officer will look at it. If they call you, they will never ask for your OTP.</p>
+      <p>You can also tell the police: 1800 255 0000, or the ScamShield Helpline: 1799.</p>
+      <div class="stack"><a class="btn btn-primary btn-block" href="#home">Back to home</a></div>
+    </section>`;
+  const choice = (name, v, label) => `<button type="button" class="chip" data-act="r-${name}" data-v="${v}" aria-pressed="${r[name] === v}">${label}</button>`;
+  return `${pageTop()}
+    <section class="card" data-read>
+      <h1 tabindex="-1" id="step-title">Report a scam</h1>
+      <p class="lead">Tell us what happened. Short answers are fine.</p>
+    </section>
+    <section class="card">
+      <h2>What happened?</h2>
+      <div class="chips">${choice("what", "call", "A phone call")}${choice("what", "message", "A message")}${choice("what", "sent", "I sent money")}${choice("what", "other", "Something else")}</div>
+      <label class="field" for="r-contact">Their phone number or link (if you have it)</label>
+      <input type="text" id="r-contact" value="${esc(r.contact)}">
+      <h2 style="margin-top:1.2rem">Did you lose money?</h2>
+      <div class="chips">${choice("lost", "yes", "Yes")}${choice("lost", "no", "No")}${choice("lost", "unsure", "Not sure")}</div>
+      ${r.lost === "yes" ? `<label class="field" for="r-amount">About how much? (S$)</label><input type="number" id="r-amount" inputmode="decimal" value="${esc(r.amount)}">` : ""}
+      <label class="field" for="r-more">Anything else? (optional)</label>
+      <textarea id="r-more">${esc(r.more)}</textarea>
+      ${r.error ? `<p class="error" role="alert">${r.error}</p>` : ""}
+      <div class="stack">
+        <button type="button" class="btn btn-primary btn-block" data-act="r-send">Send to OCBC</button>
+        ${r.lost === "yes" ? `<a class="btn btn-secondary btn-block" href="#freeze">Freeze my accounts first</a>` : ""}
+      </div>
+    </section>`;
+}
+
+// ================= Router =================
+const ROUTES = {
+  home: homeHtml, ...CALL_SCREENS, freeze: freezeHtml, check: checkHtml, "call-match": matchHtml,
+  transfer: () => S.transfer.result ? transferDoneHtml(S.transfer.result === "sent") : transferHtml(),
+  pause: pauseHtml, "human-check": humanHtml, passphrase: passHtml, learn: learnHtml, report: reportHtml
+};
+const STRESS = ["call-1", "call-2", "call-safe", "freeze", "pause"];
+
+function route() { return location.hash.slice(1) || "home"; }
+
+// Draws the current screen. focus=true moves focus to the main heading (new screen or new step).
+function refresh(focus = true) {
+  stopReading();
+  const r = route();
+  const app = document.getElementById("app");
+  app.innerHTML = (ROUTES[r] || homeHtml)();
+  document.querySelectorAll(".app-nav a").forEach(a => {
+    if (a.dataset.nav === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+  });
+  document.getElementById("bar-slot").innerHTML = STRESS.includes(r)
+    ? `<div class="call-bar"><div class="in"><p>Want to talk to a real person?</p><a class="btn btn-primary" href="${HOTLINE_TEL}">${icon("phone")}Call OCBC</a></div></div>` : "";
+  wireScreen(r);
+  if (focus) {
+    const h = document.getElementById("step-title") || app.querySelector("h1");
+    if (h) h.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
+}
+
+let firstLoad = true;
+window.addEventListener("hashchange", () => {
+  clearTimers();
+  // Coming into a feature again starts it fresh (except the frozen state and the passphrases)
+  const r = route();
+  const keep = freshState();
+  if (r === "check") S.check = keep.check;
+  if (r === "call-match") S.match = keep.match;
+  if (r === "transfer") S.transfer = keep.transfer;
+  if (r === "pause") S.pause = keep.pause;
+  if (r === "human-check") S.human = keep.human;
+  if (r === "report") S.report = keep.report;
+  refresh();
+});
+
+// Things a screen needs after it is drawn (inputs, drag and drop, timers)
+function wireScreen(r) {
+  if (r === "check" && S.check.phase === "input") {
+    const drop = document.getElementById("drop");
+    const take = file => { if (file) startCheck(detectKind(file), file.name, ""); };
+    document.getElementById("file-in").addEventListener("change", e => take(e.target.files[0]));
+    ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", e => take(e.dataTransfer.files[0]));
+    document.getElementById("msg").addEventListener("input", e => { S.check.text = e.target.value; });
+  }
+  if (r === "call-match" && S.match.phase === "input") document.getElementById("num").addEventListener("input", e => { S.match.number = e.target.value; });
+  if (r === "pause" && !S.pause.done) { clearTimers(); later(tickPause, 1000); }
+  if (r === "passphrase") {
+    document.getElementById("word").addEventListener("input", e => { S.pass.word = e.target.value; });
+    document.getElementById("who").addEventListener("change", e => { S.pass.who = e.target.value; });
+  }
+  if (r === "report" && S.report.phase === "form") {
+    document.getElementById("r-contact").addEventListener("input", e => { S.report.contact = e.target.value; });
+    document.getElementById("r-more").addEventListener("input", e => { S.report.more = e.target.value; });
+    const amt = document.getElementById("r-amount");
+    if (amt) amt.addEventListener("input", e => { S.report.amount = e.target.value; });
+  }
+}
+
+// ================= Buttons: one listener for every data-act button =================
+function onAct(btn) {
+  const v = btn.dataset.v;
+  switch (btn.dataset.act) {
+    case "freeze": S.frozen = true; announce("Your accounts are frozen."); break;
+    // Check anything
+    case "check-text":
+      if (!S.check.text.trim()) { S.check.error = "Please paste a message, add a file, or try a sample."; break; }
+      startCheck("message", "", S.check.text.trim()); return;
+    case "sample": {
+      const s = SAMPLES[+btn.dataset.i];
+      if (s.kind === "message") { S.check.text = s.text; startCheck("message", "", s.text); }
+      else startCheck(s.kind, s.name, "");
+      return;
+    }
+    case "check-again": S.check = freshState().check; break;
+    // Call match
+    case "num": S.match.number = v; break;
+    case "match": {
+      const digits = S.match.number.replace(/\D/g, "").replace(/^65(?=\d{8}$)/, "");
+      if (digits.length < 8) { S.match.error = "Please type the 8-digit number that called you."; break; }
+      S.match.result = OUTBOUND.find(o => o.digits === digits) || null;
+      S.match.phase = "result"; S.match.error = "";
+      break;
+    }
+    case "match-again": S.match = freshState().match; break;
+    // Transfer
+    case "pick": S.transfer.pick = btn.dataset.id; break;
+    case "score": {
+      const t = S.transfer, picked = TRANSFERS.find(x => x.id === t.pick);
+      t.score = Math.min(100, picked.factors.reduce((sum, f) => sum + f[1], 0));
+      t.phase = "scoring"; refresh();
+      later(() => { t.phase = "result"; announce(`Risk score ${t.score} out of 100`); refresh(); }, 1400);
+      return;
+    }
+    case "t-send": S.transfer.result = "sent"; break;
+    case "t-cancel": S.transfer.result = "cancelled"; break;
+    case "t-again": S.transfer = freshState().transfer; break;
+    // Kopi break
+    case "p-ans": S.pause.answer = v; refresh(false); return;
+    case "p-cancel": S.pause.done = "cancelled"; break;
+    case "p-send": if (pauseLeft() > 0) return; S.pause.done = "sent"; break;
+    // Caller check
+    case "cap":
+      if (btn.dataset.id === "kopi") { S.human.phase = "code"; S.human.wrong = false; S.human.code = "KOPI-" + randomDigits(4); }
+      else { S.human.wrong = true; announce("Not that one. Try again."); }
+      break;
+    case "sms": toast("Code sent by SMS (demo)"); return;
+    case "told": S.human.phase = "waiting"; refresh(); runCaller(); return;
+    case "sim": S.human.sim = v; clearTimers(); refresh(false); runCaller(); return;
+    case "otp": S.human.phase = v === "yes" ? "matched" : "mismatch"; break;
+    case "h-again": S.human = freshState().human; break;
+    // Passphrase
+    case "show": S.pass.shown = S.pass.shown === +btn.dataset.i ? -1 : +btn.dataset.i; refresh(false); return;
+    case "save-pass":
+      if (S.pass.word.trim().length < 3) { S.pass.error = "Please type a word with at least 3 letters."; break; }
+      S.pass.list.push({ who: S.pass.who, word: S.pass.word.trim() });
+      S.pass.word = ""; S.pass.error = ""; toast("Passphrase saved"); break;
+    // Learn
+    case "quiz": S.learn.picked = v; refresh(false); return;
+    // Report
+    case "r-what": S.report.what = v; refresh(false); return;
+    case "r-lost": S.report.lost = v; refresh(false); return;
+    case "r-send":
+      if (!S.report.what || !S.report.lost) { S.report.error = "Please answer the two questions with buttons."; break; }
+      S.report.phase = "sent"; S.report.ref = "SR-26-" + randomDigits(5); break;
+  }
+  refresh();
+}
+
+// ---------- Text size ----------
+function setTextSize(size) {
+  document.documentElement.dataset.size = size;
+  document.querySelectorAll(".text-size button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.size === size)));
+  try { localStorage.setItem("vtc-text-size", size); } catch (e) { /* not remembered */ }
+}
+try { setTextSize(localStorage.getItem("vtc-text-size") || "normal"); } catch (e) { setTextSize("normal"); }
+
+// ---------- Read aloud, with the word being spoken highlighted ----------
+const canSpeak = "speechSynthesis" in window;
+const readBtn = document.getElementById("read-btn");
+let words = [];          // [{ span, start }] in reading order
+let fallbackTimer = null;
+let gotBoundary = false;
+let reading = false;
+
+function setReadButton(on) {
+  reading = on;
+  readBtn.setAttribute("aria-pressed", String(on));
+  readBtn.innerHTML = on ? `${icon("stop")}<span class="visually-hidden">Stop reading</span>` : `${icon("speaker")}<span class="visually-hidden">Read aloud</span>`;
+  readBtn.title = on ? "Stop reading" : "Read aloud";
+  document.getElementById("app").classList.toggle("reading", on);
+}
+if (!canSpeak) readBtn.hidden = true; else setReadButton(false);
+
+// Wraps every word inside the [data-read] areas in <span class="w">, once, and builds the
+// text to speak. Each word remembers where it starts in that text, so the browser's
+// "I'm now at character N" event can be matched back to a word on screen.
+function prepareWords() {
+  words = [];
+  let text = "";
+  document.querySelectorAll("#app [data-read]").forEach(area => {
+    if (!area.dataset.wrapped) {
+      const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(node => {
+        const frag = document.createDocumentFragment();
+        node.nodeValue.split(/(\s+)/).forEach(piece => {
+          if (!piece) return;
+          if (/^\s+$/.test(piece)) { frag.appendChild(document.createTextNode(piece)); return; }
+          const s = document.createElement("span");
+          s.className = "w";
+          s.textContent = piece;
+          frag.appendChild(s);
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+      area.dataset.wrapped = "yes";
+    }
+    // Skip words that are hidden (for example visually-hidden helper text)
+    area.querySelectorAll(".w").forEach(span => {
+      if (span.closest(".visually-hidden") || span.closest("[hidden]")) return;
+      words.push({ span, start: text.length });
+      text += span.textContent + " ";
+    });
+    text += "\n";
+  });
+  return text;
+}
+
+function clearMark() {
+  document.querySelectorAll(".w.now").forEach(s => s.classList.remove("now"));
+}
+
+function markWord(i) {
+  clearMark();
+  const w = words[i];
+  if (!w) return;
+  w.span.classList.add("now");
+  const r = w.span.getBoundingClientRect();
+  if (r.top < 80 || r.bottom > innerHeight - 90) w.span.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+
+// The last word that starts at or before this character position
+function wordAt(charIndex) {
+  let found = 0;
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].start <= charIndex) found = i; else break;
+  }
+  return found;
+}
+
+// Some voices never send word events. Then we move the highlight on a timer instead:
+// a rough guess of how long each word takes to say at this speed.
+function startFallback(rate) {
+  let i = 0;
+  const step = () => {
+    if (!reading || gotBoundary || i >= words.length) return;
+    markWord(i);
+    const len = words[i].span.textContent.length;
+    const pause = /[.,?!:]$/.test(words[i].span.textContent) ? 260 : 0;
+    i++;
+    fallbackTimer = setTimeout(step, (180 + len * 55 + pause) / rate);
+  };
+  step();
+}
+
+function stopReading() {
+  if (canSpeak) speechSynthesis.cancel();
+  clearTimeout(fallbackTimer);
+  clearMark();
+  if (canSpeak) setReadButton(false);
+}
+
+function pickVoice() {
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("en"));
+  // On-device voices are the ones most likely to report each word as it is spoken
+  return voices.find(v => v.localService && /SG|GB/.test(v.lang)) || voices.find(v => v.localService) || voices[0] || null;
+}
+
+function startReading() {
+  const text = prepareWords();
+  if (!words.length) return;
+  const talk = new SpeechSynthesisUtterance(text);
+  talk.rate = 0.9;
+  const voice = pickVoice();
+  if (voice) talk.voice = voice;
+  gotBoundary = false;
+  talk.onboundary = e => {
+    if (e.name && e.name !== "word") return;
+    gotBoundary = true;
+    clearTimeout(fallbackTimer);
+    markWord(wordAt(e.charIndex));
+  };
+  talk.onstart = () => {
+    setTimeout(() => { if (reading && !gotBoundary) startFallback(talk.rate); }, 700);
+  };
+  talk.onend = stopReading;
+  talk.onerror = stopReading;
+  setReadButton(true);
+  speechSynthesis.cancel();
+  speechSynthesis.speak(talk);
+}
+
+
+// ================= One click listener for the page =================
+document.addEventListener("click", e => {
+  const el = e.target.closest("button, a");
+  if (!el) return;
+  if (el.dataset.size) setTextSize(el.dataset.size);
+  else if (el.id === "read-btn") reading ? stopReading() : startReading();
+  else if (el.dataset.act) onAct(el);
+});
+
+refresh(false);
+</script>
+</body>
+</html>

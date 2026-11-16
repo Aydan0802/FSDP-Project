@@ -1,0 +1,17 @@
+{
+  "name": "verify-the-caller-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Verify the Caller (student prototype): serves the web app and the risk scoring API. Owner: Jose.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "4.21.2"
+  }
+}

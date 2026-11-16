@@ -1,0 +1,47 @@
+/* Feature: Is the caller a real person? (picture puzzle, code, waiting, matching number).
+   Owner: added on frontend-update (from the senior flow preview).
+   Uses the Clarity variables only. */
+
+.cc-steps { margin-bottom: .75rem; }
+.cc-screen .panel { margin-bottom: 1rem; }
+
+/* The picture puzzle: four big buttons, picture with its name under it */
+.cc-captcha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.cc-captcha button {
+  display: grid; justify-items: center; gap: .25rem; min-height: 7rem; padding: .75rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 700;
+  border: 2.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  touch-action: manipulation;
+}
+.cc-captcha button:hover { border-color: var(--red); }
+.cc-emoji { font-size: 3rem; line-height: 1.1; }
+
+/* The code to read out, big and spaced */
+.cc-code {
+  margin: 1rem 0; padding: 1rem; text-align: center;
+  font-size: 2.5rem; font-weight: 800; letter-spacing: .12em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+  background: var(--surface-2); border: 2px dashed var(--text); border-radius: var(--radius);
+}
+.cc-say { margin-top: -.25rem; color: var(--muted); text-align: center; font-weight: 600; }
+
+/* Demo only: who is calling? */
+.cc-demo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; padding: .625rem .875rem;
+  border: 1.5px dashed var(--field-border); border-radius: var(--radius);
+}
+.cc-demo strong { margin-right: .25rem; }
+
+/* My side and the caller's side, next to each other when there is room */
+.cc-split { display: grid; gap: 1rem; align-items: start; }
+@media (min-width: 44rem) { .cc-split { grid-template-columns: 1fr 1fr; } }
+
+/* The dark "caller's screen" panel */
+.cc-caller { padding: 1rem 1.125rem; background: var(--charcoal); color: var(--white); border-radius: var(--radius-lg); }
+.cc-caller h2 { font-size: 1.125rem; color: var(--white); }
+.cc-caller ol { display: grid; gap: .4rem; margin: 0; padding-left: 1.25rem; list-style: decimal; font-size: 1rem; }
+.cc-tag {
+  display: inline-block; margin-bottom: .5rem; padding: .1rem .6rem; border-radius: 999px;
+  background: var(--white); color: var(--charcoal); font-size: .875rem; font-weight: 700;
+}
+
+.cc-warning { padding: .75rem 1rem; background: var(--red-tint); color: var(--red-dark); border-radius: var(--radius); }
