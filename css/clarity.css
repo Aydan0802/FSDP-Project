@@ -22,7 +22,7 @@ h1, h2, .brand-name { font-weight: 800; letter-spacing: -.02em; }
 
 .app-header { border-bottom: 0; box-shadow: 0 1px 0 var(--border), 0 4px 16px rgba(54, 59, 64, .05); }
 .brand-mark { border-radius: 12px; }
-.app-nav a, .app-nav button, .tool-btn, .text-size button { border-radius: 999px; }
+.app-nav a, .app-nav button, .tool-btn, .text-size button, .lang-switch button { border-radius: 999px; }
 .app-nav [aria-current="page"] { background: var(--red-tint); color: var(--red-dark); box-shadow: none; }
 
 .side-nav a, .side-nav button { border-radius: 999px; }

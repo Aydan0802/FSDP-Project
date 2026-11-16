@@ -84,10 +84,12 @@ function brandHtml(href, tag = "") {
 // ---------- Menus ----------
 
 // The customer's top menu. route is the address after the #.
+// labelKey is a translation key (i18n.js), not the words themselves: the words are looked up
+// each time the menu is drawn, so they follow the language the customer picked.
 const CUSTOMER_MENU = [
-  { route: "customer", icon: "home", label: "Home" },
-  { route: "my-reports", icon: "flag", label: "My reports" },
-  { route: "help", icon: "question", label: "Help" }
+  { route: "customer", icon: "home", labelKey: "menu.home" },
+  { route: "my-reports", icon: "flag", labelKey: "menu.myReports" },
+  { route: "help", icon: "question", labelKey: "menu.help" }
 ];
 
 // The staff side menu. count is the small number badge (it matches "Waiting for review" on the overview).
@@ -101,26 +103,28 @@ const STAFF_MENU = [
 
 // Turns a menu list into links. The link for the current route gets aria-current="page",
 // which tells screen readers "you are here" and lets the CSS highlight it.
+// An item has either labelKey (translated, the customer menu) or label (English only, the staff menu).
 function menuLinksHtml(items, current) {
   return items.map(item => `<a href="#${item.route}"${item.route === current ? ' aria-current="page"' : ""}>
-      ${icon(item.icon)}${item.label}${item.count ? `<span class="count">${item.count}</span>` : ""}
+      ${icon(item.icon)}${item.labelKey ? t(item.labelKey) : item.label}${item.count ? `<span class="count">${item.count}</span>` : ""}
     </a>`).join("");
 }
 
 // ---------- Page frames: header and menu around a screen's content ----------
 
-// A customer screen: header (brand, menu, read aloud, text size, sign out), then the content.
+// A customer screen: header (brand, menu, language, read aloud, text size, sign out), then the content.
 // current is the menu route to highlight; pass "" when the screen isn't in the menu.
-// textSizeHtml() and readAloudButtonHtml() live in a11y.js.
+// textSizeHtml() and readAloudButtonHtml() live in a11y.js; languageSwitchHtml() in i18n.js.
 function customerPageHtml(current, content) {
   return `
     <header class="app-header">
       ${brandHtml("#customer")}
-      <nav class="app-nav" aria-label="Customer menu">${menuLinksHtml(CUSTOMER_MENU, current)}</nav>
+      <nav class="app-nav" aria-label="${t("nav.customer")}">${menuLinksHtml(CUSTOMER_MENU, current)}</nav>
       <div class="header-tools">
+        ${languageSwitchHtml()}
         ${readAloudButtonHtml()}
         ${textSizeHtml()}
-        <button type="button" class="tool-btn" data-action="signout">${icon("logout")}<span class="tool-label">Sign out</span></button>
+        <button type="button" class="tool-btn" data-action="signout">${icon("logout")}<span class="tool-label">${t("header.signOut")}</span></button>
       </div>
     </header>
     <main class="cust-main" tabindex="-1">${content}</main>`;
@@ -152,7 +156,7 @@ const OCBC_TEL = "tel:18003633333";
 
 // A small "Home" link for the top of a screen
 function homeLinkHtml() {
-  return `<a class="btn btn-link back-link" href="#customer">${icon("back")}Home</a>`;
+  return `<a class="btn btn-link back-link" href="#customer">${icon("back")}${t("menu.home")}</a>`;
 }
 
 // The bar fixed to the bottom of the screen on stressful screens (calling now, freeze).
@@ -162,8 +166,8 @@ function callBarHtml() {
     <div class="call-bar-space" aria-hidden="true"></div>
     <div class="call-bar">
       <div class="call-bar-in">
-        <p>Want to talk to a real person?</p>
-        <a class="btn btn-primary btn-small" href="${OCBC_TEL}">${icon("phone")}Call OCBC</a>
+        <p>${t("callBar.question")}</p>
+        <a class="btn btn-primary btn-small" href="${OCBC_TEL}">${icon("phone")}${t("callBar.call")}</a>
       </div>
     </div>`;
 }

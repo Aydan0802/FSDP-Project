@@ -45,16 +45,19 @@
 <body data-theme="clarity">
   <!-- The skip link and the demo banner stay on every screen. The router draws the current
        screen inside <div id="app">. -->
-  <a class="skip-link" href="#main">Skip to main content</a>
+  <!-- data-i18n="key": i18n.js swaps these words when the language changes (the router never redraws them) -->
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
   <div class="demo-bar">
-    <p><strong>Student prototype.</strong> Not a real OCBC service. All data is made up.</p>
+    <p><strong data-i18n="demo.title">Student prototype.</strong> <span data-i18n="demo.text">Not a real OCBC service. All data is made up.</span></p>
   </div>
   <div id="app"></div>
 
   <!-- Scripts run in this order. Core first, so the helpers and registerRoute() exist before
        any feature file uses them. -->
 
-  <!-- Core: SHARED (whole team), except access.js (Wei Ye) -->
+  <!-- Core: SHARED (whole team), except access.js (Wei Ye) and i18n.js (Jose).
+       i18n.js goes first: it defines t(), which every file below uses for its words. -->
+  <script src="js/core/i18n.js"></script>
   <script src="js/core/helpers.js"></script>
   <script src="js/core/state.js"></script>
   <script src="js/core/a11y.js"></script>
