@@ -60,9 +60,10 @@ function icon(name, extraClass = "") {
   return `<svg class="icon ${extraClass}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
 }
 
-// Returns a result badge (icon + words) for one of the five RESULTS keys, e.g. badge("likely")
+// Returns a result badge (icon + words) for one of the five RESULTS keys, e.g. badge("likely").
+// The words come from i18n.js ("result.likely"), so they follow the customer's language.
 function badge(key) {
-  return `<span class="badge badge--${key}">${icon(RESULTS[key].icon)}${RESULTS[key].short}</span>`;
+  return `<span class="badge badge--${key}">${icon(RESULTS[key].icon)}${t(`result.${key}`)}</span>`;
 }
 
 // Turns words into a CSS-friendly name: "In review" becomes "in-review"

@@ -7,10 +7,11 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
 const i18n = require("../../js/core/i18n.js");
 const RISK_SCORER_DATA = require("../../js/data/risk-scorer.js");
-const REPORT_DATA = require("../../js/data/report.js");
-const FREEZE_DATA = require("../../js/data/freeze.js");
 
 const { t, setLanguage, getLanguage, addTranslations, I18N } = i18n;
 
@@ -57,13 +58,51 @@ test("t() fills in the blanks", () => {
 
 // ---------- The translations themselves ----------
 
-// The shared words plus my three screens' words, the same way the browser adds them
-const ALL = [
-  { name: "shared (i18n.js)", text: { en: I18N.en, zh: I18N.zh, ms: I18N.ms } },
-  { name: "risk scorer", text: RISK_SCORER_DATA.text },
-  { name: "report", text: REPORT_DATA.text },
-  { name: "freeze", text: FREEZE_DATA.text }
-];
+// Teammates' data files are plain browser scripts with no module.exports, so we run each one in
+// a small sandbox and read its ..._DATA back out. Any data file with a text block is checked,
+// so a screen is covered by these tests as soon as someone translates it.
+const DATA_DIR = path.join(__dirname, "..", "..", "js", "data");
+function teamTexts() {
+  const found = [];
+  for (const file of fs.readdirSync(DATA_DIR).filter(f => f.endsWith(".js"))) {
+    const code = fs.readFileSync(path.join(DATA_DIR, file), "utf8");
+    const name = (code.match(/^const (\w+_DATA)\s*=/m) || [])[1];
+    if (!name) continue;
+    const sandbox = { module: undefined };
+    vm.runInNewContext(`${code}\n;this.__data = ${name};`, sandbox);
+    if (sandbox.__data.text) found.push({ name: file, text: sandbox.__data.text, data: sandbox.__data });
+  }
+  return found;
+}
+
+test("the call match words match the calls matchCall() returns", () => {
+  const { data } = teamTexts().find(d => d.name === "call-match-logic.js");
+  for (const call of data.outboundCalls) {
+    for (const field of ["team", "time", "about"]) {
+      assert.equal(data.text.en[`cml.call.${call.id}.${field}`], call[field], `${call.id}.${field}`);
+    }
+  }
+});
+
+// The shared words plus every screen's words
+const ALL = [{ name: "shared (i18n.js)", text: { en: I18N.en, zh: I18N.zh, ms: I18N.ms } }, ...teamTexts()];
+
+test("the badge words match RESULTS in helpers.js", () => {
+  const helpers = fs.readFileSync(path.join(DATA_DIR, "..", "core", "helpers.js"), "utf8");
+  for (const [, key, short] of helpers.matchAll(/(\w+): \{ short: "([^"]+)"/g)) {
+    assert.equal(I18N.en[`result.${key}`], short, key);
+  }
+});
+
+test("no two screens use the same key", () => {
+  const owner = {};
+  for (const { name, text } of ALL) {
+    for (const key of Object.keys(text.en)) {
+      assert.ok(!owner[key] || owner[key] === name, `"${key}" is in both ${owner[key]} and ${name}`);
+      owner[key] = name;
+    }
+  }
+});
 
 test("every English word has a Chinese and a Malay version", () => {
   for (const { name, text } of ALL) {

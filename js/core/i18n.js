@@ -49,7 +49,13 @@ const I18N = {
     "callBar.call": "Call OCBC",
     "common.callOcbcNumber": "Call OCBC {phone}",
     "common.backHome": "Back to home",
-    "read.noVoice": "Sorry, this device has no voice for this language. Reading in English instead."
+    "read.noVoice": "Sorry, this device has no voice for this language. Reading in English instead.",
+    // The five result badges (badge() in helpers.js). Must match RESULTS[key].short there.
+    "result.likely": "Likely AI-made",
+    "result.partial": "Part AI-made",
+    "result.uncertain": "Some signs",
+    "result.unsure": "Not sure",
+    "result.real": "Probably real"
   },
   zh: {
     "lang.label": "语言",
@@ -70,7 +76,12 @@ const I18N = {
     "callBar.call": "打电话给 OCBC",
     "common.callOcbcNumber": "打电话给 OCBC {phone}",
     "common.backHome": "回到主页",
-    "read.noVoice": "抱歉，这部设备没有中文语音。现在用英语朗读。"
+    "read.noVoice": "抱歉，这部设备没有中文语音。现在用英语朗读。",
+    "result.likely": "很可能是 AI 做的",
+    "result.partial": "部分是 AI 做的",
+    "result.uncertain": "有一些迹象",
+    "result.unsure": "不确定",
+    "result.real": "可能是真的"
   },
   ms: {
     "lang.label": "Bahasa",
@@ -91,7 +102,12 @@ const I18N = {
     "callBar.call": "Telefon OCBC",
     "common.callOcbcNumber": "Telefon OCBC {phone}",
     "common.backHome": "Kembali ke halaman utama",
-    "read.noVoice": "Maaf, peranti ini tiada suara Bahasa Melayu. Kami akan baca dalam Bahasa Inggeris."
+    "read.noVoice": "Maaf, peranti ini tiada suara Bahasa Melayu. Kami akan baca dalam Bahasa Inggeris.",
+    "result.likely": "Mungkin dibuat oleh AI",
+    "result.partial": "Sebahagian dibuat oleh AI",
+    "result.uncertain": "Ada beberapa tanda",
+    "result.unsure": "Tidak pasti",
+    "result.real": "Mungkin benar"
   }
 };
 
@@ -130,11 +146,14 @@ const warnedKeys = new Set();
 // If the current language has no text for this key, we show the English instead (better than
 // a blank button) and warn in the console so the team notices and adds it.
 function t(key, values = {}) {
-  let text = I18N[currentLanguage][key];
+  // Bank staff always get English (the staff console is English-only), even if a customer
+  // picked another language earlier on this same device.
+  const lang = typeof appState !== "undefined" && appState.role === "staff" ? "en" : currentLanguage;
+  let text = I18N[lang][key];
   if (text === undefined) {
-    if (!warnedKeys.has(currentLanguage + ":" + key)) {
-      warnedKeys.add(currentLanguage + ":" + key);
-      console.warn(`Missing translation: "${key}" in "${currentLanguage}". Showing English instead.`);
+    if (!warnedKeys.has(lang + ":" + key)) {
+      warnedKeys.add(lang + ":" + key);
+      console.warn(`Missing translation: "${key}" in "${lang}". Showing English instead.`);
     }
     text = I18N.en[key];
   }
