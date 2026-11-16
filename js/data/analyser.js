@@ -4,7 +4,9 @@
 // Owner: Aydan
 // Messages are checked by the real text detector ("text detector prototype/detector/"), so the
 // examples below are only sample messages to try: their results come from the detector.
-// The voice results are still written by hand: they show until the voice detector is plugged in.
+// Voice recordings go to the real voice detector on this computer. The hand-written voice results
+// below give each result's title and advice, and are shown in full only as a demo when the voice
+// checker isn't running.
 // All messages are short, made up and clearly fake: fake names, ".example" links, no real people.
 // The Chinese and Malay wording still needs a teammate who speaks each language to check it.
 
@@ -17,31 +19,42 @@ const ANALYSER_DATA = {
   labels: {
     en: {
       risk: { low: "Low risk", medium: "Medium risk", high: "High risk" },
-      looksLike: "This looks like",
-      lowTitle: "We found no clear scam signs",
+      // The big headline, in plain words, for each risk level
+      headline: {
+        high: "This message is likely a scam",
+        medium: "Be careful with this message",
+        low: "We found no clear scam signs"
+      },
+      looksLike: "It looks like:",
       howSure: "How sure we are",
       sure: { low: "Not very sure", medium: "Fairly sure", high: "Very sure" },
-      flagsTitle: "Warning signs in your message",
+      flagsTitle: "Why we think so",
+      tapHint: "The worrying parts are marked in red. Tap a part to see why.",
       noFlags: "We found no warning signs in this message.",
       stepsTitle: "What to do now",
-      honesty: "These are warning signs, not proof of a scam. If you're unsure, ask the bank.",
+      honesty: "This is a warning, not proof. If you're not sure, call the bank on the number on your card.",
       types: {
-        impersonation: "A scam pretending to be the bank or government",
-        phishing: "A fake link to steal your details",
-        parcel: "A fake delivery message",
-        job: "A job scam",
-        investment: "An investment scam",
-        love: "A love scam",
-        none: "A normal message"
+        impersonation: "someone pretending to be the bank or government",
+        phishing: "a fake link to steal your bank details",
+        parcel: "a fake delivery message",
+        job: "a fake job offer",
+        investment: "a fake investment offer",
+        love: "someone you met online asking for money",
+        none: "a normal message"
       }
     },
     zh: {
       risk: { low: "低风险", medium: "中风险", high: "高风险" },
-      looksLike: "这看起来像",
-      lowTitle: "没有发现明显的诈骗迹象",
+      headline: {
+        high: "这条信息很可能是诈骗",
+        medium: "请小心这条信息",
+        low: "没有发现明显的诈骗迹象"
+      },
+      looksLike: "这看起来像：",
       howSure: "我们的把握",
       sure: { low: "不太确定", medium: "比较确定", high: "非常确定" },
-      flagsTitle: "信息中的危险信号",
+      flagsTitle: "我们为什么这样认为",
+      tapHint: "可疑的部分已用红色标出。点击可以看原因。",
       noFlags: "这条信息没有发现危险信号。",
       stepsTitle: "现在该怎么做",
       honesty: "这些只是危险信号，不能证明一定是诈骗。如有疑问，请联系银行。",
@@ -56,21 +69,26 @@ const ANALYSER_DATA = {
     },
     ms: {
       risk: { low: "Risiko rendah", medium: "Risiko sederhana", high: "Risiko tinggi" },
-      looksLike: "Ini kelihatan seperti",
-      lowTitle: "Kami tidak menemui tanda penipuan yang jelas",
+      headline: {
+        high: "Mesej ini mungkin penipuan",
+        medium: "Berhati-hati dengan mesej ini",
+        low: "Kami tidak menemui tanda penipuan yang jelas"
+      },
+      looksLike: "Ini kelihatan seperti:",
       howSure: "Sejauh mana kami pasti",
       sure: { low: "Kurang pasti", medium: "Agak pasti", high: "Sangat pasti" },
-      flagsTitle: "Tanda amaran dalam mesej anda",
+      flagsTitle: "Mengapa kami fikir begitu",
+      tapHint: "Bahagian yang membimbangkan ditanda merah. Tekan untuk lihat sebabnya.",
       noFlags: "Kami tidak menemui tanda amaran dalam mesej ini.",
       stepsTitle: "Apa yang perlu dilakukan sekarang",
       honesty: "Ini hanya tanda amaran, bukan bukti penipuan. Jika ragu, tanya pihak bank.",
       types: {
-        impersonation: "Penipuan yang menyamar sebagai bank atau kerajaan",
-        phishing: "Pautan palsu untuk mencuri butiran anda",
-        parcel: "Mesej penghantaran palsu",
-        job: "Penipuan kerja",
-        investment: "Penipuan pelaburan",
-        love: "Penipuan cinta"
+        impersonation: "penipuan yang menyamar sebagai bank atau kerajaan",
+        phishing: "pautan palsu untuk mencuri butiran anda",
+        parcel: "mesej penghantaran palsu",
+        job: "penipuan kerja",
+        investment: "penipuan pelaburan",
+        love: "penipuan cinta"
       }
     }
   },
@@ -198,54 +216,54 @@ const ANALYSER_DATA = {
   // MEDIUM = uncertain, HIGH or an AI watermark = likely, "part of this clip" = partial,
   // INCONCLUSIVE = unsure. Wording copied from the first website prototype.
   sampleClipName: "sample-voicemail.wav",
+  // The voice checker (voice detector prototype/app/api.py) runs on this computer only
+  voiceApi: "http://127.0.0.1:7861/api/voice",
+  voiceTimeoutMs: 120000,   // give up after 2 minutes (a long recording on a slow computer)
   voiceResults: {
+    // title: the big headline. meaning: one line explaining "fake voice", for older customers.
     likely: {
-      title: "Likely an AI-made voice",
+      title: "This voice is likely fake",
+      meaning: "A fake voice is made by a computer (AI) to sound like a real person.",
       chance: 91, sure: "High",
       reasons: [
-        "The voice has patterns that are common in AI-made speech.",
-        "These patterns run through the whole clip, not just one part.",
-        "The clip was long and clear enough to check."
+        "The voice sounds like it was made by a computer.",
+        "It sounds this way all the way through."
       ],
       extra: "Don't send money or share any codes. Hang up and call the bank yourself."
     },
     partial: {
-      title: "Part of this clip sounds AI-made",
+      title: "Part of this voice may be fake",
+      meaning: "Someone may have mixed a computer-made (AI) voice into a real recording.",
       chance: 63, sure: "Medium",
       reasons: [
-        "Seconds 10 to 20 sound different from the rest of the clip.",
-        "A real voice may have been mixed with an AI-made one.",
-        "No hidden AI watermark was found."
+        "Seconds 10 to 20 sound computer-made, but the rest sounds real."
       ],
-      extra: "Treat this call as suspicious.",
+      extra: "Treat this call as suspicious. Hang up and call the person back on a number you know.",
       timeline: [false, false, true, true, false, false]   // one entry per 5 seconds of the clip
     },
     uncertain: {
-      title: "Some signs of an AI voice",
+      title: "This voice might be fake",
+      meaning: "A fake voice is made by a computer (AI) to sound like a real person.",
       chance: 48, sure: "Medium",
       reasons: [
-        "Some parts of the voice sound smoother than a person normally does.",
-        "This sounds like phone-call audio, where our checks make more mistakes.",
-        "No hidden AI watermark was found."
+        "Some parts sound a bit like a computer voice, but we're not sure.",
+        "It sounds like a phone recording, so this check is less sure."
       ],
       extra: "Be careful. Check the caller another way before you do anything they ask."
     },
     unsure: {
-      title: "Not sure: not enough clear evidence",
+      title: "We can't tell if this voice is real",
       chance: null, sure: "Low",   // the detector gives no number when it can't tell
       reasons: [
-        "Different parts of the clip gave very different results.",
-        "There was no clear pattern either way."
+        "We couldn't get a clear answer from this recording."
       ],
-      extra: "Try a longer clip, or check the caller with questions instead."
+      extra: "Try a longer recording, or ask the caller a question only the real person would know."
     },
     real: {
-      title: "Probably a real human voice",
+      title: "This voice sounds like a real person",
       chance: 6, sure: "High",
       reasons: [
-        "No hidden AI watermark was found. That alone doesn't prove the voice is real.",
-        "The voice sounds natural all the way through.",
-        "The clip was long and clear enough to check."
+        "The voice sounds like a real person all the way through."
       ],
       extra: "A real voice can still belong to a scammer. If the caller asks for money, codes or secrecy, hang up."
     }
