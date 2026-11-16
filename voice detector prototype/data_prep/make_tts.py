@@ -53,8 +53,9 @@ class SpeechT5:
         from transformers import SpeechT5ForTextToSpeech, SpeechT5HifiGan, SpeechT5Processor
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.processor = SpeechT5Processor.from_pretrained(DL / "speecht5_tts")
-        self.model = SpeechT5ForTextToSpeech.from_pretrained(DL / "speecht5_tts").to(self.device).eval()
-        self.vocoder = SpeechT5HifiGan.from_pretrained(DL / "speecht5_hifigan").to(self.device).eval()
+        # Both ship only pickles (.bin); weights_only=True (the default, written out) loads tensors only.
+        self.model = SpeechT5ForTextToSpeech.from_pretrained(DL / "speecht5_tts", weights_only=True).to(self.device).eval()
+        self.vocoder = SpeechT5HifiGan.from_pretrained(DL / "speecht5_hifigan", weights_only=True).to(self.device).eval()
         self.speakers = {}
         for name in SPEECHT5_VOICES:  # one x-vector (voice fingerprint) per CMU Arctic speaker
             first = sorted((DL / "xvectors" / "spkrec-xvect").glob(f"cmu_us_{name}_*.npy"))[0]

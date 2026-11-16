@@ -20,6 +20,7 @@ torch.serialization.get_unsafe_globals_in_checkpoint) plus PyTorch's own
 tensor-rebuilding helpers.
 """
 import functools
+import importlib.metadata
 import pickle
 import types
 from _compat_pickle import IMPORT_MAPPING, NAME_MAPPING  # Python 2 -> 3 names (standard library)
@@ -34,6 +35,16 @@ ROOT = Path(__file__).resolve().parent.parent
 CKPT_DIR = ROOT / "downloads" / "audioseal"
 SR = 16000
 DETECT_THRESHOLD = 0.5  # AudioSeal's default: over half the audio carries the mark
+
+# The safe loading below replaces two functions inside audioseal.loader. It was
+# checked on this version only: another one could load checkpoints some other way
+# and quietly skip our replacement, so stop instead.
+AUDIOSEAL_VERSION = "0.2.0"
+if importlib.metadata.version("audioseal") != AUDIOSEAL_VERSION or not all(
+        hasattr(loader, name) for name in ("_safe_load_checkpoint", "load_model_checkpoint")):
+    raise RuntimeError(f"detectors/watermark.py was checked with audioseal {AUDIOSEAL_VERSION}, but "
+                       f"{importlib.metadata.version('audioseal')} is installed. Install that version "
+                       "(requirements.txt) or check the loader again before using it.")
 
 ALLOWED = {
     ("collections", "OrderedDict"), ("collections", "defaultdict"), ("typing", "Any"),

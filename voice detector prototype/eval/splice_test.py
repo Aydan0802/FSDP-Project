@@ -8,10 +8,11 @@ enough 5 s windows sound synthetic. This script measures that rule:
     real only   real + real + real      a warning here is a false alarm
     spliced     real + FAKE + real      a warning here is a catch
 
-Each pair of test clips is built from different recordings, clean and through
-a simulated phone call. Real pieces come from different speakers, so this
-tests the windows, not a believable edit. The script scores every clip once,
-saves the window chances, then tries each rule setting on those saved scores.
+Each pair of test clips is built from different recordings, clean, compressed
+and through a simulated phone call. Real pieces come from different speakers,
+so this tests the windows, not a believable edit. The script scores every clip
+once, saves the window chances, then tries each rule setting on those saved
+scores.
 
 Choose the rule on validation clips, then run the test clips ONCE to report it:
     python -m eval.splice_test --manifest data/train_manifest_sg_orpheus.csv --split val --out results/splice_val
@@ -25,10 +26,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from audio.phone import PhoneConfig, degrade
+from audio.phone import PhoneConfig, compress_clip, degrade
 from detectors.calibration import combine
 from detectors.forensics_xlsr import load_audio, score_clip
 from detectors.verdict import CALIBRATION, PART_MIN_SHARE, PART_MIN_WINDOWS, PART_WINDOW, phone_band_share
+from eval import run_info
 
 ROOT = Path(__file__).resolve().parent.parent
 GRID = [(w, n, s) for w in (0.5, 0.6, 0.7, 0.8, 0.9) for n in (1, 2, 3) for s in (0.1, 0.2, 0.3)]
@@ -50,11 +52,13 @@ def make_trials(manifest, n, seed=0):
 
 def score_trial(kind, generator, paths, cal):
     wav = np.concatenate([load_audio(ROOT / p) for p in paths])
-    phone, _ = degrade(wav, seed=zlib.crc32("".join(paths).encode()), config=PhoneConfig())
+    seed = zlib.crc32("".join(paths).encode())
+    phone, _ = degrade(wav, seed=seed, config=PhoneConfig())
+    compressed, _ = compress_clip(wav, seed=seed)
     rows = []
-    for condition, audio in [("clean", wav), ("phone", phone)]:
+    for condition, audio in [("clean", wav), ("compressed", compressed), ("phone", phone)]:
         params = cal["phone" if phone_band_share(audio) < cal["band_cutoff"] else "wideband"]
-        dets = [score_clip(audio, ROOT / head if head else None) for head in cal["heads"]]
+        dets = [score_clip(audio, ROOT / head if head else None) for head in params["heads"]]
         rows.append({"kind": kind, "generator": generator, "condition": condition,
                      "chance": float(combine([d["fake_score_raw"] for d in dets], params)),
                      "windows": json.dumps(combine(np.array([d["window_scores"] for d in dets]).T,
@@ -76,7 +80,7 @@ def rule_table(scores, high_edge):
     for part_window, min_windows, min_share in GRID:
         flagged = (scores.chance >= high_edge) | windows.map(lambda w: warned(w, part_window, min_windows, min_share))
         row = {"window_chance": part_window, "min_windows": min_windows, "min_share": min_share}
-        for condition in ("clean", "phone"):
+        for condition in ("clean", "compressed", "phone"):
             kept = flagged[scores.condition == condition]
             kinds = scores.kind[scores.condition == condition]
             row[f"{condition}_false_alarm_%"] = round(100 * kept[kinds == "real only"].mean(), 1)
@@ -97,7 +101,10 @@ def main():
     out = ROOT / args.out
     out.mkdir(parents=True, exist_ok=True)
     cal = json.loads(CALIBRATION.read_text())
+    # The saved chances depend on the calibration too, so it is part of the record.
+    run = {"manifest": args.manifest, "split": args.split, "n": args.n, "calibration": cal}
     if (out / "scores.csv").exists() and not args.rescore:
+        run_info.check(out, **run)
         print(f"Re-using {out / 'scores.csv'} (pass --rescore to score again)")
         scores = pd.read_csv(out / "scores.csv", keep_default_na=False)
     else:
@@ -112,6 +119,7 @@ def main():
                 print(f"  scored {i + 1}/{len(trials)} clips")
         scores = pd.DataFrame(rows)
         scores.to_csv(out / "scores.csv", index=False)
+        run_info.write(out, **run)
 
     table = rule_table(scores, cal["bands"]["MEDIUM"])
     table.to_csv(out / "rules.csv", index=False)

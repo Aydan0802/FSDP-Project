@@ -62,7 +62,8 @@ def load_tools():
     """Tool name -> function from 16 kHz audio to rebuilt 16 kHz audio."""
     encodec = EncodecModel.from_pretrained(DL / "encodec_24khz", use_safetensors=True).to(DEVICE).eval()
     dac = DacModel.from_pretrained(DL / "dac_16khz", use_safetensors=True).to(DEVICE).eval()
-    univnet = UnivNetModel.from_pretrained(DL / "univnet_dev").to(DEVICE).eval()
+    # UnivNet ships only a pickle (.bin); weights_only=True (the default, written out) loads tensors only.
+    univnet = UnivNetModel.from_pretrained(DL / "univnet_dev", weights_only=True).to(DEVICE).eval()
     features = UnivNetFeatureExtractor.from_pretrained(DL / "univnet_dev")
     # SNAC only ships a pickle (.bin), so load it with weights_only=True and a strict key check.
     snac = SNAC.from_config(str(DL / "snac_24khz" / "config.json"))
@@ -95,14 +96,25 @@ def tool_for(stem):
     return TOOLS[zlib.crc32(stem.encode()) % len(TOOLS)]
 
 
+def mel_match(a, b):
+    """How alike two clips sound, as the correlation of their log-mel spectrograms.
+    Waveforms cannot show this: a mel vocoder rebuilds the phase, so its waveform
+    looks unrelated to the original even when the sound is right."""
+    a, b = [librosa.power_to_db(librosa.feature.melspectrogram(y=x, sr=SR, n_mels=80)).ravel() for x in (a, b)]
+    return np.corrcoef(a, b)[0, 1]
+
+
 def check(tools, real, n):
-    """How close each tool stays to the original: a low correlation means it is broken."""
+    """How close each tool stays to the original. Compare to different speech, the
+    last row: a working tool has a mel match far above it."""
+    clips = [load_audio(ROOT / path) for path in real.path[:n + 1]]
     for name, tool in tools.items():
-        for path in real.path[:n]:
-            wav = load_audio(ROOT / path)
+        for wav in clips[:n]:
             out = rebuild(tool, wav)
-            print(f"{name:8s} {len(wav) / SR:5.1f} s  correlation {np.corrcoef(wav, out)[0, 1]:.3f}  "
-                  f"loudness ratio {out.std() / wav.std():.2f}")
+            print(f"{name:8s} {len(wav) / SR:5.1f} s  mel match {mel_match(wav, out):.3f}  "
+                  f"waveform {np.corrcoef(wav, out)[0, 1]:.3f}  loudness ratio {out.std() / wav.std():.2f}")
+    shortest = min(len(clips[0]), len(clips[1]))
+    print(f"different speech  mel match {mel_match(clips[0][:shortest], clips[1][:shortest]):.3f}")
 
 
 def make_copy(job):
