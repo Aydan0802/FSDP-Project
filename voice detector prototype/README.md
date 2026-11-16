@@ -34,12 +34,33 @@ python -c "from huggingface_hub import snapshot_download; snapshot_download('eli
 python -m detectors.verdict path/to/clip.wav
 ```
 
-Steps: AudioSeal watermark check (found = AI-generated, stop) -> detect clean vs phone-band audio -> detector score -> calibrated chance it is synthetic (`detectors/calibration.json`) -> band LOW / MEDIUM / HIGH or INCONCLUSIVE, a confidence level and the reasons. It is one risk signal, not a scam verdict.
+Steps: AudioSeal watermark check (found = AI-generated, stop) -> detect clean vs phone-band audio -> the detector heads for that kind of audio -> calibrated chance it is synthetic (`detectors/calibration.json`) -> band LOW / MEDIUM / HIGH or INCONCLUSIVE, a confidence level and the reasons. It is one risk signal, not a scam verdict. All clips use the original head + `clips_final3`, with weights fitted separately for clean and phone-band audio. The `phone_tuned` setup from Run 12 is kept for the live-call work in `detectors/calibration_phone_tuned.json`; try it with `--calibration detectors/calibration_phone_tuned.json` (Run 12 in `docs/eval_results.md` says why it is not the default).
 
 The watermark layer needs AudioSeal's two small checkpoints (about 94 MB) in `downloads/audioseal/`:
 
 ```bash
 python -c "from huggingface_hub import hf_hub_download as d; [d('facebook/audioseal', f, local_dir='downloads/audioseal') for f in ('detector_base.pth', 'generator_base.pth')]"
+```
+
+## Use it from the website ("Check anything" screen)
+
+The website's voice check sends the recording to a small local API, `app/api.py` (Python standard library only, nothing extra to install). Start it, then open the website as usual:
+
+```bash
+python -m app.api
+```
+
+It loads the model (about a minute the first time), then listens on http://127.0.0.1:7861. Only pages from `localhost` / `127.0.0.1` may call it, nothing leaves the computer, and each recording is deleted straight after it is checked. Phone recordings such as `.m4a` and `.amr` are converted with the bundled ffmpeg first.
+
+- `POST /api/voice/check?ext=m4a` with the recording as the body; `POST /api/voice/sample` checks our own synthetic sample clip (the first file in `data/fake_tts/piper/`); `GET /api/voice/health`.
+- The answer is one of the website's five results (likely / partial / uncertain / unsure / real) with the chance, how sure, and reasons as short codes (for example `{"key": "short", "seconds": 3.2}`), so the website can word them in English, Chinese or Malay.
+- It needs the downloaded model and AudioSeal files above **and** our trained head `models/finetuned/clips_final3.safetensors` (1.9 MB). Weights are never committed, so copy that file from the computer that trained it (or retrain with `train/finetune_head.py`).
+- If the API isn't running, the website still works: the voice check shows a demo result, clearly marked as one.
+
+**At the booth (visitors' own phones):** the team laptop is the server. `app\start_booth.ps1` starts the API with `--site` (so it also serves the website) and an ngrok tunnel to the team's fixed address (`$PublicDomain` in the script; the same address is `voiceApiPublic` in `js/data/analyser.js`). Visitors scan the poster's QR code (the Vercel site), and the voice check goes through the tunnel to the laptop. Put the Vercel link in `$VercelSite` so the API accepts calls from it. Keep the laptop plugged in, online and awake (sleep off, closing the lid does nothing) all event.
+
+```bash
+powershell -ExecutionPolicy Bypass -File app\start_booth.ps1
 ```
 
 ## Score a clip with the detector only (raw score)
@@ -70,10 +91,21 @@ python -m eval.watermark_test --n 50               # does the watermark survive 
 
 The full evaluation takes about 3 minutes on an RTX 4050. Latest results: `docs/eval_results.md`.
 
+`eval.run_eval` saves `run.json` next to `scores.csv`, and only reuses saved scores made with the same head, manifest and split. `--limit N` writes to a separate `<out>_limitN` folder.
+
 After that, each step uses scores saved by `eval.run_eval`, one folder per head. The commands are at the top of each script:
 
-- `eval/calibrate.py` fits `detectors/calibration.json` on validation clips and reports the test clips.
+- `eval/calibrate.py` fits the calibration on validation clips (each kind of audio may have its own heads) and reports validation and test clips. It only updates the live `detectors/calibration.json` with `--save`, after keeping a copy of the old one.
+- `eval/clip_rules.py` compares the average with the worst windows, and reports fakes missed at a set false alarm rate.
 - `eval/splice_test.py` tests the "part of this clip sounds synthetic" warning.
+- `eval/false_alarm_check.py` measured false alarms on real Singaporean clips that had never been scored. Those clips are now used by `data_prep/prepare_fresh.py`.
+- `data_prep/prepare_fresh.py` adds Parts 1 and 3 of the corpus to training and validation, and builds the held-out clips (`data/manifest_heldout.csv`).
+- `eval/compare_heads.py` compares mixes of heads on validation, using a rule fixed before scoring. Test folders are only reported.
+- `eval/window_pooling.py` tries other ways to combine a clip's 5 s windows on validation.
+- `eval/noise_check.py` breaks phone errors down by noise level, packet loss and codec, and tests noise-aware calibration on validation.
+- `eval/routing_check.py` counts how many clips the app sends to the other calibration (it measures the sound above 3.8 kHz; the tables use the condition label), and what that changes.
+
+The code review of 3 to 4 Nov 2026, what it changed and the limits it found are in `docs/code_review.md`.
 
 ## Run the tests
 

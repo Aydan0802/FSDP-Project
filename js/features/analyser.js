@@ -10,14 +10,19 @@
 // "checking" steps for that kind, then the result and what to do now.
 //
 // Which check runs:
-//   message     (pasted text, an example, or a .txt file)  checkMessage() in this file:
-//               an example's hand-written result if it is exactly an example, otherwise a real
-//               scan for scam phrases (scanMessage(), patterns in js/data/analyser.js)
-//   voice       (audio or video file)   checkClip() in this file: PLACEHOLDER, the demo picker's result
+//   message     (pasted text, an example, or a .txt file)  the real text detector,
+//               TextDetector.checkMessage() in "text detector prototype/detector/"
+//               (hand-written red-flag rules in English, Chinese and Malay; runs on this device)
+//   voice       (audio or video file)   checkClip() in this file: sent to the voice checker on the
+//               team laptop ("voice detector prototype/app/api.py"): http://127.0.0.1:7861 when the
+//               site is opened on the laptop, or the laptop's public tunnel link anywhere else
+//               (see voiceApiUrl()). If it can't be reached, the demo picker's made-up result
+//               shows, marked "Demo result".
 //   screenshot  (image file)            EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
 //   document    (pdf, doc, anything else) EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
-// Only a file's name and type are used to tell what it is. Audio, pictures and documents are
-// never opened. A .txt file's words are read on this device only. Nothing is uploaded.
+// A file's name and type tell us what it is. A .txt file's words are read on this device only.
+// A voice recording only goes to our voice checker, which deletes it straight after checking.
+// Pictures and documents are never opened.
 //
 // What it remembers (appState.analyser, cleared by #reset):
 //   phase      "input", "analysing" or "result"
@@ -26,6 +31,8 @@
 //   kind       "message", "voice", "screenshot" or "document"
 //   label      what was checked, in words ("Pasted message", "Sample voice message" ...)
 //   fileName   the file's name ("" for typed text)
+//   file       the voice recording itself (kept only for this visit, so "Try again" can resend it)
+//   sample     true for the "Sample voice message" button
 //   step       which "checking" step is showing
 //   outcome    the result on screen (see check() below)
 //   voiceDemo  which of the five voice results the next voice check shows (the demo picker)
@@ -34,9 +41,12 @@
 // Everything is inside (function () { ... })(); so its names stay private to this file.
 
 // Languages: the screen's words come from t() (js/core/i18n.js), with the words in
-// ANALYSER_DATA.text. A Chinese or Malay example still gets its result in its own language
-// (see exampleResultHtml). "label" and the history's "when" are saved already translated,
-// because the home screen shows them as they are.
+// ANALYSER_DATA.text. Results are written in the language the customer picked, whatever language
+// the message is in (the marked phrases are copied from the message, so they stay as they are).
+// A message result is worked out again each time the screen is drawn, so switching language on
+// the result screen re-words it straight away. The voice checker sends short codes, not
+// sentences, so its reasons are translated here too. "label" and the history's "when" are saved
+// already translated, because the home screen shows them as they are.
 
 (function () {
   const data = ANALYSER_DATA;
@@ -48,6 +58,8 @@
   // The coloured result box (.verdict in base.css) for each risk level and each RESULTS key
   const RISK_BOX = { high: "v-bad", medium: "v-careful", low: "v-good" };
   const RESULT_BOX = { likely: "v-bad", partial: "v-bad", uncertain: "v-careful", unsure: "v-careful", real: "v-good" };
+  // The voice checker says how sure it is as High / Medium / Low; these are the words for it
+  const VOICE_SURE = { High: "an.voiceSure.high", Medium: "an.voiceSure.medium", Low: "an.voiceSure.low" };
 
   // ---------- Small helpers ----------
 
@@ -68,7 +80,7 @@
   }
 
   function freshCheck() {
-    return { phase: "input", text: "", error: "", kind: "", label: "", fileName: "", step: 0, outcome: null };
+    return { phase: "input", text: "", error: "", kind: "", label: "", fileName: "", file: null, sample: false, step: 0, outcome: null };
   }
 
   // This feature's corner of appState, created the first time it's needed
@@ -99,38 +111,80 @@
 
   // ---------- The checks ----------
 
-  // A real scan of any typed or pasted message: every scam phrase pattern it contains is one
-  // warning sign. 2 or more is high risk, 1 is medium, none is low.
-  // flags are { phrase, reason } with the exact words found, so they can be marked in the message.
-  function scanMessage(text) {
-    const flags = [];
-    data.phrases.forEach(({ pattern, reason }) => {
-      const found = text.match(pattern);
-      if (found) flags.push({ phrase: found[0], reason });
-    });
-    const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
-    return { risk, flags };
+  // A message (typed, pasted, a .txt file or an example): the text detector checks it, writing
+  // the summary and reasons in the customer's language.
+  // result: { risk, type, confidence, summary, flags: [{ phrase, reason }], lang, score }.
+  // Each flag's phrase is copied exactly from the text, so it can be marked in the message.
+  function detectMessage(text) {
+    return TextDetector.checkMessage(text, { lang: getLanguage() });
   }
 
-  // A message: an example's own hand-written result if the text is exactly that example,
-  // otherwise the phrase scan
+  // Only the text and its risk are kept: the words are worked out again when the screen is drawn
   function checkMessage(text) {
-    const example = data.examples.find(ex => ex.text === text.trim());
-    if (example) return { kind: "message", exampleId: example.id };
-    return { kind: "message", text: text.trim(), scan: scanMessage(text) };
+    const clean = text.trim();
+    return { kind: "message", text: clean, risk: detectMessage(clean).risk };
   }
 
-  // A voice clip. PLACEHOLDER: whichever of the five results the demo picker is set to.
-  function checkClip() {
-    return { kind: "voice", result: myState().voiceDemo };
+  // "voicemail.m4a" -> "m4a" (the voice checker needs to know the kind of file)
+  function fileEnding(name) {
+    const parts = name.toLowerCase().split(".");
+    return parts.length > 1 ? parts.pop() : "wav";
   }
 
-  // Runs the right check for the kind, and returns the outcome kept in appState.analyser.outcome
-  function check(state, fail) {
+  // Where the voice checker is. Opened on the laptop itself: the checker on this computer.
+  // Opened anywhere else (a visitor's phone through the booth link, or the Vercel site): the
+  // laptop's public link (data.voiceApiPublic). Empty = no public checker, so the demo result shows.
+  function voiceApiUrl() {
+    const onThisComputer = ["localhost", "127.0.0.1"].includes(location.hostname);
+    return onThisComputer ? data.voiceApi : data.voiceApiPublic;
+  }
+
+  // A voice recording: sent to the voice checker, which answers with one of the five shared
+  // results plus the chance, how sure it is, reason codes and a timeline.
+  // If the voice checker can't be reached, the demo picker's made-up result shows instead.
+  async function checkClip(state) {
+    const api = voiceApiUrl();
+    if (!api) return { kind: "voice", result: state.voiceDemo, demo: true };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), data.voiceTimeoutMs);
+    // The tunnel shows first-time visitors an "are you sure?" page; this header skips it for our calls
+    const headers = { "ngrok-skip-browser-warning": "1" };
+    let res;
+    try {
+      res = state.sample
+        ? await fetch(`${api}/sample`, { method: "POST", headers, signal: controller.signal })
+        : await fetch(`${api}/check?ext=${encodeURIComponent(fileEnding(state.file.name))}`, {
+            method: "POST", headers: { ...headers, "Content-Type": "application/octet-stream" }, body: state.file, signal: controller.signal
+          });
+    } catch (e) {
+      if (e.name === "AbortError") return { kind: "error", message: "an.err.voiceSlow" };
+      return { kind: "voice", result: state.voiceDemo, demo: true };   // the voice checker isn't running
+    } finally {
+      clearTimeout(timer);
+    }
+    const body = await res.json().catch(() => ({}));
+    if (state.sample && res.status === 404) return { kind: "voice", result: state.voiceDemo, demo: true };   // no sample clip here
+    if (!res.ok || !data.voiceResults[body.result]) {
+      return { kind: "error", message: VOICE_ERRORS[body.code] };
+    }
+    return { kind: "voice", result: body.result, live: body };
+  }
+  // What the voice checker's error codes mean, in words (translation keys)
+  const VOICE_ERRORS = { unreadable: "an.err.voiceUnreadable", tooBig: "an.err.voiceTooBig", noSound: "an.err.voiceNoSound" };
+
+  // Runs the right check for the kind, and returns the outcome kept in appState.analyser.outcome.
+  // If a check breaks (for example a detector file didn't load), the customer sees the
+  // friendly "We couldn't check this" screen instead of a stuck page.
+  async function check(state, fail) {
     if (fail) return { kind: "error" };
-    if (state.kind === "message") return checkMessage(state.text);
-    if (state.kind === "voice") return checkClip();
-    return { kind: state.kind, evidence: EVIDENCE_CHECKER.check(state.kind, state.fileName) };
+    try {
+      if (state.kind === "message") return checkMessage(state.text);
+      if (state.kind === "voice") return await checkClip(state);
+      return { kind: state.kind, evidence: EVIDENCE_CHECKER.check(state.kind, state.fileName) };
+    } catch (e) {
+      console.error("The check failed:", e);
+      return { kind: "error" };
+    }
   }
 
   // Adds a finished check to this visit's history, for the home screen's "My recent checks"
@@ -138,7 +192,7 @@
     const o = state.outcome;
     if (o.kind === "error") return;
     const entry = { kind: o.kind, what: state.fileName || state.label, when: t("an.today", { time: timeNow() }) };
-    if (o.kind === "message") entry.risk = o.exampleId ? findExample(o.exampleId).result.risk : o.scan.risk;
+    if (o.kind === "message") entry.risk = o.risk;
     else if (o.kind === "voice") entry.result = o.result;
     else entry.result = o.evidence.result;
     state.history.unshift(entry);
@@ -146,17 +200,20 @@
 
   // ---------- Drawing: the screen has three phases ----------
 
-  // Redraws this screen for the next phase. render() knows not to start afresh.
-  let redrawing = false;
+  // Redraws this screen for the next phase
   function draw() {
-    redrawing = true;
-    try { redrawScreen(); } finally { redrawing = false; }
+    redrawScreen();
   }
 
   function screenHtml() {
     const state = myState();
-    // Coming to this screen from somewhere else always starts with an empty box
-    if (!redrawing && state.phase !== "input") Object.assign(state, freshCheck());
+    // Coming to this screen from somewhere else always starts with an empty box. If this screen
+    // is already showing, it is only being drawn again (the next phase, or a language change),
+    // so it stays on the same phase: a result stays put and is re-worded in the new language.
+    // The old screen is still on the page at this moment (the router swaps it after render()),
+    // the same way Jose's risk scorer does it.
+    const alreadyHere = document.querySelector(".an-screen") !== null;
+    if (!alreadyHere && state.phase !== "input") Object.assign(state, freshCheck());
     const body = state.phase === "analysing" ? analysingHtml() : state.phase === "result" ? resultHtml() : inputHtml();
     return customerPageHtml("", `<div class="narrow an-screen">${homeLinkHtml()}${body}</div>
       <p class="visually-hidden" role="status" id="an-status"></p>`);
@@ -260,20 +317,28 @@
   }
 
   // Starts a check: shows the checking steps one by one, then the result.
-  //   kind, label, fileName, text: what is being checked. fail: the demo "Check failed" screen.
-  async function startCheck({ kind, label, fileName = "", text = "", fail = false }) {
+  //   kind, label, fileName, text, file, sample: what is being checked. fail: the demo "Check failed" screen.
+  // The check starts straight away and runs while the steps show. If it takes longer than the
+  // steps (a long voice recording), the last step keeps spinning until the answer comes back.
+  let latestCheck = 0;   // so an old, slow check can't overwrite a newer one
+  async function startCheck({ kind, label, fileName = "", text = "", file = null, sample = false, fail = false }) {
     const state = myState();
-    Object.assign(state, { phase: "analysing", kind, label, fileName, text, error: "", step: 0, outcome: null });
+    const thisCheck = ++latestCheck;
+    Object.assign(state, { phase: "analysing", kind, label, fileName, text, file, sample, error: "", step: 0, outcome: null });
     draw();
+    const answer = check(state, fail);
     const steps = kindInfo(kind).steps;
-    for (let step = 1; step <= steps.length; step++) {
+    const stillHere = () => thisCheck === latestCheck && state.phase === "analysing" && document.getElementById("an-progress");
+    for (let step = 1; step < steps.length; step++) {
       await wait(STEP_MS);
-      const list = document.getElementById("an-progress");
-      if (!list || state.phase !== "analysing") return;   // the customer left this screen while it was checking
+      if (!stillHere()) return;   // the customer left this screen while it was checking
       state.step = step;
-      list.innerHTML = progressItemsHtml(steps, step);
+      document.getElementById("an-progress").innerHTML = progressItemsHtml(steps, step);
     }
-    state.outcome = check(state, fail);
+    await wait(STEP_MS);   // the last step shows for at least this long
+    const outcome = await answer;
+    if (!stillHere()) return;
+    state.outcome = outcome;
     addToHistory(state);
     state.phase = "result";
     draw();
@@ -340,123 +405,111 @@
     return `<ol class="an-steps">${steps.map(step => `<li>${esc(step)}</li>`).join("")}</ol>`;
   }
 
-  // ---------- Which language an example's result is in ----------
-  // A Chinese or Malay example is a sample message in that language, so its result stays in
-  // that language (data.labels.zh / .ms and its own words). An English example's result follows
-  // the language the customer picked: its words are translation keys, looked up with t().
+  // An example's button text: English examples have a translation key, the Chinese and Malay
+  // ones are sample messages in that language, so their button stays in that language.
+  function exampleChip(example) {
+    return example.lang === "en" ? t(example.chip) : example.chip;
+  }
   function exampleLang(example) {
     return example.lang === "en" ? getLocale() : example.lang;
   }
-  function exampleSay(example) {
-    return example.lang === "en" ? t : words => words;
-  }
-  function exampleChip(example) {
-    return exampleSay(example)(example.chip);
-  }
 
-  // A message that matched one of the examples: its hand-written result (see exampleSay above)
-  function exampleResultHtml(example) {
-    const r = example.result;
-    const say = exampleSay(example);
-    const lang = exampleLang(example);
-    const words = data.labels[example.lang] || data.labels.en;
-    const typeName = words.types[r.type] ? say(words.types[r.type]) : t(data.labels.en.types[r.type]);
-    const steps = r.steps || (data.nextSteps[r.type] || []).map(key => t(key));
-    const flags = r.flags.map(f => ({ ...f, reason: say(f.reason) }));
+  // A message: the text detector's result, in the customer's language. Worked out again on every
+  // draw, so switching language on the result screen re-words it (the result itself stays the same).
+  // For older customers: a plain headline first ("This message is likely a scam"), then what kind
+  // of scam it looks like, then what to do, and only then why we think so.
+  // A low-risk message isn't called "safe": rules can't prove a message is safe.
+  function messageResultHtml(outcome) {
+    const r = detectMessage(outcome.text);
+    const steps = (data.nextSteps[r.type] || data.nextSteps.none).map(key => t(key));
     return `
       <section data-read>
         ${detectedHtml()}
-        <div class="verdict ${RISK_BOX[r.risk]}" lang="${lang}">
+        <div class="verdict ${RISK_BOX[r.risk]}">
           ${icon(RISK_ICONS[r.risk])}
-          <div><p><strong>${say(words.risk[r.risk])}</strong> · ${say(words.looksLike)}</p><h1 tabindex="-1">${esc(typeName)}</h1></div>
+          <div>
+            <p><strong>${t(`an.risk.${r.risk}`)}</strong></p>
+            <h1 tabindex="-1">${t(`an.headline.${r.risk}`)}</h1>
+            ${r.risk === "low" ? "" : `<p class="an-kind">${t("an.looksLike", { type: t(`an.type.${r.type}`) })}</p>`}
+          </div>
         </div>
-      </section>
-      <section class="panel an-result" aria-labelledby="an-why-title" lang="${lang}">
-        <div class="an-result-top"><h2 id="an-why-title">${say(words.flagsTitle)}</h2><span class="an-demo-tag" lang="${getLocale()}">${t("an.demoTag")}</span></div>
-        <div data-read>
-          <p class="an-summary">${esc(say(r.summary))}</p>
-          <p class="an-sure">${say(words.howSure)}: <strong>${say(words.sure[r.confidence])}</strong>${dotsHtml(r.confidence)}</p>
-        </div>
-        ${flags.length
-          ? highlightedHtml(example.text, flags)
-          : `<blockquote class="an-message">${esc(example.text)}</blockquote>
-             <p class="an-none">${icon("check")}<span>${say(words.noFlags)}</span></p>`}
-      </section>
-      <section class="panel" aria-labelledby="an-todo-title" lang="${lang}">
-        <div data-read>
-          <h2 id="an-todo-title">${say(words.stepsTitle)}</h2>
-          ${stepsListHtml(steps)}
-        </div>
-        <div lang="${getLocale()}">${actionsHtml("message", r.risk !== "low")}</div>
-        <p class="an-honesty">${icon("question")}<span>${say(words.honesty)}</span></p>
-      </section>`;
-  }
-
-  // A typed or pasted message: the result of the real phrase scan
-  function scanResultHtml(outcome) {
-    const { risk } = outcome.scan;
-    const flags = outcome.scan.flags.map(f => ({ ...f, reason: t(f.reason) }));
-    const words = data.labels.en;
-    return `
-      <section data-read>
-        ${detectedHtml()}
-        <div class="verdict ${RISK_BOX[risk]}">
-          ${icon(RISK_ICONS[risk])}
-          <div><p><strong>${t(words.risk[risk])}</strong></p><h1 tabindex="-1">${t(data.scan.titles[risk])}</h1></div>
-        </div>
-      </section>
-      <section class="panel an-result" aria-labelledby="an-why-title">
-        <h2 id="an-why-title">${t("an.why")}</h2>
-        ${flags.length
-          ? highlightedHtml(outcome.text, flags)
-          : `<blockquote class="an-message">${esc(outcome.text)}</blockquote>
-             <ul class="reasons" data-read>${data.scan.noSigns.map(x => `<li>${icon("check")}<span>${t(x)}</span></li>`).join("")}</ul>`}
       </section>
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
           <h2 id="an-todo-title">${t("an.stepsTitle")}</h2>
-          ${stepsListHtml(data.scan.steps[risk].map(key => t(key)))}
+          ${stepsListHtml(steps)}
         </div>
-        ${actionsHtml("message", risk !== "low")}
-        <p class="an-honesty">${icon("question")}<span>${t(words.honesty)}</span></p>
+        ${actionsHtml("message", r.risk !== "low")}
+      </section>
+      <section class="panel an-result" aria-labelledby="an-why-title">
+        <h2 id="an-why-title">${t("an.why")}</h2>
+        <div data-read>
+          <p class="an-summary">${esc(r.summary)}</p>
+          <p class="an-sure">${t("an.howSure")}: <strong>${t(`an.sure.${r.confidence}`)}</strong>${dotsHtml(r.confidence)}</p>
+        </div>
+        ${r.flags.length
+          ? `<p class="meta an-tap-hint">${t("an.tapHint")}</p>${highlightedHtml(outcome.text, r.flags)}`
+          : `<blockquote class="an-message">${esc(outcome.text)}</blockquote>
+             <p class="an-none">${icon("check")}<span>${t("an.noFlags")}</span></p>`}
+        <p class="an-honesty">${icon("question")}<span>${t("an.honesty")}</span></p>
       </section>`;
   }
 
-  // The clip in 5-second pieces, with the pieces that sound AI-made marked
+  // 10 -> "10", 8.8 -> "8.8"
+  function secs(n) {
+    return String(Math.round(n * 10) / 10);
+  }
+
+  // The clip in 5-second pieces ({ start, end, ai }), with the pieces that sound fake marked
   function timelineHtml(parts) {
     return `
       <div class="an-timeline-box">
         <h3>${t("an.timeline.title")}</h3>
         <ol class="an-timeline">
-          ${parts.map((ai, i) => `<li${ai ? ' class="is-ai"' : ""}>
-              <span aria-hidden="true">${i * 5}s</span>
-              <span class="visually-hidden">${t("an.timeline.part", { from: i * 5, to: i * 5 + 5, what: ai ? t("an.timeline.ai") : t("an.timeline.natural") })}</span>
+          ${parts.map(p => `<li${p.ai ? ' class="is-ai"' : ""}>
+              <span aria-hidden="true">${secs(p.start)}s</span>
+              <span class="visually-hidden">${t("an.timeline.part", { from: secs(p.start), to: secs(p.end), what: p.ai ? t("an.timeline.ai") : t("an.timeline.natural") })}</span>
             </li>`).join("")}
         </ol>
         <p class="meta an-key"><span class="an-key-swatch" aria-hidden="true"></span>${t("an.timeline.key")}</p>
       </div>`;
   }
 
-  function voiceResultHtml(key) {
-    const v = data.voiceResults[key];
+  // The voice checker's reasons and details come as codes ({ key: "short", seconds: 3.2 }), so
+  // they can be shown in the customer's language: "an.vr.short" with {seconds} filled in.
+  function voiceReasonText(reason) {
+    const values = { ...reason };
+    if (typeof values.seconds === "number") values.seconds = secs(values.seconds);
+    if (typeof values.from === "number") values.from = secs(values.from);
+    if (typeof values.to === "number") values.to = secs(values.to);
+    if (values.type) values.type = t(`an.vr.audio.${values.type}`);
+    return t(`an.vr.${reason.key}`, values);
+  }
+
+  // A voice result. outcome.live is the voice checker's real answer; without it (the checker
+  // isn't running) the hand-written demo result for outcome.result shows, marked "Demo result".
+  // Same order as the message result: headline, what to do, why. The technical points, and the
+  // "which seconds" timeline (unless part of the clip is fake), are folded under "More details".
+  function voiceResultHtml(outcome) {
+    const key = outcome.result;
+    const v = data.voiceResults[key];   // the title, meaning and "what to do" for this result
+    const live = outcome.live;
+    const chance = live ? live.chance : v.chance;
+    const sure = live ? VOICE_SURE[live.sure] : v.sure;
+    const reasons = live ? live.reasons.map(voiceReasonText) : v.reasons.map(r => t(r));
+    const details = live ? (live.details || []).map(voiceReasonText) : [];
+    const parts = live ? live.timeline : v.timeline && v.timeline.map((ai, i) => ({ start: i * 5, end: i * 5 + 5, ai }));
+    const timeline = parts && key !== "real" ? timelineHtml(parts) : "";
+    const foldedTimeline = key !== "partial" ? timeline : "";
     return `
       <section data-read>
         ${detectedHtml()}
         <div class="verdict ${RESULT_BOX[key]}">
-          <div>${badge(key)}<h1 tabindex="-1">${t(v.title)}</h1></div>
+          <div>
+            ${badge(key)}<h1 tabindex="-1">${t(v.title)}</h1>
+            ${v.meaning ? `<p class="an-kind">${t(v.meaning)}</p>` : ""}
+          </div>
         </div>
-      </section>
-      <section class="panel an-result an-voice an-voice--${key}" aria-labelledby="an-why-title">
-        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2><span class="an-demo-tag">${t("an.demoTag")}</span></div>
-        <div data-read>
-          ${v.chance === null
-            ? `<p class="an-chance-none">${t("an.chanceNone")}</p>`
-            : `<p class="an-chance"><span class="an-chance-num">${v.chance}%</span><span>${t("an.chance")}</span></p>
-               <div class="an-meter" aria-hidden="true"><span style="--w: ${v.chance}%"></span></div>`}
-          <p class="an-sure">${t("an.howSure")}: <strong>${t(v.sure)}</strong></p>
-        </div>
-        ${v.timeline ? timelineHtml(v.timeline) : ""}
-        <ul class="reasons" data-read>${v.reasons.map(reason => `<li>${icon(key === "real" ? "check" : "flag")}<span>${t(reason)}</span></li>`).join("")}</ul>
       </section>
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
@@ -464,6 +517,25 @@
           <p class="an-extra">${icon("warning")}<span>${t(v.extra)}</span></p>
         </div>
         ${actionsHtml("voice", key !== "real")}
+      </section>
+      <section class="panel an-result an-voice an-voice--${key}" aria-labelledby="an-why-title">
+        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2>${live ? "" : `<span class="an-demo-tag">${t("an.demoTag")}</span>`}</div>
+        ${outcome.demo ? `<p class="an-honesty">${icon("question")}<span>${t("an.voiceOffline")}</span></p>` : ""}
+        <div data-read>
+          ${chance === null
+            ? `<p class="an-chance-none">${t(live && live.watermark ? "an.chanceWatermark" : "an.chanceNone")}</p>`
+            : `<p class="an-chance"><span class="an-chance-num">${chance}%</span><span>${t("an.chance")}</span></p>
+               <div class="an-meter" aria-hidden="true"><span style="--w: ${chance}%"></span></div>`}
+          <p class="an-sure">${t("an.howSure")}: <strong>${t(sure)}</strong></p>
+          <ul class="reasons">${reasons.map(reason => `<li>${icon(key === "real" ? "check" : "flag")}<span>${esc(reason)}</span></li>`).join("")}</ul>
+        </div>
+        ${key === "partial" ? timeline : ""}
+        ${details.length || foldedTimeline ? `
+          <details class="an-more">
+            <summary>${t("an.moreDetails")}</summary>
+            ${foldedTimeline}
+            ${details.length ? `<ul class="an-more-list">${details.map(d => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+          </details>` : ""}
         <p class="an-honesty">${icon("question")}<span>${t("an.voiceHonesty")}</span></p>
       </section>`;
   }
@@ -491,13 +563,14 @@
       </section>`;
   }
 
-  // What the customer sees if a check fails (shown here with the demo button)
-  function errorHtml() {
+  // What the customer sees if a check fails. message: a translation key saying what went wrong,
+  // if the checker told us (for example "an.err.voiceUnreadable").
+  function errorHtml(message) {
     return `
       <section class="panel" data-read>
         <span class="an-error-icon">${icon("warning")}</span>
         <h1 tabindex="-1">${t("an.error.title")}</h1>
-        <p>${t("an.error.text")}</p>
+        <p>${t(message || "an.error.text")}</p>
         <p class="meta">${t("an.error.help")}</p>
       </section>
       <div class="stack">
@@ -508,9 +581,9 @@
 
   function resultHtml() {
     const o = myState().outcome;
-    if (o.kind === "error") return errorHtml();
-    if (o.kind === "message") return o.exampleId ? exampleResultHtml(findExample(o.exampleId)) : scanResultHtml(o);
-    if (o.kind === "voice") return voiceResultHtml(o.result);
+    if (o.kind === "error") return errorHtml(o.message);
+    if (o.kind === "message") return messageResultHtml(o);
+    if (o.kind === "voice") return voiceResultHtml(o);
     return evidenceResultHtml(o.evidence);
   }
 
@@ -588,10 +661,15 @@
     if (message) box.focus();
   }
 
-  // A file was added (picked or dropped). Only a .txt file is read, on this device, to scan its words.
+  // A file was added (picked or dropped). A .txt file is read on this device; a voice recording
+  // goes to the voice checker on this computer; pictures and documents are never opened.
   async function takeFile(file) {
     if (!file) return;
     const kind = detectKind(file);
+    if (kind === "voice") {
+      startCheck({ kind, label: t(kindInfo(kind).label), fileName: file.name, file });
+      return;
+    }
     if (kind !== "message") {
       startCheck({ kind, label: t(kindInfo(kind).label), fileName: file.name });
       return;
@@ -666,7 +744,7 @@
           const example = findExample(data.sampleMessageId);
           startCheck({ kind: "message", label: t("an.sample.sms"), text: example.text });
         } else if (which === "voice") {
-          startCheck({ kind: "voice", label: t("an.sample.voice"), fileName: data.sampleClipName });
+          startCheck({ kind: "voice", label: t("an.sample.voice"), fileName: data.sampleClipName, sample: true });
         } else {
           const s = EVIDENCE_CHECKER.samples[Number(button.dataset.i)];
           startCheck({ kind: s.kind, label: t(s.label), fileName: s.name });
@@ -709,7 +787,7 @@
         draw();
       }
       if (action === "retry") {
-        startCheck({ kind: state.kind, label: state.label, fileName: state.fileName, text: state.text });
+        startCheck({ kind: state.kind, label: state.label, fileName: state.fileName, text: state.text, file: state.file, sample: state.sample });
       }
     });
     const result = document.querySelector(".an-result");

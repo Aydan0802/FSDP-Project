@@ -11,18 +11,20 @@ fake source (each TTS generator on its own), and by codec. Never just one number
 
 Outputs in results/eval/:
     scores.csv        one row per clip per condition
+    run.json          the head, manifest and split that made scores.csv; a
+                      saved scores.csv is only reused if these match
     metrics.csv       EER, AUC, accuracy, false accepts / rejects per group
     score_stats.json  mean and spread of scores, real vs fake, per condition
-                      (feeds simulator/scam_sim.py later)
     hist_scores.png, roc.png
 
 Run from the project root:
     python -m eval.run_eval              # all clips
-    python -m eval.run_eval --limit 20   # quick check
+    python -m eval.run_eval --limit 20   # quick check, written to results/eval_limit20/
 """
 import argparse
 import json
 import zlib
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import matplotlib
@@ -32,32 +34,43 @@ from sklearn.metrics import roc_auc_score, roc_curve
 
 from audio.phone import PhoneConfig, compress_clip, degrade
 from detectors.forensics_xlsr import load_audio, score_clip
+from eval import run_info
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+BATCH_CLIPS = 32  # clips whose copies are made at once, which limits the memory used
+
+
+def three_versions(clip):
+    """The clean, compressed and phone audio of one clip."""
+    wav = load_audio(ROOT / clip.path)
+    seed = zlib.crc32(clip.path.encode())  # same clip -> same phone copy every run
+    phone_wav, phone_info = degrade(wav, seed=seed, config=PhoneConfig())
+    clip_wav, clip_info = compress_clip(wav, seed=seed)
+    return [("clean", wav, {}), ("compressed", clip_wav, clip_info), ("phone", phone_wav, phone_info)]
 
 
 def score_all(manifest, head=None):
-    rows = []
-    for i, clip in enumerate(manifest.itertuples(index=False)):
-        wav = load_audio(ROOT / clip.path)
-        seed = zlib.crc32(clip.path.encode())  # same clip -> same phone copy every run
-        phone_wav, phone_info = degrade(wav, seed=seed, config=PhoneConfig())
-        clip_wav, clip_info = compress_clip(wav, seed=seed)
-        for condition, audio, info in [("clean", wav, {}), ("compressed", clip_wav, clip_info),
-                                       ("phone", phone_wav, phone_info)]:
-            r = score_clip(audio, head)
-            rows.append({**clip._asdict(), "condition": condition,
-                         "codec": info.get("codec"), "snr_db": info.get("snr_db"),
-                         "packet_loss": info.get("packet_loss"),
-                         "fake_score_raw": r["fake_score_raw"], "window_spread": r["window_spread"],
-                         "window_scores": json.dumps(r["window_scores"]),
-                         "n_windows": r["n_windows"], "duration_s": r["duration_s"],
-                         "inconclusive": r["inconclusive"]})
-        if (i + 1) % 25 == 0:
-            print(f"  scored {i + 1}/{len(manifest)} clips")
+    rows, clips, done = [], list(manifest.itertuples(index=False)), 0
+    # Most of the time here is ffmpeg, a separate program, so several clips at once are much faster.
+    with ThreadPoolExecutor(max_workers=8) as threads:
+        for start in range(0, len(clips), BATCH_CLIPS):
+            batch = clips[start:start + BATCH_CLIPS]
+            for clip, versions in zip(batch, threads.map(three_versions, batch)):
+                for condition, audio, info in versions:
+                    r = score_clip(audio, head)
+                    rows.append({**clip._asdict(), "condition": condition,
+                                 "codec": info.get("codec"), "snr_db": info.get("snr_db"),
+                                 "packet_loss": info.get("packet_loss"),
+                                 "fake_score_raw": r["fake_score_raw"], "window_spread": r["window_spread"],
+                                 "window_scores": json.dumps(r["window_scores"]),
+                                 "n_windows": r["n_windows"], "duration_s": r["duration_s"],
+                                 "inconclusive": r["inconclusive"]})
+                done += 1
+                if done % 25 == 0:
+                    print(f"  scored {done}/{len(manifest)} clips")
     return pd.DataFrame(rows)
 
 
@@ -153,9 +166,14 @@ def main():
     args = ap.parse_args()
 
     out = ROOT / args.out
+    if args.limit:  # a quick check never replaces the full results
+        out = out.with_name(f"{out.name}_limit{args.limit}")
     out.mkdir(parents=True, exist_ok=True)
     scores_path = out / "scores.csv"
-    if scores_path.exists() and not args.rescore and not args.limit:
+    # How these scores are made, so a folder is never reused for another head, manifest or split.
+    run = {"head": run_info.head_name(args.head), "manifest": args.manifest, "split": args.split, "limit": args.limit}
+    if scores_path.exists() and not args.rescore:
+        run_info.check(out, **run)
         scores = pd.read_csv(scores_path, keep_default_na=False)
         print(f"Re-using {scores_path} (pass --rescore to score again)")
     else:
@@ -169,6 +187,7 @@ def main():
               f"{' with head ' + args.head if args.head else ''} ...")
         scores = score_all(manifest, args.head)
         scores.to_csv(scores_path, index=False)
+        run_info.write(out, **run)
 
     table = build_metrics(scores, args.threshold)
     table.to_csv(out / "metrics.csv", index=False)

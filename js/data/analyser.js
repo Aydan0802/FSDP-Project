@@ -1,211 +1,102 @@
 "use strict";
 
-// Made-up data for: Check anything (the analyser): messages and voice recordings.
+// Data for: Check anything (the analyser): messages and voice recordings.
 // Owner: Aydan
-// The example and voice results below are written by hand. A typed or pasted message that isn't
-// one of the examples is really scanned on this device for the scam phrases in "phrases".
-// When the real voice detector is ready, it will produce results in this same shape.
+// Messages are checked by the real text detector ("text detector prototype/detector/"), so the
+// examples below are only sample messages to try: their results come from the detector.
+// Voice recordings go to the real voice detector on this computer (voice detector prototype/
+// app/api.py). The hand-written voice results below give each result's title, meaning and advice,
+// and are shown in full only as a demo when the voice checker isn't running.
 // All messages are short, made up and clearly fake: fake names, ".example" links, no real people.
-// The Chinese and Malay examples still need a teammate to check the wording.
 //
 // Languages (see "How to translate your screen" in TEAM-FILES.md): the screen's words are
 // translation keys ("an.title"), with the English, Chinese and Malay in text at the bottom.
-// The Chinese and Malay EXAMPLES are different: they are sample messages in that language, and
-// their results are written in that language right here (labels.zh, labels.ms and their own
-// steps), whatever language the customer picked. English examples' results follow the customer's language.
-// The text at the bottom is AI-drafted and still needs a native speaker to check it.
+// Results are shown in the language the customer picked, whatever language the message is in.
+// The Chinese and Malay text is AI-drafted and still needs a native speaker to check it.
 
 const ANALYSER_DATA = {
   maxLength: 2000,   // the longest message the box accepts (characters)
 
-  // ---------- Words the message result uses, in each language ----------
-  // en holds translation keys (the screen looks them up in the customer's language).
-  // zh and ms are the words for a Chinese or Malay example, which always gets its result in its own language.
-  labels: {
-    en: {
-      risk: { low: "an.risk.low", medium: "an.risk.medium", high: "an.risk.high" },
-      looksLike: "an.looksLike",
-      howSure: "an.howSure",
-      sure: { low: "an.sure.low", medium: "an.sure.medium", high: "an.sure.high" },
-      flagsTitle: "an.flagsTitle",
-      noFlags: "an.noFlags",
-      stepsTitle: "an.stepsTitle",
-      honesty: "an.honesty",
-      types: {
-        impersonation: "an.type.impersonation",
-        phishing: "an.type.phishing",
-        parcel: "an.type.parcel",
-        job: "an.type.job",
-        investment: "an.type.investment",
-        love: "an.type.love",
-        none: "an.type.none"
-      }
-    },
-    zh: {
-      risk: { low: "低风险", medium: "中风险", high: "高风险" },
-      looksLike: "这看起来像",
-      howSure: "我们的把握",
-      sure: { low: "不太确定", medium: "比较确定", high: "非常确定" },
-      flagsTitle: "信息中的危险信号",
-      noFlags: "这条信息没有发现危险信号。",
-      stepsTitle: "现在该怎么做",
-      honesty: "这些只是危险信号，不能证明一定是诈骗。如有疑问，请联系银行。",
-      types: { impersonation: "冒充银行或政府的诈骗" }
-    },
-    ms: {
-      risk: { low: "Risiko rendah", medium: "Risiko sederhana", high: "Risiko tinggi" },
-      looksLike: "Ini kelihatan seperti",
-      howSure: "Sejauh mana kami pasti",
-      sure: { low: "Kurang pasti", medium: "Agak pasti", high: "Sangat pasti" },
-      flagsTitle: "Tanda amaran dalam mesej anda",
-      noFlags: "Kami tidak menemui tanda amaran dalam mesej ini.",
-      stepsTitle: "Apa yang perlu dilakukan sekarang",
-      honesty: "Ini hanya tanda amaran, bukan bukti penipuan. Jika ragu, tanya pihak bank.",
-      types: { job: "Penipuan kerja" }
-    }
-  },
-
   // ---------- Next steps for each kind of message (translation keys) ----------
-  // An example can give its own "steps" instead (the Chinese and Malay ones do).
   nextSteps: {
-    impersonation: ["an.next.impersonation.1", "an.next.impersonation.2", "an.next.impersonation.3", "an.next.impersonation.4"],
-    phishing: ["an.next.phishing.1", "an.next.phishing.2", "an.next.phishing.3", "an.next.phishing.4"],
-    parcel: ["an.next.parcel.1", "an.next.parcel.2", "an.next.parcel.3"],
-    job: ["an.next.job.1", "an.next.job.2", "an.next.job.3"],
-    investment: ["an.next.investment.1", "an.next.investment.2", "an.next.investment.3"],
-    love: ["an.next.love.1", "an.next.love.2", "an.next.love.3"],
-    none: ["an.next.none.1", "an.next.none.2"]
+    impersonation: [
+      "an.next.impersonation.1",
+      "an.next.impersonation.2",
+      "an.next.impersonation.3",
+      "an.next.impersonation.4"
+    ],
+    phishing: [
+      "an.next.phishing.1",
+      "an.next.phishing.2",
+      "an.next.phishing.3",
+      "an.next.phishing.4"
+    ],
+    parcel: [
+      "an.next.parcel.1",
+      "an.next.parcel.2",
+      "an.next.parcel.3"
+    ],
+    job: [
+      "an.next.job.1",
+      "an.next.job.2",
+      "an.next.job.3"
+    ],
+    investment: [
+      "an.next.investment.1",
+      "an.next.investment.2",
+      "an.next.investment.3"
+    ],
+    love: [
+      "an.next.love.1",
+      "an.next.love.2",
+      "an.next.love.3"
+    ],
+    none: [
+      "an.next.none.1",
+      "an.next.none.2"
+    ]
   },
 
-  // ---------- "Try an example" messages, each with a hand-written result ----------
-  // risk: "low" | "medium" | "high". confidence: "low" | "medium" | "high".
-  // type: one of the keys in labels.en.types. flags: phrases copied exactly from the text.
-  // English examples: chip, summary and each flag's reason are translation keys (the message text
-  // and the phrases stay as they are). Chinese and Malay examples: written out in their own language.
+  // ---------- "More message examples": sample messages to try ----------
+  // The text detector checks each one like any pasted message. English examples' chip is a
+  // translation key; the Chinese and Malay ones are sample messages in that language, so their
+  // chip stays in that language.
   examples: [
     {
       id: "bank", chip: "an.ex.bank.chip", lang: "en",
-      text: "Bank Security Team: we detected an unusual login on your account. Reply with the 6-digit OTP we sent you within 10 minutes, or your account will be frozen.",
-      result: {
-        risk: "high", type: "impersonation", confidence: "high",
-        summary: "an.ex.bank.summary",
-        flags: [
-          { phrase: "Bank Security Team", reason: "an.ex.bank.flag1" },
-          { phrase: "Reply with the 6-digit OTP", reason: "an.ex.bank.flag2" },
-          { phrase: "within 10 minutes", reason: "an.ex.bank.flag3" },
-          { phrase: "your account will be frozen", reason: "an.ex.bank.flag4" }
-        ]
-      }
+      text: "Bank Security Team: we detected an unusual login on your account. Reply with the 6-digit OTP we sent you within 10 minutes, or your account will be frozen."
     },
     {
       id: "link", chip: "an.ex.link.chip", lang: "en",
-      text: "Your card has been suspended. Tap here to verify your details now: card-verify-secure.example/login",
-      result: {
-        risk: "high", type: "phishing", confidence: "high",
-        summary: "an.ex.link.summary",
-        flags: [
-          { phrase: "Your card has been suspended", reason: "an.ex.link.flag1" },
-          { phrase: "Tap here to verify your details", reason: "an.ex.link.flag2" },
-          { phrase: "card-verify-secure.example/login", reason: "an.ex.link.flag3" }
-        ]
-      }
+      text: "Your card has been suspended. Tap here to verify your details now: card-verify-secure.example/login"
     },
     {
       id: "parcel", chip: "an.ex.parcel.chip", lang: "en",
-      text: "Your parcel could not be delivered. Pay a $1.99 redelivery fee within 24 hours: parcel-redeliver.example",
-      result: {
-        risk: "medium", type: "parcel", confidence: "high",
-        summary: "an.ex.parcel.summary",
-        flags: [
-          { phrase: "Pay a $1.99 redelivery fee", reason: "an.ex.parcel.flag1" },
-          { phrase: "within 24 hours", reason: "an.ex.parcel.flag2" },
-          { phrase: "parcel-redeliver.example", reason: "an.ex.parcel.flag3" }
-        ]
-      }
+      text: "Your parcel could not be delivered. Pay a $1.99 redelivery fee within 24 hours: parcel-redeliver.example"
     },
     {
       id: "job", chip: "an.ex.job.chip", lang: "en",
-      text: "Part-time job! Earn $300 a day just by liking videos. No experience needed. Pay a $50 registration fee to start. WhatsApp us now.",
-      result: {
-        risk: "high", type: "job", confidence: "high",
-        summary: "an.ex.job.summary",
-        flags: [
-          { phrase: "Earn $300 a day just by liking videos", reason: "an.ex.job.flag1" },
-          { phrase: "Pay a $50 registration fee to start", reason: "an.ex.job.flag2" },
-          { phrase: "WhatsApp us now", reason: "an.ex.job.flag3" }
-        ]
-      }
+      text: "Part-time job! Earn $300 a day just by liking videos. No experience needed. Pay a $50 registration fee to start. WhatsApp us now."
     },
     {
       id: "invest", chip: "an.ex.invest.chip", lang: "en",
-      text: "Join our VIP crypto group. Guaranteed 30% returns every week! Limited slots, transfer today to secure your place.",
-      result: {
-        risk: "high", type: "investment", confidence: "high",
-        summary: "an.ex.invest.summary",
-        flags: [
-          { phrase: "Guaranteed 30% returns every week", reason: "an.ex.invest.flag1" },
-          { phrase: "Limited slots", reason: "an.ex.invest.flag2" },
-          { phrase: "transfer today", reason: "an.ex.invest.flag3" }
-        ]
-      }
+      text: "Join our VIP crypto group. Guaranteed 30% returns every week! Limited slots, transfer today to secure your place."
     },
     {
       id: "love", chip: "an.ex.love.chip", lang: "en",
-      text: "My dear, I miss you so much. I'm stuck at the airport and need $2,000 for customs. Please don't tell your family, I'll pay you back next week.",
-      result: {
-        risk: "high", type: "love", confidence: "medium",
-        summary: "an.ex.love.summary",
-        flags: [
-          { phrase: "need $2,000 for customs", reason: "an.ex.love.flag1" },
-          { phrase: "Please don't tell your family", reason: "an.ex.love.flag2" }
-        ]
-      }
+      text: "My dear, I miss you so much. I'm stuck at the airport and need $2,000 for customs. Please don't tell your family, I'll pay you back next week."
     },
     {
       id: "normal", chip: "an.ex.normal.chip", lang: "en",
-      text: "Hi Auntie, the family dinner is moved to Saturday 7pm at the usual restaurant. See you there!",
-      result: {
-        risk: "low", type: "none", confidence: "high",
-        summary: "an.ex.normal.summary",
-        flags: []
-      }
+      text: "Hi Auntie, the family dinner is moved to Saturday 7pm at the usual restaurant. See you there!"
     },
     {
       id: "zh-bank", chip: "中文：银行通知", lang: "zh",
-      text: "【银行通知】您的账户出现异常登录。请在10分钟内点击链接验证，否则账户将被冻结：bank-verify.example",
-      result: {
-        risk: "high", type: "impersonation", confidence: "high",
-        summary: "这条信息看起来像是冒充银行的诈骗。真正的银行不会要求您点击链接来验证账户。请不要点击链接，也不要提供任何验证码。",
-        flags: [
-          { phrase: "【银行通知】", reason: "自称是银行" },
-          { phrase: "10分钟内", reason: "催促您马上行动" },
-          { phrase: "点击链接验证", reason: "要求您点击链接" },
-          { phrase: "账户将被冻结", reason: "威胁您" }
-        ],
-        steps: [
-          "不要点击链接，也不要回复。",
-          "请拨打银行卡背面的电话号码，直接联系银行。",
-          "仍有疑问？请拨打反诈骗热线 1799。"
-        ]
-      }
+      text: "【银行通知】您的账户出现异常登录。请在10分钟内点击链接验证，否则账户将被冻结：bank-verify.example"
     },
     {
       id: "ms-job", chip: "Melayu: kerja sambilan", lang: "ms",
-      text: "Kerja sambilan dari rumah! Dapat $300 sehari hanya dengan 'like' video. Bayar yuran pendaftaran $50 dahulu. WhatsApp kami sekarang!",
-      result: {
-        risk: "high", type: "job", confidence: "medium",
-        summary: "Mesej ini kelihatan seperti penipuan kerja. Majikan sebenar tidak akan meminta anda membayar untuk mula bekerja. Jangan bayar apa-apa dan jangan berikan butiran bank anda.",
-        flags: [
-          { phrase: "Dapat $300 sehari hanya dengan 'like' video", reason: "Terlalu bagus untuk menjadi kenyataan" },
-          { phrase: "Bayar yuran pendaftaran $50 dahulu", reason: "Meminta anda membayar dahulu" },
-          { phrase: "WhatsApp kami sekarang", reason: "Mendesak anda" }
-        ],
-        steps: [
-          "Jangan bayar apa-apa untuk “memulakan” kerja.",
-          "Jangan kongsi butiran bank atau kata laluan sekali guna (OTP).",
-          "Masih ragu? Hubungi Talian Bantuan Anti-Penipuan di 1799."
-        ]
-      }
+      text: "Kerja sambilan dari rumah! Dapat $300 sehari hanya dengan 'like' video. Bayar yuran pendaftaran $50 dahulu. WhatsApp kami sekarang!"
     }
   ],
 
@@ -216,74 +107,56 @@ const ANALYSER_DATA = {
     voice: { label: "an.kind.voice", icon: "wave", steps: ["an.kind.voice.step1", "an.kind.voice.step2", "an.kind.voice.step3"] }
   },
 
-  // The "Sample SMS" button uses this example, so it shows the full hand-written result
+  // The "Sample SMS" button checks this example
   sampleMessageId: "bank",
 
-  // ---------- Scam phrases looked for in any message the customer types or pastes ----------
-  // A real check, done on this device: each pattern that is found adds one warning sign.
-  // 2 or more signs is high risk, 1 is medium, none is low. reason is a translation key.
-  phrases: [
-    { pattern: /safe account/i, reason: "an.phrase.safeAccount" },
-    { pattern: /\b(otp|one[- ]time password|pin|verification code|tac)\b/i, reason: "an.phrase.otp" },
-    { pattern: /\burgent(ly)?\b|immediately|within \d+\s*(min|mins|minutes|hour|hours|hrs)\b|right now|act now/i, reason: "an.phrase.rush" },
-    { pattern: /https?:\/\/\S+|www\.\S+|bit\.ly\/\S+|\b[\w-]+\.(com|sg|co|net|org|xyz|link|info|example)(\/\S*)?/i, reason: "an.phrase.link" },
-    { pattern: /\bpolice\b|\bmas\b|\bcourt\b|\bcustoms\b|\bica\b|\bgovernment\b|\bmoh\b|\biras\b/i, reason: "an.phrase.authority" },
-    { pattern: /don'?t tell|do not tell|keep (this|it) (a )?secret|do not share this|don'?t share this/i, reason: "an.phrase.secret" },
-    { pattern: /\blocked\b|suspended|frozen|suspicious (login|activity)|unusual login|will be closed|deactivated/i, reason: "an.phrase.account" }
-  ],
-
-  // What the result says for a typed or pasted message, by risk level (translation keys)
-  scan: {
-    titles: {
-      high: "an.scan.title.high",
-      medium: "an.scan.title.medium",
-      low: "an.scan.title.low"
-    },
-    noSigns: ["an.scan.noSigns.1", "an.scan.noSigns.2"],
-    steps: {
-      high: ["an.scan.high.1", "an.scan.risky.2", "an.scan.risky.3"],
-      medium: ["an.scan.medium.1", "an.scan.risky.2", "an.scan.risky.3"],
-      low: ["an.next.none.1", "an.scan.low.2"]
-    }
-  },
+  // ---------- The voice checker ----------
+  // voice detector prototype/app/api.py, running on the team laptop.
+  // voiceApi: used when the website is opened on the laptop itself.
+  // voiceApiPublic: the laptop's public link (the tunnel), used when the website is opened
+  // anywhere else (visitors' phones, the Vercel site). "" = none yet, so the demo result shows.
+  voiceApi: "http://127.0.0.1:7861/api/voice",
+  voiceApiPublic: "https://stagnant-powdered-playing.ngrok-free.dev/api/voice",
+  voiceTimeoutMs: 120000,   // give up after 2 minutes (a long recording on a slow computer)
+  sampleClipName: "sample-voicemail.wav",
 
   // ---------- Voice clip results ----------
-  // One for each of the five shared results (RESULTS in js/core/helpers.js). The real voice
-  // detector (voice detector prototype/detectors/verdict.py) maps onto these: LOW band = real,
-  // MEDIUM = uncertain, HIGH or an AI watermark = likely, "part of this clip" = partial,
-  // INCONCLUSIVE = unsure. Wording copied from the first website prototype.
-  // title, sure, reasons and extra are translation keys.
-  sampleClipName: "sample-voicemail.wav",
+  // One for each of the five shared results (RESULTS in js/core/helpers.js). The voice detector
+  // maps onto these: LOW band = real, MEDIUM = uncertain, HIGH or an AI watermark = likely,
+  // "part of this clip" = partial, INCONCLUSIVE = unsure.
+  // title: the big headline. meaning: one line explaining "fake voice", for older customers.
+  // chance, sure and reasons are only used for the demo result (the real checker sends its own).
+  // title, meaning, sure, reasons and extra are translation keys.
   voiceResults: {
     likely: {
-      title: "an.voice.likely.title",
+      title: "an.voice.likely.title", meaning: "an.voice.meaning.fake",
       chance: 91, sure: "an.voiceSure.high",
-      reasons: ["an.voice.likely.reason1", "an.voice.likely.reason2", "an.voice.clearEnough"],
+      reasons: ["an.voice.likely.reason1", "an.voice.likely.reason2"],
       extra: "an.voice.likely.extra"
     },
     partial: {
-      title: "an.voice.partial.title",
+      title: "an.voice.partial.title", meaning: "an.voice.meaning.partial",
       chance: 63, sure: "an.voiceSure.medium",
-      reasons: ["an.voice.partial.reason1", "an.voice.partial.reason2", "an.voice.noWatermark"],
+      reasons: ["an.voice.partial.reason1"],
       extra: "an.voice.partial.extra",
       timeline: [false, false, true, true, false, false]   // one entry per 5 seconds of the clip
     },
     uncertain: {
-      title: "an.voice.uncertain.title",
+      title: "an.voice.uncertain.title", meaning: "an.voice.meaning.fake",
       chance: 48, sure: "an.voiceSure.medium",
-      reasons: ["an.voice.uncertain.reason1", "an.voice.uncertain.reason2", "an.voice.noWatermark"],
+      reasons: ["an.voice.uncertain.reason1", "an.voice.uncertain.reason2"],
       extra: "an.voice.uncertain.extra"
     },
     unsure: {
       title: "an.voice.unsure.title",
       chance: null, sure: "an.voiceSure.low",   // the detector gives no number when it can't tell
-      reasons: ["an.voice.unsure.reason1", "an.voice.unsure.reason2"],
+      reasons: ["an.voice.unsure.reason1"],
       extra: "an.voice.unsure.extra"
     },
     real: {
       title: "an.voice.real.title",
       chance: 6, sure: "an.voiceSure.high",
-      reasons: ["an.voice.real.reason1", "an.voice.real.reason2", "an.voice.clearEnough"],
+      reasons: ["an.voice.real.reason1"],
       extra: "an.voice.real.extra"
     }
   },
@@ -292,62 +165,100 @@ const ANALYSER_DATA = {
   text: {
     en: {
       "an.title": "Check anything you are not sure about",
+
       "an.lead": "Add a message, a call recording, a screenshot or a letter. You do not need to pick what it is. We will work it out.",
+
       "an.drop.title": "Tap here to add a file",
       "an.drop.sub": "or drag it into this box",
+
       "an.or": "or",
+
       "an.textLabel": "Paste or type the message",
+
       "an.placeholder": "For example: Your account is locked. Tap this link...",
+
       "an.checkMessage": "Check this message",
-      "an.privacy": "Your file stays on this device. Recordings, pictures and documents are never opened or uploaded.",
+
+      "an.privacy": "Messages are checked on this device. Voice recordings are sent to our voice checker, checked and deleted straight away. Please only use the sample or a recording of your own voice. Pictures and documents are never opened.",
+
       "an.samplesTitle": "No file? Try a sample",
+
       "an.moreExamples": "More message examples",
-      "an.demoVoice": "Demo only: pick the result the next voice check shows",
+
+      "an.demoVoice": "Demo only: the voice result to show if the voice checker isn't running",
+
       "an.demoVoiceLegend": "Result for the next voice check",
+
       "an.demoErrors": "Demo only: show the error screens",
+
       "an.demo.fail": "Check failed",
       "an.demo.long": "Message too long",
+
       "an.sample.voice": "Sample voice message",
       "an.sample.sms": "Sample SMS",
+
       "an.found": "We found: {kind}",
+
       "an.done": " (done)",
+
       "an.checking": "Checking it now…",
+
       "an.fewSeconds": "This takes a few seconds.",
+
       "an.report": "Report this to OCBC",
+
       "an.sentMoney": "I already sent money or a code",
+
       "an.callerCheck": "Is the caller a real person?",
+
       "an.callMatch": "Is the bank really calling?",
+
       "an.again": "Check something else",
+
       "an.demoTag": "Demo result",
+
       "an.why": "Why we think so",
-      "an.timeline.title": "Which parts sound AI-made",
+
+      "an.timeline.title": "Which seconds sound fake",
       "an.timeline.part": "Seconds {from} to {to}: {what}",
-      "an.timeline.ai": "sounds AI-made",
-      "an.timeline.natural": "sounds natural",
-      "an.timeline.key": "Sounds AI-made",
-      "an.chanceNone": "No number this time: the clip didn't give a clear answer.",
-      "an.chance": "chance the voice is AI-made",
-      "an.voiceHonesty": "The voice check is one warning sign, not proof. A real voice can still belong to a scammer.",
+      "an.timeline.ai": "sounds fake",
+      "an.timeline.natural": "sounds real",
+      "an.timeline.key": "Sounds fake (made by a computer)",
+
+      "an.chanceNone": "No number this time: this recording didn't give us a clear answer.",
+
+      "an.chance": "chance the voice is fake",
+
+      "an.voiceHonesty": "This is a warning, not proof. A real voice can still belong to a scammer.",
+
       "an.evidenceHonesty": "These are warning signs, not proof. If you're unsure, ask the bank.",
+
       "an.error.title": "We couldn't check this",
       "an.error.text": "Something went wrong on our side. Nothing was saved or sent. Please try again in a moment.",
       "an.error.help": "Need help now? Call the Anti-Scam Helpline on 1799.",
+
       "an.retry": "Try again",
+
       "an.err.read": "We could not read that file. Please paste the message instead.",
       "an.err.empty": "That file is empty. Please paste the message instead.",
       "an.err.fileLong": "That file is too long. Please paste up to {max} characters instead.",
+
       "an.count": "{n} / {max} characters",
+
       "an.err.tooLong": "This is {over} characters too long. Please shorten it to {max} characters or fewer.",
       "an.err.nothing": "Please paste a message, add a file, or try a sample.",
+
       "an.label.pasted": "Pasted message",
       "an.label.example": "Example: {chip}",
+
       "an.today": "Today {time}",
+
       "an.status": "Checking. Please wait.",
 
       "an.kind.message": "Text message",
       "an.kind.message.step1": "Reading the words",
       "an.kind.message.step2": "Looking for scam phrases",
-      "an.kind.message.step3": "Checking links and phone numbers",
+      "an.kind.message.step3": "Checking any links",
       "an.kind.voice": "Voice recording",
       "an.kind.voice.step1": "Looking for a hidden AI watermark",
       "an.kind.voice.step2": "Listening for signs of an AI voice",
@@ -356,22 +267,28 @@ const ANALYSER_DATA = {
       "an.risk.low": "Low risk",
       "an.risk.medium": "Medium risk",
       "an.risk.high": "High risk",
-      "an.looksLike": "This looks like",
+
+      "an.looksLike": "It looks like: {type}",
+
       "an.howSure": "How sure we are",
+
       "an.sure.low": "Not very sure",
       "an.sure.medium": "Fairly sure",
       "an.sure.high": "Very sure",
-      "an.flagsTitle": "Warning signs in your message",
+
       "an.noFlags": "We found no warning signs in this message.",
+
       "an.stepsTitle": "What to do now",
-      "an.honesty": "These are warning signs, not proof of a scam. If you're unsure, ask the bank.",
-      "an.type.impersonation": "A scam pretending to be the bank or government",
-      "an.type.phishing": "A fake link to steal your details",
-      "an.type.parcel": "A fake delivery message",
-      "an.type.job": "A job scam",
-      "an.type.investment": "An investment scam",
-      "an.type.love": "A love scam",
-      "an.type.none": "A normal message",
+
+      "an.honesty": "This is a warning, not proof. If you're not sure, call the bank on the number on your card.",
+
+      "an.type.impersonation": "someone pretending to be the bank or government",
+      "an.type.phishing": "a fake link to steal your bank details",
+      "an.type.parcel": "a fake delivery message",
+      "an.type.job": "a fake job offer",
+      "an.type.investment": "a fake investment offer",
+      "an.type.love": "someone you met online asking for money",
+      "an.type.none": "a normal message",
 
       "an.next.impersonation.1": "Don't reply, and never share a one-time password (OTP) or PIN.",
       "an.next.impersonation.2": "Call the bank yourself on the number on the back of your card.",
@@ -397,141 +314,169 @@ const ANALYSER_DATA = {
       "an.next.none.2": "If something still feels wrong, contact the person on a number you already know.",
 
       "an.ex.bank.chip": "Bank “security team”",
-      "an.ex.bank.summary": "This looks like a scam pretending to be your bank. A real bank will never ask for your OTP by message. Don't reply, and don't share any code.",
-      "an.ex.bank.flag1": "Claims to be your bank",
-      "an.ex.bank.flag2": "Asks for your one-time password (OTP)",
-      "an.ex.bank.flag3": "Rushes you",
-      "an.ex.bank.flag4": "Threatens you",
       "an.ex.link.chip": "Card suspended link",
-      "an.ex.link.summary": "This looks like a fake link made to steal your card details. The link doesn't go to your bank's real website. Don't tap it.",
-      "an.ex.link.flag1": "A scary claim to make you act fast",
-      "an.ex.link.flag2": "Asks you to tap a link and type your details",
-      "an.ex.link.flag3": "Not your bank's real website",
       "an.ex.parcel.chip": "Parcel fee",
-      "an.ex.parcel.summary": "This looks like a fake delivery message. Couriers don't ask for small fees through links like this. Check your parcel in the courier's own app instead.",
-      "an.ex.parcel.flag1": "A small fee to get your card details",
-      "an.ex.parcel.flag2": "Rushes you",
-      "an.ex.parcel.flag3": "An unknown link",
       "an.ex.job.chip": "Easy part-time job",
-      "an.ex.job.summary": "This looks like a job scam. Real jobs never ask you to pay to start, and nobody pays $300 a day for liking videos. Don't pay or share your bank details.",
-      "an.ex.job.flag1": "Too good to be true",
-      "an.ex.job.flag2": "Asks you to pay first",
-      "an.ex.job.flag3": "Moves you to a private chat, fast",
       "an.ex.invest.chip": "Guaranteed returns",
-      "an.ex.invest.summary": "This looks like an investment scam. No real investment can promise guaranteed profits every week. Don't transfer any money.",
-      "an.ex.invest.flag1": "Promises profit that is too good to be true",
-      "an.ex.invest.flag2": "Pressure to act fast",
-      "an.ex.invest.flag3": "Asks for money",
       "an.ex.love.chip": "Online friend needs money",
-      "an.ex.love.summary": "This looks like a love scam. Someone you have only met online is asking for money and asking you to keep it a secret. Talk to your family before you do anything.",
-      "an.ex.love.flag1": "Asks for money",
-      "an.ex.love.flag2": "Asks you to keep a secret",
       "an.ex.normal.chip": "Family dinner (normal)",
-      "an.ex.normal.summary": "We found no warning signs in this message. It doesn't ask for money, codes or links. If anything still feels wrong, contact the person on a number you already know.",
 
-      "an.phrase.safeAccount": "Asks you to move money to a \"safe account\"",
-      "an.phrase.otp": "Asks for your OTP, PIN or a code",
-      "an.phrase.rush": "Rushes you to act now",
-      "an.phrase.link": "Has a link for you to tap",
-      "an.phrase.authority": "Says it is from the police or government",
-      "an.phrase.secret": "Tells you to keep it a secret",
-      "an.phrase.account": "Says your account is in trouble",
+      "an.voiceSure.high": "Very sure",
+      "an.voiceSure.medium": "Fairly sure",
+      "an.voiceSure.low": "Not very sure",
 
-      "an.scan.title.high": "This message is likely a scam",
-      "an.scan.title.medium": "Please be careful with this message",
-      "an.scan.title.low": "We did not find scam signs",
-      "an.scan.noSigns.1": "No requests for codes, money or secrecy.",
-      "an.scan.noSigns.2": "No links or rushing words.",
-      "an.scan.high.1": "Don't reply, tap links or send money.",
-      "an.scan.medium.1": "Don't reply, tap links or send money until you're sure.",
-      "an.scan.risky.2": "Never share a one-time password (OTP) or PIN with anyone.",
-      "an.scan.risky.3": "Call the bank on the number on the back of your card, or the Anti-Scam Helpline on 1799.",
-      "an.scan.low.2": "If something still feels wrong, call OCBC yourself before you reply or pay.",
-
-      "an.voiceSure.high": "High",
-      "an.voiceSure.medium": "Medium",
-      "an.voiceSure.low": "Low",
-      "an.voice.clearEnough": "The clip was long and clear enough to check.",
-      "an.voice.noWatermark": "No hidden AI watermark was found.",
-      "an.voice.likely.title": "Likely an AI-made voice",
-      "an.voice.likely.reason1": "The voice has patterns that are common in AI-made speech.",
-      "an.voice.likely.reason2": "These patterns run through the whole clip, not just one part.",
+      "an.voice.likely.title": "This voice is likely fake",
+      "an.voice.likely.reason1": "The voice sounds like it was made by a computer.",
+      "an.voice.likely.reason2": "It sounds this way all the way through.",
       "an.voice.likely.extra": "Don't send money or share any codes. Hang up and call the bank yourself.",
-      "an.voice.partial.title": "Part of this clip sounds AI-made",
-      "an.voice.partial.reason1": "Seconds 10 to 20 sound different from the rest of the clip.",
-      "an.voice.partial.reason2": "A real voice may have been mixed with an AI-made one.",
-      "an.voice.partial.extra": "Treat this call as suspicious.",
-      "an.voice.uncertain.title": "Some signs of an AI voice",
-      "an.voice.uncertain.reason1": "Some parts of the voice sound smoother than a person normally does.",
-      "an.voice.uncertain.reason2": "This sounds like phone-call audio, where our checks make more mistakes.",
+      "an.voice.partial.title": "Part of this voice may be fake",
+      "an.voice.partial.reason1": "Seconds 10 to 20 sound computer-made, but the rest sounds real.",
+      "an.voice.partial.extra": "Treat this call as suspicious. Hang up and call the person back on a number you know.",
+      "an.voice.uncertain.title": "This voice might be fake",
+      "an.voice.uncertain.reason1": "Some parts sound a bit like a computer voice, but we're not sure.",
+      "an.voice.uncertain.reason2": "It sounds like a phone recording, so this check is less sure.",
       "an.voice.uncertain.extra": "Be careful. Check the caller another way before you do anything they ask.",
-      "an.voice.unsure.title": "Not sure: not enough clear evidence",
-      "an.voice.unsure.reason1": "Different parts of the clip gave very different results.",
-      "an.voice.unsure.reason2": "There was no clear pattern either way.",
-      "an.voice.unsure.extra": "Try a longer clip, or check the caller with questions instead.",
-      "an.voice.real.title": "Probably a real human voice",
-      "an.voice.real.reason1": "No hidden AI watermark was found. That alone doesn't prove the voice is real.",
-      "an.voice.real.reason2": "The voice sounds natural all the way through.",
-      "an.voice.real.extra": "A real voice can still belong to a scammer. If the caller asks for money, codes or secrecy, hang up."
+      "an.voice.unsure.title": "We can't tell if this voice is real",
+      "an.voice.unsure.reason1": "We couldn't get a clear answer from this recording.",
+      "an.voice.unsure.extra": "Try a longer recording, or ask the caller a question only the real person would know.",
+      "an.voice.real.title": "This voice sounds like a real person",
+      "an.voice.real.reason1": "The voice sounds like a real person all the way through.",
+      "an.voice.real.extra": "A real voice can still belong to a scammer. If the caller asks for money, codes or secrecy, hang up.",
+
+      "an.headline.high": "This message is likely a scam",
+      "an.headline.medium": "Be careful with this message",
+      "an.headline.low": "We found no clear scam signs",
+
+      "an.tapHint": "The worrying parts are marked in red. Tap a part to see why.",
+
+      "an.chanceWatermark": "No number needed: this recording carries a hidden mark that computer voice tools add.",
+
+      "an.voiceOffline": "The voice checker isn't running on this computer, so this is a made-up demo result.",
+
+      "an.moreDetails": "More details",
+
+      "an.err.voiceSlow": "The voice check took too long. Please try a shorter recording.",
+      "an.err.voiceUnreadable": "We couldn't read this recording. Please try a different file (for example .wav, .mp3 or .m4a).",
+      "an.err.voiceTooBig": "This recording is too big. Please use one under 25 MB.",
+      "an.err.voiceNoSound": "This recording has no sound we can check.",
+
+      "an.voice.meaning.fake": "A fake voice is made by a computer (AI) to sound like a real person.",
+      "an.voice.meaning.partial": "Someone may have mixed a computer-made (AI) voice into a real recording.",
+
+      "an.vr.likely": "The voice sounds like it was made by a computer.",
+      "an.vr.partial": "Seconds {from} to {to} sound computer-made, but the rest sounds real.",
+      "an.vr.partialSome": "Some parts sound computer-made, but the rest sounds real.",
+      "an.vr.uncertain": "Some parts sound a bit like a computer voice, but we're not sure.",
+      "an.vr.unsure": "We couldn't get a clear answer from this recording.",
+      "an.vr.real": "The voice sounds like a real person.",
+      "an.vr.watermark": "This recording carries a hidden mark that computer voice tools add, so it was made by a computer.",
+      "an.vr.tooShort": "The recording is very short ({seconds} seconds). Please try a longer one.",
+      "an.vr.short": "The recording is short ({seconds} seconds), so this check is less sure.",
+      "an.vr.phone": "It sounds like a phone recording, so this check is less sure.",
+      "an.vr.disagree": "Different parts of the recording gave different answers.",
+      "an.vr.noWatermark": "No AI watermark was found. That alone doesn't prove the voice is real.",
+      "an.vr.watermarkFound": "An AI watermark (AudioSeal) was found. It proves the audio was made by AI, not that the call is a scam.",
+      "an.vr.audio": "Audio type: {type}, {seconds} seconds long.",
+      "an.vr.audio.phone": "phone quality",
+      "an.vr.audio.wideband": "clear (wideband)",
+      "an.vr.windows": "{n} of {of} five-second windows sounded computer-made."
     },
     zh: {
       "an.title": "检查任何你不确定的东西",
+
       "an.lead": "放进一条信息、电话录音、截图或信件。你不用选它是什么，我们会看出来。",
+
       "an.drop.title": "按这里加入文件",
       "an.drop.sub": "或者把文件拖进这个框",
+
       "an.or": "或者",
+
       "an.textLabel": "贴上或输入信息",
+
       "an.placeholder": "例如：你的户口被锁了。按这个链接……",
+
       "an.checkMessage": "检查这条信息",
-      "an.privacy": "你的文件留在这部设备上。录音、图片和文件都不会被打开或上传。",
+
+      "an.privacy": "信息在这部设备上检查。语音录音会发送到我们的语音检查程序，检查后马上删除。请只使用示例录音或您自己声音的录音。图片和文件不会被打开。",
+
       "an.samplesTitle": "没有文件？试试示范",
+
       "an.moreExamples": "更多信息例子",
-      "an.demoVoice": "只是示范：选下一次声音检查的结果",
+
+      "an.demoVoice": "仅供演示：语音检查程序没有运行时显示的结果",
+
       "an.demoVoiceLegend": "下一次声音检查的结果",
+
       "an.demoErrors": "只是示范：显示错误画面",
+
       "an.demo.fail": "检查失败",
       "an.demo.long": "信息太长",
+
       "an.sample.voice": "示范语音信息",
       "an.sample.sms": "示范短信",
+
       "an.found": "我们发现：{kind}",
+
       "an.done": "（完成）",
+
       "an.checking": "正在检查…",
+
       "an.fewSeconds": "需要几秒钟。",
+
       "an.report": "向 OCBC 举报",
+
       "an.sentMoney": "我已经转了钱或给了密码",
+
       "an.callerCheck": "打电话来的是真人吗？",
+
       "an.callMatch": "真的是银行打来的吗？",
+
       "an.again": "检查别的东西",
+
       "an.demoTag": "示范结果",
+
       "an.why": "为什么我们这样认为",
-      "an.timeline.title": "哪些部分听起来像 AI 做的",
+
+      "an.timeline.title": "哪几秒听起来是假的",
       "an.timeline.part": "第 {from} 到 {to} 秒：{what}",
-      "an.timeline.ai": "听起来像 AI 做的",
-      "an.timeline.natural": "听起来很自然",
-      "an.timeline.key": "听起来像 AI 做的",
-      "an.chanceNone": "这次没有数字：这段录音没有给出清楚的答案。",
-      "an.chance": "的机会是 AI 做的声音",
-      "an.voiceHonesty": "声音检查只是一个危险信号，不是证明。真人的声音也可能是骗子。",
+      "an.timeline.ai": "听起来是假的",
+      "an.timeline.natural": "听起来是真的",
+      "an.timeline.key": "听起来是假的（电脑做的）",
+
+      "an.chanceNone": "这次没有数字：这段录音没有给出明确的答案。",
+
+      "an.chance": "可能是假声音",
+
+      "an.voiceHonesty": "这只是提醒，不是证据。真的声音也可能是骗子的。",
+
       "an.evidenceHonesty": "这些只是危险信号，不是证明。如有疑问，请问银行。",
+
       "an.error.title": "我们没办法检查",
       "an.error.text": "我们这边出了问题。没有保存或发送任何东西。请等一下再试。",
       "an.error.help": "现在需要帮助？请打反诈骗热线 1799。",
+
       "an.retry": "再试一次",
+
       "an.err.read": "我们读不到这个文件。请直接贴上信息。",
       "an.err.empty": "这个文件是空的。请直接贴上信息。",
       "an.err.fileLong": "这个文件太长了。请最多贴上 {max} 个字。",
+
       "an.count": "{n} / {max} 个字",
+
       "an.err.tooLong": "多了 {over} 个字。请缩短到 {max} 个字或以下。",
       "an.err.nothing": "请贴上一条信息、加入文件，或者试试示范。",
+
       "an.label.pasted": "贴上的信息",
       "an.label.example": "例子：{chip}",
+
       "an.today": "今天 {time}",
+
       "an.status": "正在检查，请稍等。",
 
       "an.kind.message": "短信",
       "an.kind.message.step1": "正在读文字",
       "an.kind.message.step2": "正在找诈骗用语",
-      "an.kind.message.step3": "正在检查链接和电话号码",
+      "an.kind.message.step3": "检查链接",
       "an.kind.voice": "录音",
       "an.kind.voice.step1": "正在找隐藏的 AI 水印",
       "an.kind.voice.step2": "正在听有没有 AI 声音的迹象",
@@ -540,21 +485,27 @@ const ANALYSER_DATA = {
       "an.risk.low": "低风险",
       "an.risk.medium": "中风险",
       "an.risk.high": "高风险",
-      "an.looksLike": "这看起来像",
+
+      "an.looksLike": "这看起来像：{type}",
+
       "an.howSure": "我们的把握",
+
       "an.sure.low": "不太确定",
       "an.sure.medium": "比较确定",
       "an.sure.high": "非常确定",
-      "an.flagsTitle": "信息中的危险信号",
+
       "an.noFlags": "这条信息没有发现危险信号。",
+
       "an.stepsTitle": "现在该怎么做",
-      "an.honesty": "这些只是危险信号，不能证明一定是诈骗。如有疑问，请联系银行。",
-      "an.type.impersonation": "冒充银行或政府的诈骗",
-      "an.type.phishing": "偷你资料的假链接",
-      "an.type.parcel": "假的送货信息",
-      "an.type.job": "工作诈骗",
-      "an.type.investment": "投资诈骗",
-      "an.type.love": "爱情诈骗",
+
+      "an.honesty": "这只是提醒，不是证据。如果不确定，请拨打银行卡背面的电话联系银行。",
+
+      "an.type.impersonation": "冒充银行或政府的人",
+      "an.type.phishing": "骗取您银行资料的假链接",
+      "an.type.parcel": "假冒的快递通知",
+      "an.type.job": "假的工作机会",
+      "an.type.investment": "假的投资机会",
+      "an.type.love": "网上认识的人向您要钱",
       "an.type.none": "普通信息",
 
       "an.next.impersonation.1": "不要回复，也绝对不要说出一次性密码（OTP）或 PIN。",
@@ -581,141 +532,169 @@ const ANALYSER_DATA = {
       "an.next.none.2": "如果还是觉得不对，请用你本来就知道的号码联系这个人。",
 
       "an.ex.bank.chip": "银行“保安团队”",
-      "an.ex.bank.summary": "这看起来像是冒充你银行的诈骗。真正的银行绝对不会用信息问你的 OTP。不要回复，也不要给任何密码。",
-      "an.ex.bank.flag1": "自称是你的银行",
-      "an.ex.bank.flag2": "问你的一次性密码（OTP）",
-      "an.ex.bank.flag3": "催你",
-      "an.ex.bank.flag4": "威胁你",
       "an.ex.link.chip": "银行卡被停用的链接",
-      "an.ex.link.summary": "这看起来是用来偷你银行卡资料的假链接。这个链接不是去你银行真正的网站。不要按它。",
-      "an.ex.link.flag1": "用吓人的话让你赶快行动",
-      "an.ex.link.flag2": "叫你按链接，输入你的资料",
-      "an.ex.link.flag3": "不是你银行真正的网站",
       "an.ex.parcel.chip": "包裹费用",
-      "an.ex.parcel.summary": "这看起来是假的送货信息。快递公司不会用这样的链接收小额费用。请在快递公司自己的应用程序查看你的包裹。",
-      "an.ex.parcel.flag1": "用一点小钱骗你的银行卡资料",
-      "an.ex.parcel.flag2": "催你",
-      "an.ex.parcel.flag3": "不认识的链接",
       "an.ex.job.chip": "轻松的兼职工作",
-      "an.ex.job.summary": "这看起来是工作诈骗。真正的工作绝对不会叫你先付钱，也没有人会因为你按赞视频，一天付你 $300。不要付钱，也不要说出你的银行资料。",
-      "an.ex.job.flag1": "好得不像真的",
-      "an.ex.job.flag2": "叫你先付钱",
-      "an.ex.job.flag3": "很快叫你去私人聊天",
       "an.ex.invest.chip": "保证回酬",
-      "an.ex.invest.summary": "这看起来是投资诈骗。真正的投资不能保证每个星期都赚钱。不要转任何钱。",
-      "an.ex.invest.flag1": "答应的利润好得不像真的",
-      "an.ex.invest.flag2": "逼你赶快行动",
-      "an.ex.invest.flag3": "向你要钱",
       "an.ex.love.chip": "网友需要钱",
-      "an.ex.love.summary": "这看起来是爱情诈骗。一个你只在网上认识的人向你要钱，还叫你保守秘密。做任何事之前，先和家人谈一谈。",
-      "an.ex.love.flag1": "向你要钱",
-      "an.ex.love.flag2": "叫你保守秘密",
       "an.ex.normal.chip": "家庭聚餐（普通信息）",
-      "an.ex.normal.summary": "这条信息没有发现危险信号。它没有向你要钱、密码，也没有链接。如果还是觉得不对，请用你本来就知道的号码联系这个人。",
 
-      "an.phrase.safeAccount": "叫你把钱转到“安全户口”",
-      "an.phrase.otp": "问你的 OTP、PIN 或密码",
-      "an.phrase.rush": "催你马上行动",
-      "an.phrase.link": "有一个链接叫你按",
-      "an.phrase.authority": "说自己是警察或政府",
-      "an.phrase.secret": "叫你保守秘密",
-      "an.phrase.account": "说你的户口出了问题",
+      "an.voiceSure.high": "非常确定",
+      "an.voiceSure.medium": "比较确定",
+      "an.voiceSure.low": "不太确定",
 
-      "an.scan.title.high": "这条信息很可能是诈骗",
-      "an.scan.title.medium": "这条信息请小心",
-      "an.scan.title.low": "我们没有发现诈骗迹象",
-      "an.scan.noSigns.1": "没有要密码、要钱，或叫你保密。",
-      "an.scan.noSigns.2": "没有链接，也没有催你的话。",
-      "an.scan.high.1": "不要回复，不要按链接，也不要转钱。",
-      "an.scan.medium.1": "在你确定之前，不要回复，不要按链接，也不要转钱。",
-      "an.scan.risky.2": "绝对不要把一次性密码（OTP）或 PIN 告诉任何人。",
-      "an.scan.risky.3": "用你银行卡背面的号码打电话给银行，或者打反诈骗热线 1799。",
-      "an.scan.low.2": "如果还是觉得不对，回复或付钱之前，先自己打电话给 OCBC。",
-
-      "an.voiceSure.high": "高",
-      "an.voiceSure.medium": "中",
-      "an.voiceSure.low": "低",
-      "an.voice.clearEnough": "这段录音够长，也够清楚，可以检查。",
-      "an.voice.noWatermark": "没有找到隐藏的 AI 水印。",
-      "an.voice.likely.title": "很可能是 AI 做的声音",
-      "an.voice.likely.reason1": "这个声音有 AI 声音常见的特点。",
-      "an.voice.likely.reason2": "这些特点出现在整段录音里，不只是一部分。",
+      "an.voice.likely.title": "这个声音很可能是假的",
+      "an.voice.likely.reason1": "这个声音听起来像是电脑做的。",
+      "an.voice.likely.reason2": "整段录音都是这样。",
       "an.voice.likely.extra": "不要转钱，也不要给任何密码。请挂电话，然后自己打给银行。",
-      "an.voice.partial.title": "这段录音有一部分像 AI 做的",
-      "an.voice.partial.reason1": "第 10 到 20 秒听起来和其他部分不一样。",
-      "an.voice.partial.reason2": "可能把真人的声音和 AI 的声音混在一起。",
-      "an.voice.partial.extra": "请把这通电话当作可疑电话。",
-      "an.voice.uncertain.title": "有一些 AI 声音的迹象",
-      "an.voice.uncertain.reason1": "声音有些部分比一般人说话更顺。",
-      "an.voice.uncertain.reason2": "这听起来像电话录音，我们的检查在这种情况下比较容易出错。",
+      "an.voice.partial.title": "这个声音有一部分可能是假的",
+      "an.voice.partial.reason1": "第 10 到 20 秒听起来像电脑做的，其他部分听起来是真的。",
+      "an.voice.partial.extra": "请把这通电话当作可疑电话。挂断后，用您知道的号码打回给对方。",
+      "an.voice.uncertain.title": "这个声音也许是假的",
+      "an.voice.uncertain.reason1": "有些部分听起来有点像电脑的声音，但我们不确定。",
+      "an.voice.uncertain.reason2": "听起来像电话录音，所以这次检查没那么准。",
       "an.voice.uncertain.extra": "要小心。照对方说的做任何事之前，先用别的方法确认他是谁。",
-      "an.voice.unsure.title": "不确定：没有足够清楚的证据",
-      "an.voice.unsure.reason1": "录音的不同部分给出很不一样的结果。",
-      "an.voice.unsure.reason2": "看不出明显的特点。",
-      "an.voice.unsure.extra": "试试更长的录音，或者问对方一些问题来确认。",
-      "an.voice.real.title": "可能是真人的声音",
-      "an.voice.real.reason1": "没有找到隐藏的 AI 水印。但只凭这点，不能证明声音是真的。",
-      "an.voice.real.reason2": "整段声音听起来都很自然。",
-      "an.voice.real.extra": "真人的声音也可能是骗子。如果对方要钱、要密码或叫你保密，请挂电话。"
+      "an.voice.unsure.title": "我们无法判断这个声音是不是真的",
+      "an.voice.unsure.reason1": "这段录音没有给我们明确的答案。",
+      "an.voice.unsure.extra": "试试较长的录音，或者问对方一个只有真人才知道的问题。",
+      "an.voice.real.title": "这个声音听起来像真人",
+      "an.voice.real.reason1": "整段录音听起来都像真人。",
+      "an.voice.real.extra": "真人的声音也可能是骗子。如果对方要钱、要密码或叫你保密，请挂电话。",
+
+      "an.headline.high": "这条信息很可能是诈骗",
+      "an.headline.medium": "请小心这条信息",
+      "an.headline.low": "没有发现明显的诈骗迹象",
+
+      "an.tapHint": "可疑的部分已用红色标出。点击可以看原因。",
+
+      "an.chanceWatermark": "不需要数字：这段录音带有电脑语音工具加上的隐藏标记。",
+
+      "an.voiceOffline": "这台电脑上的语音检查程序没有运行，所以这是虚构的演示结果。",
+
+      "an.moreDetails": "更多详情",
+
+      "an.err.voiceSlow": "语音检查花了太长时间。请换一段较短的录音。",
+      "an.err.voiceUnreadable": "我们无法读取这段录音。请换一个文件（例如 .wav、.mp3 或 .m4a）。",
+      "an.err.voiceTooBig": "这段录音太大了。请用小于 25 MB 的录音。",
+      "an.err.voiceNoSound": "这段录音没有可以检查的声音。",
+
+      "an.voice.meaning.fake": "假声音是电脑（AI）做出来的，听起来像真人。",
+      "an.voice.meaning.partial": "有人可能把电脑（AI）做的声音混进了真的录音里。",
+
+      "an.vr.likely": "这个声音听起来像是电脑做的。",
+      "an.vr.partial": "第 {from} 到 {to} 秒听起来像电脑做的，其他部分听起来是真的。",
+      "an.vr.partialSome": "有些部分听起来像电脑做的，其他部分听起来是真的。",
+      "an.vr.uncertain": "有些部分听起来有点像电脑的声音，但我们不确定。",
+      "an.vr.unsure": "这段录音没有给我们明确的答案。",
+      "an.vr.real": "这个声音听起来像真人。",
+      "an.vr.watermark": "这段录音带有电脑语音工具加上的隐藏标记，所以是电脑做的。",
+      "an.vr.tooShort": "这段录音很短（{seconds} 秒）。请试试较长的录音。",
+      "an.vr.short": "这段录音比较短（{seconds} 秒），所以这次检查没那么准。",
+      "an.vr.phone": "听起来像电话录音，所以这次检查没那么准。",
+      "an.vr.disagree": "录音的不同部分给出了不同的答案。",
+      "an.vr.noWatermark": "没有发现 AI 水印。但这不能证明声音是真的。",
+      "an.vr.watermarkFound": "发现了 AI 水印（AudioSeal）。这证明录音是 AI 做的，但不能证明这通电话是诈骗。",
+      "an.vr.audio": "录音类型：{type}，长 {seconds} 秒。",
+      "an.vr.audio.phone": "电话音质",
+      "an.vr.audio.wideband": "清晰（宽带）",
+      "an.vr.windows": "{of} 个五秒片段中有 {n} 个听起来像电脑做的。"
     },
     ms: {
       "an.title": "Semak apa sahaja yang anda tidak pasti",
+
       "an.lead": "Masukkan mesej, rakaman panggilan, tangkapan skrin atau surat. Anda tidak perlu pilih jenisnya. Kami akan tahu sendiri.",
+
       "an.drop.title": "Tekan di sini untuk tambah fail",
       "an.drop.sub": "atau seret fail ke dalam kotak ini",
+
       "an.or": "atau",
+
       "an.textLabel": "Tampal atau taip mesej",
+
       "an.placeholder": "Contohnya: Akaun anda dikunci. Tekan pautan ini...",
+
       "an.checkMessage": "Semak mesej ini",
-      "an.privacy": "Fail anda kekal pada peranti ini. Rakaman, gambar dan dokumen tidak akan dibuka atau dimuat naik.",
+
+      "an.privacy": "Mesej disemak pada peranti ini. Rakaman suara dihantar ke penyemak suara kami, disemak dan terus dipadam. Sila guna sampel atau rakaman suara anda sendiri sahaja. Gambar dan dokumen tidak dibuka.",
+
       "an.samplesTitle": "Tiada fail? Cuba contoh",
+
       "an.moreExamples": "Lebih banyak contoh mesej",
-      "an.demoVoice": "Demo sahaja: pilih keputusan untuk semakan suara seterusnya",
+
+      "an.demoVoice": "Demo sahaja: keputusan suara yang dipaparkan jika penyemak suara tidak berjalan",
+
       "an.demoVoiceLegend": "Keputusan untuk semakan suara seterusnya",
+
       "an.demoErrors": "Demo sahaja: tunjuk skrin ralat",
+
       "an.demo.fail": "Semakan gagal",
       "an.demo.long": "Mesej terlalu panjang",
+
       "an.sample.voice": "Contoh mesej suara",
       "an.sample.sms": "Contoh SMS",
+
       "an.found": "Kami jumpa: {kind}",
+
       "an.done": " (selesai)",
+
       "an.checking": "Sedang menyemak…",
+
       "an.fewSeconds": "Ini ambil masa beberapa saat.",
+
       "an.report": "Laporkan kepada OCBC",
+
       "an.sentMoney": "Saya sudah hantar wang atau kod",
+
       "an.callerCheck": "Adakah pemanggil orang sebenar?",
+
       "an.callMatch": "Betulkah bank yang telefon?",
+
       "an.again": "Semak benda lain",
+
       "an.demoTag": "Keputusan demo",
+
       "an.why": "Mengapa kami fikir begitu",
-      "an.timeline.title": "Bahagian mana yang macam dibuat oleh AI",
+
+      "an.timeline.title": "Saat mana yang kedengaran palsu",
       "an.timeline.part": "Saat {from} hingga {to}: {what}",
-      "an.timeline.ai": "macam dibuat oleh AI",
-      "an.timeline.natural": "kedengaran semula jadi",
-      "an.timeline.key": "Macam dibuat oleh AI",
-      "an.chanceNone": "Tiada nombor kali ini: rakaman tidak memberi jawapan yang jelas.",
-      "an.chance": "peluang suara ini dibuat oleh AI",
-      "an.voiceHonesty": "Semakan suara ialah satu tanda amaran, bukan bukti. Suara sebenar pun mungkin milik penipu.",
+      "an.timeline.ai": "kedengaran palsu",
+      "an.timeline.natural": "kedengaran sebenar",
+      "an.timeline.key": "Kedengaran palsu (dibuat oleh komputer)",
+
+      "an.chanceNone": "Tiada nombor kali ini: rakaman ini tidak memberi jawapan yang jelas.",
+
+      "an.chance": "kemungkinan suara ini palsu",
+
+      "an.voiceHonesty": "Ini amaran, bukan bukti. Suara sebenar masih boleh milik penipu.",
+
       "an.evidenceHonesty": "Ini hanya tanda amaran, bukan bukti. Jika ragu, tanya bank.",
+
       "an.error.title": "Kami tidak dapat menyemak ini",
       "an.error.text": "Ada masalah di pihak kami. Tiada apa yang disimpan atau dihantar. Sila cuba lagi sebentar lagi.",
       "an.error.help": "Perlu bantuan sekarang? Hubungi Talian Bantuan Anti-Penipuan di 1799.",
+
       "an.retry": "Cuba lagi",
+
       "an.err.read": "Kami tidak dapat baca fail itu. Sila tampal mesej sahaja.",
       "an.err.empty": "Fail itu kosong. Sila tampal mesej sahaja.",
       "an.err.fileLong": "Fail itu terlalu panjang. Sila tampal sehingga {max} aksara sahaja.",
+
       "an.count": "{n} / {max} aksara",
+
       "an.err.tooLong": "Ini terlebih {over} aksara. Sila pendekkan kepada {max} aksara atau kurang.",
       "an.err.nothing": "Sila tampal mesej, tambah fail, atau cuba contoh.",
+
       "an.label.pasted": "Mesej yang ditampal",
       "an.label.example": "Contoh: {chip}",
+
       "an.today": "Hari ini {time}",
+
       "an.status": "Sedang menyemak. Sila tunggu.",
 
       "an.kind.message": "Mesej teks",
       "an.kind.message.step1": "Membaca perkataan",
       "an.kind.message.step2": "Mencari ayat penipuan",
-      "an.kind.message.step3": "Menyemak pautan dan nombor telefon",
+      "an.kind.message.step3": "Menyemak pautan",
       "an.kind.voice": "Rakaman suara",
       "an.kind.voice.step1": "Mencari tanda air AI yang tersembunyi",
       "an.kind.voice.step2": "Mendengar tanda-tanda suara AI",
@@ -724,22 +703,28 @@ const ANALYSER_DATA = {
       "an.risk.low": "Risiko rendah",
       "an.risk.medium": "Risiko sederhana",
       "an.risk.high": "Risiko tinggi",
-      "an.looksLike": "Ini kelihatan seperti",
+
+      "an.looksLike": "Ini kelihatan seperti: {type}",
+
       "an.howSure": "Sejauh mana kami pasti",
+
       "an.sure.low": "Kurang pasti",
       "an.sure.medium": "Agak pasti",
       "an.sure.high": "Sangat pasti",
-      "an.flagsTitle": "Tanda amaran dalam mesej anda",
+
       "an.noFlags": "Kami tidak menemui tanda amaran dalam mesej ini.",
+
       "an.stepsTitle": "Apa yang perlu dilakukan sekarang",
-      "an.honesty": "Ini hanya tanda amaran, bukan bukti penipuan. Jika ragu, tanya pihak bank.",
-      "an.type.impersonation": "Penipuan yang menyamar sebagai bank atau kerajaan",
-      "an.type.phishing": "Pautan palsu untuk mencuri butiran anda",
-      "an.type.parcel": "Mesej penghantaran palsu",
-      "an.type.job": "Penipuan kerja",
-      "an.type.investment": "Penipuan pelaburan",
-      "an.type.love": "Penipuan cinta",
-      "an.type.none": "Mesej biasa",
+
+      "an.honesty": "Ini amaran, bukan bukti. Jika tidak pasti, hubungi bank melalui nombor pada kad anda.",
+
+      "an.type.impersonation": "orang yang menyamar sebagai bank atau kerajaan",
+      "an.type.phishing": "pautan palsu untuk mencuri butiran bank anda",
+      "an.type.parcel": "mesej penghantaran palsu",
+      "an.type.job": "tawaran kerja palsu",
+      "an.type.investment": "tawaran pelaburan palsu",
+      "an.type.love": "orang yang dikenali dalam talian meminta wang",
+      "an.type.none": "mesej biasa",
 
       "an.next.impersonation.1": "Jangan balas, dan jangan sekali-kali kongsi kata laluan sekali guna (OTP) atau PIN.",
       "an.next.impersonation.2": "Telefon bank sendiri menggunakan nombor di belakang kad anda.",
@@ -765,82 +750,72 @@ const ANALYSER_DATA = {
       "an.next.none.2": "Jika masih rasa tidak kena, hubungi orang itu melalui nombor yang anda sudah tahu.",
 
       "an.ex.bank.chip": "\"Pasukan keselamatan\" bank",
-      "an.ex.bank.summary": "Ini kelihatan seperti penipuan yang menyamar sebagai bank anda. Bank sebenar tidak akan sekali-kali minta OTP anda melalui mesej. Jangan balas, dan jangan kongsi apa-apa kod.",
-      "an.ex.bank.flag1": "Mengaku sebagai bank anda",
-      "an.ex.bank.flag2": "Minta kata laluan sekali guna (OTP) anda",
-      "an.ex.bank.flag3": "Mendesak anda",
-      "an.ex.bank.flag4": "Mengugut anda",
       "an.ex.link.chip": "Pautan kad digantung",
-      "an.ex.link.summary": "Ini kelihatan seperti pautan palsu untuk mencuri butiran kad anda. Pautan ini tidak pergi ke laman web bank anda yang sebenar. Jangan tekan.",
-      "an.ex.link.flag1": "Ayat menakutkan supaya anda bertindak cepat",
-      "an.ex.link.flag2": "Suruh anda tekan pautan dan taip butiran anda",
-      "an.ex.link.flag3": "Bukan laman web bank anda yang sebenar",
       "an.ex.parcel.chip": "Yuran bungkusan",
-      "an.ex.parcel.summary": "Ini kelihatan seperti mesej penghantaran palsu. Syarikat kurier tidak minta yuran kecil melalui pautan seperti ini. Semak bungkusan anda dalam aplikasi kurier itu sendiri.",
-      "an.ex.parcel.flag1": "Yuran kecil untuk dapatkan butiran kad anda",
-      "an.ex.parcel.flag2": "Mendesak anda",
-      "an.ex.parcel.flag3": "Pautan yang tidak dikenali",
       "an.ex.job.chip": "Kerja sambilan mudah",
-      "an.ex.job.summary": "Ini kelihatan seperti penipuan kerja. Kerja sebenar tidak akan suruh anda bayar untuk mula, dan tiada siapa bayar $300 sehari hanya untuk 'like' video. Jangan bayar atau kongsi butiran bank anda.",
-      "an.ex.job.flag1": "Terlalu bagus untuk menjadi kenyataan",
-      "an.ex.job.flag2": "Suruh anda bayar dahulu",
-      "an.ex.job.flag3": "Cepat-cepat bawa anda ke sembang peribadi",
       "an.ex.invest.chip": "Pulangan dijamin",
-      "an.ex.invest.summary": "Ini kelihatan seperti penipuan pelaburan. Tiada pelaburan sebenar yang boleh menjamin untung setiap minggu. Jangan pindahkan apa-apa wang.",
-      "an.ex.invest.flag1": "Janji untung yang terlalu bagus untuk menjadi kenyataan",
-      "an.ex.invest.flag2": "Desakan supaya bertindak cepat",
-      "an.ex.invest.flag3": "Minta wang",
       "an.ex.love.chip": "Kawan dalam talian perlukan wang",
-      "an.ex.love.summary": "Ini kelihatan seperti penipuan cinta. Orang yang anda kenal dalam talian sahaja minta wang dan suruh anda rahsiakannya. Bincang dengan keluarga anda sebelum buat apa-apa.",
-      "an.ex.love.flag1": "Minta wang",
-      "an.ex.love.flag2": "Suruh anda simpan rahsia",
       "an.ex.normal.chip": "Makan malam keluarga (biasa)",
-      "an.ex.normal.summary": "Kami tidak menemui tanda amaran dalam mesej ini. Ia tidak minta wang, kod atau pautan. Jika masih rasa tidak kena, hubungi orang itu melalui nombor yang anda sudah tahu.",
 
-      "an.phrase.safeAccount": "Suruh anda pindahkan wang ke \"akaun selamat\"",
-      "an.phrase.otp": "Minta OTP, PIN atau kod anda",
-      "an.phrase.rush": "Mendesak anda bertindak sekarang",
-      "an.phrase.link": "Ada pautan untuk anda tekan",
-      "an.phrase.authority": "Mengaku dari polis atau kerajaan",
-      "an.phrase.secret": "Suruh anda rahsiakannya",
-      "an.phrase.account": "Kata akaun anda ada masalah",
+      "an.voiceSure.high": "Sangat pasti",
+      "an.voiceSure.medium": "Agak pasti",
+      "an.voiceSure.low": "Kurang pasti",
 
-      "an.scan.title.high": "Mesej ini mungkin penipuan",
-      "an.scan.title.medium": "Sila berhati-hati dengan mesej ini",
-      "an.scan.title.low": "Kami tidak jumpa tanda penipuan",
-      "an.scan.noSigns.1": "Tiada permintaan untuk kod, wang atau rahsia.",
-      "an.scan.noSigns.2": "Tiada pautan atau perkataan yang mendesak.",
-      "an.scan.high.1": "Jangan balas, tekan pautan atau hantar wang.",
-      "an.scan.medium.1": "Jangan balas, tekan pautan atau hantar wang sehingga anda pasti.",
-      "an.scan.risky.2": "Jangan sekali-kali kongsi kata laluan sekali guna (OTP) atau PIN dengan sesiapa.",
-      "an.scan.risky.3": "Telefon bank menggunakan nombor di belakang kad anda, atau Talian Bantuan Anti-Penipuan di 1799.",
-      "an.scan.low.2": "Jika masih rasa tidak kena, telefon OCBC sendiri sebelum anda balas atau bayar.",
-
-      "an.voiceSure.high": "Tinggi",
-      "an.voiceSure.medium": "Sederhana",
-      "an.voiceSure.low": "Rendah",
-      "an.voice.clearEnough": "Rakaman ini cukup panjang dan jelas untuk disemak.",
-      "an.voice.noWatermark": "Tiada tanda air AI tersembunyi dijumpai.",
-      "an.voice.likely.title": "Mungkin suara yang dibuat oleh AI",
-      "an.voice.likely.reason1": "Suara ini ada corak yang biasa dalam pertuturan buatan AI.",
-      "an.voice.likely.reason2": "Corak ini ada di sepanjang rakaman, bukan di satu bahagian sahaja.",
+      "an.voice.likely.title": "Suara ini besar kemungkinan palsu",
+      "an.voice.likely.reason1": "Suara ini kedengaran seperti dibuat oleh komputer.",
+      "an.voice.likely.reason2": "Ia kedengaran begini dari awal hingga akhir.",
       "an.voice.likely.extra": "Jangan hantar wang atau kongsi apa-apa kod. Letak telefon dan telefon bank sendiri.",
-      "an.voice.partial.title": "Sebahagian rakaman ini macam dibuat oleh AI",
-      "an.voice.partial.reason1": "Saat 10 hingga 20 kedengaran berbeza daripada bahagian lain.",
-      "an.voice.partial.reason2": "Suara sebenar mungkin telah dicampur dengan suara buatan AI.",
-      "an.voice.partial.extra": "Anggap panggilan ini mencurigakan.",
-      "an.voice.uncertain.title": "Ada beberapa tanda suara AI",
-      "an.voice.uncertain.reason1": "Beberapa bahagian suara kedengaran lebih lancar daripada orang biasa bercakap.",
-      "an.voice.uncertain.reason2": "Ini macam audio panggilan telefon, yang mana semakan kami lebih mudah tersilap.",
+      "an.voice.partial.title": "Sebahagian suara ini mungkin palsu",
+      "an.voice.partial.reason1": "Saat 10 hingga 20 kedengaran seperti buatan komputer, tetapi selebihnya kedengaran sebenar.",
+      "an.voice.partial.extra": "Anggap panggilan ini mencurigakan. Letak telefon dan hubungi orang itu semula melalui nombor yang anda tahu.",
+      "an.voice.uncertain.title": "Suara ini mungkin palsu",
+      "an.voice.uncertain.reason1": "Sesetengah bahagian kedengaran sedikit seperti suara komputer, tetapi kami tidak pasti.",
+      "an.voice.uncertain.reason2": "Ia kedengaran seperti rakaman telefon, jadi semakan ini kurang pasti.",
       "an.voice.uncertain.extra": "Berhati-hati. Semak pemanggil dengan cara lain sebelum buat apa-apa yang dia minta.",
-      "an.voice.unsure.title": "Tidak pasti: bukti tidak cukup jelas",
-      "an.voice.unsure.reason1": "Bahagian rakaman yang berbeza memberi keputusan yang sangat berbeza.",
-      "an.voice.unsure.reason2": "Tiada corak yang jelas.",
-      "an.voice.unsure.extra": "Cuba rakaman yang lebih panjang, atau semak pemanggil dengan bertanya soalan.",
-      "an.voice.real.title": "Mungkin suara manusia sebenar",
-      "an.voice.real.reason1": "Tiada tanda air AI tersembunyi dijumpai. Itu sahaja tidak membuktikan suara ini sebenar.",
-      "an.voice.real.reason2": "Suara ini kedengaran semula jadi dari awal hingga akhir.",
-      "an.voice.real.extra": "Suara sebenar pun mungkin milik penipu. Jika pemanggil minta wang, kod atau rahsia, letak telefon."
+      "an.voice.unsure.title": "Kami tidak pasti sama ada suara ini sebenar",
+      "an.voice.unsure.reason1": "Kami tidak mendapat jawapan yang jelas daripada rakaman ini.",
+      "an.voice.unsure.extra": "Cuba rakaman yang lebih panjang, atau tanya pemanggil soalan yang hanya orang sebenar tahu.",
+      "an.voice.real.title": "Suara ini kedengaran seperti orang sebenar",
+      "an.voice.real.reason1": "Suara ini kedengaran seperti orang sebenar dari awal hingga akhir.",
+      "an.voice.real.extra": "Suara sebenar pun mungkin milik penipu. Jika pemanggil minta wang, kod atau rahsia, letak telefon.",
+
+      "an.headline.high": "Mesej ini mungkin penipuan",
+      "an.headline.medium": "Berhati-hati dengan mesej ini",
+      "an.headline.low": "Kami tidak menemui tanda penipuan yang jelas",
+
+      "an.tapHint": "Bahagian yang membimbangkan ditanda merah. Tekan untuk lihat sebabnya.",
+
+      "an.chanceWatermark": "Tiada nombor diperlukan: rakaman ini ada tanda tersembunyi yang ditambah oleh alat suara komputer.",
+
+      "an.voiceOffline": "Penyemak suara tidak berjalan pada komputer ini, jadi ini keputusan demo rekaan.",
+
+      "an.moreDetails": "Butiran lanjut",
+
+      "an.err.voiceSlow": "Semakan suara mengambil masa terlalu lama. Sila cuba rakaman yang lebih pendek.",
+      "an.err.voiceUnreadable": "Kami tidak dapat membaca rakaman ini. Sila cuba fail lain (contohnya .wav, .mp3 atau .m4a).",
+      "an.err.voiceTooBig": "Rakaman ini terlalu besar. Sila guna rakaman di bawah 25 MB.",
+      "an.err.voiceNoSound": "Rakaman ini tiada bunyi yang boleh disemak.",
+
+      "an.voice.meaning.fake": "Suara palsu dibuat oleh komputer (AI) supaya kedengaran seperti orang sebenar.",
+      "an.voice.meaning.partial": "Seseorang mungkin telah mencampurkan suara buatan komputer (AI) ke dalam rakaman sebenar.",
+
+      "an.vr.likely": "Suara ini kedengaran seperti dibuat oleh komputer.",
+      "an.vr.partial": "Saat {from} hingga {to} kedengaran seperti buatan komputer, tetapi selebihnya kedengaran sebenar.",
+      "an.vr.partialSome": "Sesetengah bahagian kedengaran seperti buatan komputer, tetapi selebihnya kedengaran sebenar.",
+      "an.vr.uncertain": "Sesetengah bahagian kedengaran sedikit seperti suara komputer, tetapi kami tidak pasti.",
+      "an.vr.unsure": "Kami tidak mendapat jawapan yang jelas daripada rakaman ini.",
+      "an.vr.real": "Suara ini kedengaran seperti orang sebenar.",
+      "an.vr.watermark": "Rakaman ini ada tanda tersembunyi yang ditambah oleh alat suara komputer, jadi ia dibuat oleh komputer.",
+      "an.vr.tooShort": "Rakaman ini sangat pendek ({seconds} saat). Sila cuba rakaman yang lebih panjang.",
+      "an.vr.short": "Rakaman ini pendek ({seconds} saat), jadi semakan ini kurang pasti.",
+      "an.vr.phone": "Ia kedengaran seperti rakaman telefon, jadi semakan ini kurang pasti.",
+      "an.vr.disagree": "Bahagian rakaman yang berbeza memberi jawapan yang berbeza.",
+      "an.vr.noWatermark": "Tiada tanda air AI ditemui. Itu sahaja tidak membuktikan suara itu sebenar.",
+      "an.vr.watermarkFound": "Tanda air AI (AudioSeal) ditemui. Ia membuktikan audio itu dibuat oleh AI, bukan bahawa panggilan itu penipuan.",
+      "an.vr.audio": "Jenis audio: {type}, {seconds} saat panjang.",
+      "an.vr.audio.phone": "kualiti telefon",
+      "an.vr.audio.wideband": "jelas (jalur lebar)",
+      "an.vr.windows": "{n} daripada {of} tetingkap lima saat kedengaran seperti buatan komputer."
     }
   }
 };

@@ -10,7 +10,8 @@ What this wrapper adds on top of the authors' own inference.py:
   2. Builds the model from the backbone's config only (no extra 1.2 GB
      download) and loads the weights from .safetensors. It stops with an error
      if any weight is missing or unexpected, except the 4 known training-only
-     "projection.*" tensors.
+     "projection.*" tensors, and it only runs the authors' model.py if the file
+     is exactly the one we read (SHA-256 check).
   3. Reports how much the windows agree, so the app can say "inconclusive"
      instead of guessing.
 
@@ -21,7 +22,9 @@ Run (from the project root):
     python -m detectors.forensics_xlsr path/to/clip.wav [more.wav ...]
 """
 import argparse
+import copy
 import functools
+import hashlib
 import importlib.util
 import time
 from pathlib import Path
@@ -43,9 +46,11 @@ WINDOW_S = 5.0      # the model was trained on 5 s clips
 HOP_S = 2.5         # 50% overlap between windows
 BATCH = 4           # windows per forward pass (fits a 6 GB GPU)
 
-# Tensors in the checkpoint that the authors' model.py never uses (a
+# The 4 tensors in the checkpoint that the authors' model.py never uses (a
 # training-only head). Any OTHER missing or unexpected tensor is an error.
-KNOWN_UNUSED_PREFIXES = ("projection.",)
+KNOWN_UNUSED = {"projection.0.weight", "projection.0.bias", "projection.2.weight", "projection.2.bias"}
+# SHA-256 of the model.py we read (it only defines layers). A changed file is not run.
+MODEL_PY_SHA256 = "764e06f723677df084d8a99fb367b210e985b5b5f5ee4333228a73cd44e29a1d"
 
 # ASSUMPTION placeholders until we calibrate on our own data:
 MIN_SECONDS = 2.0          # shorter clips are too little evidence -> inconclusive
@@ -60,10 +65,45 @@ def _load_author_classes():
     if not path.exists() or not WEIGHTS.exists():
         raise FileNotFoundError(
             f"Model files not found in {MODEL_DIR}. Download them first (see README.md).")
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    if digest != MODEL_PY_SHA256:
+        raise RuntimeError(f"{path} is not the file we read and checked (its SHA-256 is {digest}). "
+                           "Read the new file before running it, then update MODEL_PY_SHA256.")
     spec = importlib.util.spec_from_file_location("forensics_model", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.AASISTPool, module.Classifier
+
+
+def check_keys(missing, unexpected):
+    """load_state_dict(strict=False) would silently run on random weights if names
+    did not match, so check every mismatch ourselves: nothing may be missing, and
+    the only tensors left over must be exactly the 4 known unused ones."""
+    if missing or set(unexpected) != KNOWN_UNUSED:
+        raise RuntimeError(
+            "Checkpoint does not match the model.\n"
+            f"  missing ({len(missing)}): {list(missing)[:10]}\n"
+            f"  unexpected ({len(unexpected)}), expected exactly {sorted(KNOWN_UNUSED)}: {list(unexpected)[:10]}")
+
+
+class CosineOutput(torch.nn.Module):
+    """One-class last layer (OC-softmax, Zhang et al. 2021, see CITATIONS.md).
+    It replaces the final Linear and keeps its weight names. The score is how
+    closely a clip's features point at one learned "real speech" direction, so
+    real clips must sit close together while fakes may be anywhere else. It is
+    returned as a logit, so sigmoid(logit) = P(real) still holds."""
+    ALPHA = 20.0        # sharpness, from the paper
+    REAL_MARGIN = 0.9   # real clips should reach this cosine, from the paper
+    FAKE_MARGIN = 0.2   # fake clips should stay below this one, from the paper
+    MID = (REAL_MARGIN + FAKE_MARGIN) / 2
+
+    def __init__(self, linear):
+        super().__init__()
+        self.weight, self.bias = linear.weight, linear.bias  # bias is unused; kept so the names match
+
+    def forward(self, x):
+        cosine = torch.nn.functional.cosine_similarity(x, self.weight)
+        return (self.ALPHA * (cosine - self.MID)).unsqueeze(-1)
 
 
 class ForensicsDetector(torch.nn.Module):
@@ -93,15 +133,7 @@ def _load_original():
     model = ForensicsDetector()
     state = load_file(str(WEIGHTS))
     result = model.load_state_dict(state, strict=False)
-
-    # strict=False would silently run on random weights if names did not
-    # match, so check every mismatch ourselves.
-    unexpected = [k for k in result.unexpected_keys if not k.startswith(KNOWN_UNUSED_PREFIXES)]
-    if result.missing_keys or unexpected:
-        raise RuntimeError(
-            "Checkpoint does not match the model.\n"
-            f"  missing ({len(result.missing_keys)}): {result.missing_keys[:10]}\n"
-            f"  unexpected ({len(unexpected)}): {unexpected[:10]}")
+    check_keys(result.missing_keys, result.unexpected_keys)
     print(f"[forensics_xlsr] loaded {len(state) - len(result.unexpected_keys)} weight tensors "
           f"on {device}; skipped {len(result.unexpected_keys)} known unused 'projection.*' tensors")
     return model.eval().to(device), device
@@ -115,8 +147,12 @@ def get_model(head=None):
     original, device = _load_original()
     if not head:
         return original, device
-    model = ForensicsDetector(wavlm=original.wavlm)
     head_state = load_file(str(head))
+    # A head trained with --unfreeze brings its own last backbone layers, so it cannot share.
+    own_backbone = any(k.startswith("wavlm.") for k in head_state)
+    model = ForensicsDetector(wavlm=copy.deepcopy(original.wavlm) if own_backbone else original.wavlm)
+    if head_state.pop("one_class", None) is not None:  # marker saved by train/finetune_head.py
+        model.classifier.output_head[3] = CosineOutput(model.classifier.output_head[3])
     result = model.load_state_dict(head_state, strict=False)
     missing = [k for k in result.missing_keys if k.startswith(("pool.", "classifier."))]
     if missing or result.unexpected_keys:
@@ -163,7 +199,8 @@ def score_clip(wav, head=None):
                                                 enabled=(device == "cuda")):
         for i in range(0, len(windows), BATCH):
             logits = model(windows[i:i + BATCH].to(device)).float()
-            fake_scores.append(1.0 - torch.sigmoid(logits).cpu())  # P(fake) = 1 - P(real)
+            # P(fake) = 1 - P(real) = sigmoid(-logit), which never rounds to exactly 0 or 1
+            fake_scores.append(torch.sigmoid(-logits).cpu())
     scores = torch.cat(fake_scores).numpy()
 
     spread = float(scores.std())

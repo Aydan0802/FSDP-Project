@@ -26,6 +26,7 @@ Run from the project root:
 import csv
 import json
 import subprocess
+import zlib
 from pathlib import Path
 
 import imageio_ffmpeg
@@ -42,7 +43,10 @@ WAV_DIR = RAW.parent
 SOURCES = ROOT / "docs" / "sg_officials_sources.csv"
 FINETUNED = {"fine-tuned 1": ROOT / "models" / "finetuned" / "head.safetensors",      # audiobook data only
              "fine-tuned 2": ROOT / "models" / "finetuned" / "head_sg.safetensors",  # + Singaporean speech
-             "best so far": ROOT / "models" / "finetuned" / "final_slow.safetensors"}  # + Orpheus fakes
+             "fine-tuned 3": ROOT / "models" / "finetuned" / "final_slow.safetensors",  # + Orpheus fakes
+             "fine-tuned 4": ROOT / "models" / "finetuned" / "clips_final2.safetensors",  # + vocoded and compressed
+             "best so far": ROOT / "models" / "finetuned" / "clips_final3.safetensors",  # + Parts 1 and 3 of the corpus
+             "phone head": ROOT / "models" / "finetuned" / "phone_tuned.safetensors"}  # Run 12, used on phone audio
 OUT = ROOT / "results" / "sg_officials"
 FLAG_AT = 0.5  # a window counts as "flagged" when its raw fake score is at least this
 
@@ -72,7 +76,6 @@ def main():
                          f"{RAW.relative_to(ROOT)} and one row per file to the CSV.")
     models = {"original": None, **{name: path for name, path in FINETUNED.items() if path.exists()}}
     cal = json.loads((ROOT / "detectors" / "calibration.json").read_text())
-    cal_model = "+".join(Path(h).stem if h else "original" for h in cal["heads"])
     rows, timeline = [], []
 
     for src in sources:
@@ -85,7 +88,8 @@ def main():
         if not wav_path.exists():
             extract_audio(raw_path, wav_path)
         wav = load_audio(wav_path)
-        phone, _ = degrade(wav, seed=0, config=PhoneConfig(codec="gsm"))
+        # Each clip gets its own simulated call (one seed for all gave every copy the same 20.9 dB of noise).
+        phone, _ = degrade(wav, seed=zlib.crc32(src["file"].encode()), config=PhoneConfig(codec="gsm"))
 
         for condition, audio in [("as received", wav), ("phone (GSM)", phone)]:
             for model_name, head in models.items():
@@ -105,10 +109,14 @@ def main():
                              "max_at": f"{int(peak // 60)}:{peak % 60:04.1f}",
                              "share_windows_flagged": f"{100 * (windows >= FLAG_AT).mean():.0f}%",
                              "n_windows": r["n_windows"], "seconds": r["duration_s"]})
-            # The app's full verdict uses whichever model detectors/calibration.json was
-            # fitted for, so it is the same for every model row of this clip + condition.
+            # The app's full verdict uses the heads detectors/calibration.json lists for the
+            # kind of audio it measures, so it is the same for every model row of this clip + condition.
             v = analyse(audio)
-            app = f"{v['band']} {v['likelihood_pct']:.0f}% ({cal_model})"
+            if v["likelihood_pct"] is None:  # watermark found: no detector score
+                app = v["verdict"]
+            else:
+                heads = "+".join(Path(h).stem if h else "original" for h in cal[v["channel"]]["heads"])
+                app = f"{v['band']} {v['likelihood_pct']:.0f}% ({heads})"
             for row in rows[-len(models):]:
                 row["app_verdict"] = app
 

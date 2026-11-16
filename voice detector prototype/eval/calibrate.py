@@ -8,8 +8,8 @@ clean and phone audio, and between heads. This fits a small logistic model
 behaves so differently on each.
 The verdict detects which one a clip is.
 
-It can combine several heads. Each head is scored first with eval.run_eval
-into its own folder, on the same clips:
+It can combine several heads, and each kind of audio can use its own heads.
+Each head is scored first with eval.run_eval into its own folder, on the same clips:
 
     python -m eval.run_eval --manifest data/train_manifest_sg_orpheus.csv --split val --out results/val_orig
     python -m eval.run_eval --manifest data/train_manifest_sg_orpheus.csv --split val --out results/val_ft --head models/finetuned/x.safetensors
@@ -19,12 +19,22 @@ into its own folder, on the same clips:
         --fit results/val_orig results/val_ft --test results/test_orig results/test_ft \
         --report-dir results/calibration
 
+--heads, --fit and --test are used for both kinds of audio, unless phone audio
+gets its own with --phone-heads, --phone-fit and --phone-test.
+
+The new calibration is written to <report-dir>/calibration.json. Only --save also
+writes the live detectors/calibration.json that the app uses, after copying the
+old one to <report-dir>/calibration_before.json.
+
 No leakage: weights come from validation only, so accuracy on --test at the
 50% cut-off is a fair estimate, unlike the EER in run_eval.py, which picks the
-best threshold on the test set itself.
+best threshold on the test set itself. The report also has the validation rows,
+marked in-sample: the same clips fitted the weights and chose each head's
+epoch, so the app's percentages look better calibrated there than on new clips.
 """
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import matplotlib
@@ -34,6 +44,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, roc_auc_score, roc_curve
 
 from detectors.calibration import combine, logit
+from eval import run_info
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -95,29 +106,66 @@ def evaluate(condition, name, y, p):
     return row
 
 
+def report_rows(data, table, raw, p, conditions):
+    """evaluate() for each condition, all fakes and then each kind of fake."""
+    t = table[table.condition.isin(conditions)]
+    y = (t.label == "fake").astype(int).to_numpy()
+    chance = combine(raw[t.index], p)
+    fakes = t.generator.where(t.generator != "", t.source).to_numpy()
+    rows = []
+    for condition in conditions:
+        c = (t.condition == condition).to_numpy()
+        rows.append({"data": data, **evaluate(condition, "ALL", y[c], chance[c])})
+        for name in sorted(set(fakes[c & (y == 1)])):
+            keep = c & ((y == 0) | (fakes == name))
+            rows.append({"data": data, **evaluate(condition, name, y[keep], chance[keep])})
+    return rows, y, chance
+
+
+def setups(args):
+    """Heads, fit folders and test folders for each kind of audio, after checking
+    that every folder was scored with the head it is given for (eval/run_info.py)."""
+    phone = (args.phone_heads, args.phone_fit, args.phone_test)
+    if any(phone) and not all(phone):
+        raise SystemExit("--phone-heads, --phone-fit and --phone-test go together")
+    wide = (args.heads, args.fit, args.test)
+    chosen = {"wideband": wide, "phone": phone if all(phone) else wide}
+    for heads, fit, test in chosen.values():
+        if not len(heads) == len(fit) == len(test):
+            raise SystemExit("each kind of audio needs one --fit and one --test folder per head")
+        for folder, head in zip(fit + test, heads + heads):
+            run_info.check(ROOT / folder, head=run_info.head_name(head))
+    return chosen
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--heads", nargs="+", required=True,
                     help="'original' or a fine-tuned head path, one per --fit folder")
     ap.add_argument("--fit", nargs="+", required=True, help="folders with validation scores.csv, one per head")
     ap.add_argument("--test", nargs="+", required=True, help="folders with test scores.csv, one per head")
+    ap.add_argument("--phone-heads", nargs="+", help="heads for phone audio, if not the same as --heads")
+    ap.add_argument("--phone-fit", nargs="+", help="validation folders for --phone-heads")
+    ap.add_argument("--phone-test", nargs="+", help="test folders for --phone-heads")
     ap.add_argument("--report-dir", default="results/calibration")
+    ap.add_argument("--save", action="store_true", help="also write the live detectors/calibration.json")
     args = ap.parse_args()
-    if not len(args.heads) == len(args.fit) == len(args.test):
-        raise SystemExit("--heads, --fit and --test need one entry per head")
-    fit_all, fit_raw, fit_windows = load(args.fit)
-    test_all, test_raw, _ = load(args.test)
+    chosen = setups(args)
     report_dir = ROOT / args.report_dir
     report_dir.mkdir(parents=True, exist_ok=True)
     params, report = {}, []
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
 
     for ax, (channel, conditions) in zip(axes, CHANNELS.items()):
+        heads, fit_folders, test_folders = chosen[channel]
+        fit_all, fit_raw, fit_windows = load(fit_folders)
+        test_all, test_raw, _ = load(test_folders)
         m = fit_all.condition.isin(conditions).to_numpy()
         y_fit = (fit_all.label[m] == "fake").astype(int).to_numpy()
         # class_weight: treat real and fake as equally likely, whatever the mix of validation clips.
         lr = LogisticRegression(C=1.0, class_weight="balanced").fit(logit(fit_raw[m]), y_fit)
-        p = {"weights": [round(float(w), 4) for w in lr.coef_[0]], "bias": round(float(lr.intercept_[0]), 4),
+        p = {"heads": [run_info.head_name(h) for h in heads],
+             "weights": [round(float(w), 4) for w in lr.coef_[0]], "bias": round(float(lr.intercept_[0]), 4),
              "n_real": int((y_fit == 0).sum()), "n_fake": int((y_fit == 1).sum())}
         # How much windows of one clip disagree, on the same scale as the final chance.
         spreads = [float(combine(w, p).std()) for w, keep in zip(fit_windows, m) if keep and len(w) > 1]
@@ -125,16 +173,9 @@ def main():
         p["spread_limit"] = round(float(np.percentile(spreads, SPREAD_LIMIT)), 3)
         params[channel] = p
 
-        t = test_all[test_all.condition.isin(conditions)]
-        y = (t.label == "fake").astype(int).to_numpy()
-        chance = combine(test_raw[t.index], p)
-        fakes = t.generator.where(t.generator != "", t.source).to_numpy()
-        for condition in conditions:
-            c = (t.condition == condition).to_numpy()
-            report.append(evaluate(condition, "ALL", y[c], chance[c]))
-            for name in sorted(set(fakes[c & (y == 1)])):
-                keep = c & ((y == 0) | (fakes == name))
-                report.append(evaluate(condition, name, y[keep], chance[keep]))
+        report += report_rows("val (in-sample)", fit_all, fit_raw, p, conditions)[0]
+        rows, y, chance = report_rows("test", test_all, test_raw, p, conditions)
+        report += rows
 
         # Reliability chart: in each bin, predicted vs actual share of fakes.
         bins = np.clip(np.digitize(chance, np.linspace(0, 1, 11)) - 1, 0, 9)
@@ -150,20 +191,26 @@ def main():
     plt.savefig(report_dir / "calibration.png", dpi=150)
     plt.close()
 
-    OUT_JSON.write_text(json.dumps({
+    calibration = json.dumps({
         "method": "P(fake) = sigmoid(sum(w * logit(raw per head)) + bias), fitted per channel on validation",
-        "heads": [None if h == "original" else h for h in args.heads],
         "band_cutoff": BAND_CUTOFF,
         "bands": {name: edge for edge, name in BANDS},
         "prior_note": "assumes real and fake equally likely; real calls are mostly genuine",
-        **params}, indent=2))
+        **params}, indent=2)
+    (report_dir / "calibration.json").write_text(calibration)
+    if args.save:
+        if OUT_JSON.exists():
+            shutil.copy(OUT_JSON, report_dir / "calibration_before.json")
+        OUT_JSON.write_text(calibration)
     table = pd.DataFrame(report)
     table.to_csv(report_dir / "calibration_report.csv", index=False)
     pd.set_option("display.width", 250)
     pd.set_option("display.max_columns", 30)
     print("\n" + table.to_string(index=False))
     print(f"\nWeights: {json.dumps(params)}")
-    print(f"Saved {OUT_JSON.relative_to(ROOT)} and {args.report_dir}/calibration_report.csv, calibration.png")
+    saved = f"{OUT_JSON.relative_to(ROOT)} (old one in calibration_before.json)" if args.save else \
+        "nothing live (pass --save to update detectors/calibration.json)"
+    print(f"Saved {args.report_dir}/calibration.json, calibration_report.csv, calibration.png; {saved}")
 
 
 if __name__ == "__main__":

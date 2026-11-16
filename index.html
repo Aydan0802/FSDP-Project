@@ -98,6 +98,12 @@
   <script src="js/features/learn-signs.js"></script>
   <script src="js/features/passphrase.js"></script>
   <!-- Aydan -->
+  <!-- The text detector (red-flag rules, runs on this device). Load in this order, before analyser.js -->
+  <script src="text%20detector%20prototype/detector/rules_zh.js"></script>
+  <script src="text%20detector%20prototype/detector/rules_ms.js"></script>
+  <script src="text%20detector%20prototype/detector/rules.js"></script>
+  <script src="text%20detector%20prototype/detector/words.js"></script>
+  <script src="text%20detector%20prototype/detector/checker.js"></script>
   <script src="js/features/analyser.js"></script>
   <script src="js/features/coming-soon.js"></script>
   <!-- Jose (call-match-logic.js must load before Yan Lin's call-match.js, which uses it) -->

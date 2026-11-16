@@ -1,0 +1,52 @@
+{
+  "about": "Short, made-up test lines written by the team (fake names, TestBank, .example links). Written BEFORE the Chinese and Malay rules and not changed after. Because the same people wrote the rules, results on this set are a smoke test, not real-world accuracy. The Chinese and Malay lines need a teammate who speaks the language to check them.",
+  "messages": [
+    { "lang": "en", "label": "scam", "type": "impersonation", "text": "This is the police. Your bank account is linked to a money laundering case. Transfer your savings to a safe account now." },
+    { "lang": "en", "label": "scam", "type": "impersonation", "text": "Your Singpass will be suspended today. Verify your identity at singpass-verify.example" },
+    { "lang": "en", "label": "scam", "type": "impersonation", "text": "TestBank: your account needs an update. Download our app from this link: testbank-update.example/app.apk" },
+    { "lang": "en", "label": "scam", "type": "parcel", "text": "SingPost: your package is on hold due to an unpaid customs fee. Pay at singpost-fee.example within 12 hours." },
+    { "lang": "en", "label": "scam", "type": "job", "text": "Hi, I'm a recruiter. Earn S$200 a day rating hotel apps from home. Message our agent on Telegram to start." },
+    { "lang": "en", "label": "scam", "type": "investment", "text": "Exclusive stock tips! Our mentor guarantees 20% profit monthly. Join our WhatsApp group: wa.me/0000" },
+    { "lang": "en", "label": "scam", "type": "love", "text": "Darling, I can't wait to meet you. Please buy me Google Play gift cards so I can pay for my flight." },
+    { "lang": "en", "label": "scam", "type": "phishing", "text": "Dear customer, unusual activity was found on your card. Log in here to confirm your details: bit.ly/test0000" },
+
+    { "lang": "en", "label": "normal", "type": "none", "text": "TestBank: Your OTP is 482913. It expires in 5 minutes. Never share your OTP with anyone." },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Your order has been shipped. Track it at www.shop.example/track" },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Reminder: your dental appointment is on Monday at 10am. Reply YES to confirm." },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Mum, can you transfer $50 to me for the school trip? Thanks!" },
+    { "lang": "en", "label": "normal", "type": "none", "text": "TestBank: A card payment of S$45.20 was made at a supermarket. If this was not you, call the number on the back of your card." },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Hi team, the part-time job fair is on Friday. Please share the poster." },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Congratulations on your exam results! So proud of you." },
+    { "lang": "en", "label": "normal", "type": "none", "text": "Your parcel could not be delivered today. We will try again tomorrow, no action needed." },
+
+    { "lang": "zh", "label": "scam", "type": "impersonation", "text": "【测试银行】您的账户出现异常登录，请回复短信验证码，否则账户将被冻结。" },
+    { "lang": "zh", "label": "scam", "type": "impersonation", "text": "这里是警察局，您的账户涉嫌洗钱，请立即把钱转到安全账户配合调查。" },
+    { "lang": "zh", "label": "scam", "type": "phishing", "text": "您的银行卡已被暂停使用，请点击链接更新资料：bank-update.example" },
+    { "lang": "zh", "label": "scam", "type": "parcel", "text": "您的包裹无法派送，请在24小时内支付1.99元重新派送费：parcel-fee.example" },
+    { "lang": "zh", "label": "scam", "type": "job", "text": "兼职招聘！每天点赞视频可赚300元，无需经验，先交50元报名费，请加WhatsApp。" },
+    { "lang": "zh", "label": "scam", "type": "investment", "text": "加入VIP炒币群，保证每周30%回报！名额有限，今天转账。" },
+    { "lang": "zh", "label": "scam", "type": "love", "text": "亲爱的，我在机场被扣留了，急需2000元交关税，请不要告诉你的家人。" },
+
+    { "lang": "zh", "label": "normal", "type": "none", "text": "妈，我今晚七点回家吃饭，记得留点汤给我。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "【测试银行】您的验证码是123456，五分钟内有效，请勿向任何人透露。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "周六的家庭聚会改到老地方，大家记得带孩子来。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "你的快递我帮你拿了，放在门口。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "明天下午三点开会，请准时参加。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "爸，我这个月的学费已经交了，不用担心。" },
+    { "lang": "zh", "label": "normal", "type": "none", "text": "老师说下周一考试，记得复习第三章。" },
+
+    { "lang": "ms", "label": "scam", "type": "impersonation", "text": "Bank Ujian: Log masuk luar biasa dikesan. Sila balas dengan kod OTP anda dalam masa 10 minit atau akaun anda akan dibekukan." },
+    { "lang": "ms", "label": "scam", "type": "phishing", "text": "Kad anda telah digantung. Klik pautan ini untuk mengesahkan butiran anda: kad-sah.example" },
+    { "lang": "ms", "label": "scam", "type": "parcel", "text": "Bungkusan anda tidak dapat dihantar. Bayar yuran penghantaran semula $1.99 di parcel-bayar.example" },
+    { "lang": "ms", "label": "scam", "type": "job", "text": "Kerja sambilan dari rumah! Dapat $300 sehari hanya dengan 'like' video. Bayar yuran pendaftaran $50 dahulu. WhatsApp kami sekarang!" },
+    { "lang": "ms", "label": "scam", "type": "investment", "text": "Pelaburan kripto dengan pulangan dijamin 30% setiap minggu! Tempat terhad, pindahkan wang hari ini." },
+    { "lang": "ms", "label": "scam", "type": "love", "text": "Sayang, saya tersekat di lapangan terbang dan perlukan $2,000 untuk kastam. Jangan beritahu keluarga anda." },
+
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Mak, saya balik rumah pukul 7 malam ini. Simpan sikit lauk untuk saya." },
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Kod OTP anda ialah 123456. Jangan kongsi kod ini dengan sesiapa." },
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Mesyuarat esok ditangguhkan ke pukul 3 petang." },
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Jangan lupa bawa buku untuk kelas Isnin." },
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Terima kasih kerana hadir ke majlis kami semalam." },
+    { "lang": "ms", "label": "normal", "type": "none", "text": "Abang, saya dah bayar yuran sekolah adik bulan ini." }
+  ]
+}
