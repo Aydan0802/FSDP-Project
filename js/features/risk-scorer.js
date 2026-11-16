@@ -12,6 +12,11 @@
 // the site was opened with "python -m http.server"), it scores on this device instead, with
 // the very same code, so the result is the same either way.
 //
+// Languages: every word on this screen comes from t() (js/core/i18n.js), with the words in
+// RISK_SCORER_DATA.text. The scorer and the server still answer in English (the staff console
+// and the API use that). This screen shows a signal's reason by looking up its id,
+// t("rs.signal.<id>.reason"), so the customer sees it in their own language.
+//
 // What it remembers (appState.riskScorer, cleared by #reset):
 //   selectedId  the sample picked last
 //   phase       "pick", "scoring", "result" or "done"
@@ -23,6 +28,7 @@
 
 (function () {
   const data = RISK_SCORER_DATA;
+  addTranslations(data.text);    // this screen's English, Chinese and Malay words
   const API_TIMEOUT_MS = 2000;   // R-5: the API must answer within 2 seconds
   const MIN_CHECK_MS = 900;      // show "Checking..." at least this long, so people see it happen
 
@@ -35,28 +41,36 @@
 
   const esc = escapeHtml;
 
+  // Money stays in the Singapore style ($5,000) in every language: it is what seniors see on
+  // their bank statements, and it reads the same in English, Chinese and Malay.
   function money(amount) {
     return new Intl.NumberFormat("en-SG", { style: "currency", currency: "SGD", maximumFractionDigits: 2, minimumFractionDigits: 0 }).format(amount);
   }
 
-  // 1 becomes "1 am", 19 becomes "7 pm"
+  // 1 becomes "1 am" / "凌晨1点" / "1 pagi". We pick the part of the day ourselves instead of
+  // letting the browser format it, because the browser gives "上午1时" and "1 PG", which
+  // seniors don't say. The words for each part of the day are in the data file.
   function hourText(hour) {
-    if (hour === 0) return "12 midnight";
-    if (hour === 12) return "12 noon";
-    return hour < 12 ? `${hour} am` : `${hour - 12} pm`;
+    const h = hour % 12 || 12;   // 0 and 12 both say "12"
+    const part = hour === 0 ? "midnight" : hour < 6 ? "night" : hour < 12 ? "morning"
+      : hour === 12 ? "noon" : hour < 18 ? "afternoon" : "evening";
+    return t(`rs.hour.${part}`, { h });
   }
 
-  // How long ago the payee was added, in words
+  // How long ago the payee was added, in words. Intl.RelativeTimeFormat is built into the
+  // browser and already knows "12 minutes ago" / "12分钟前" / "12 minit lalu".
   function agoText(hours) {
-    if (hours < 1) return `${Math.round(hours * 60)} minutes ago`;
-    if (hours < 48) return `${Math.round(hours)} hours ago`;
-    if (hours < 24 * 365) return `${Math.round(hours / 24)} days ago`;
-    return "over a year ago";
+    const ago = new Intl.RelativeTimeFormat(getLocale(), { numeric: "always" });
+    if (hours < 1) return ago.format(-Math.round(hours * 60), "minute");
+    if (hours < 48) return ago.format(-Math.round(hours), "hour");
+    if (hours < 24 * 365) return ago.format(-Math.round(hours / 24), "day");
+    return t("rs.overYear");
   }
 
+  // "Others: 14 and 6 minutes ago". Intl.ListFormat puts "and" / "和" / "dan" between the numbers.
   function recentText(minutes) {
-    if (!minutes.length) return "None";
-    return `${minutes.length} other${minutes.length > 1 ? "s" : ""}: ${minutes.map(m => `${m}`).join(" and ")} minutes ago`;
+    if (!minutes.length) return t("rs.none");
+    return t("rs.recentList", { list: new Intl.ListFormat(getLocale()).format(minutes.map(String)) });
   }
 
   function wait(ms) {
@@ -117,39 +131,31 @@
     return staffCase.ref;
   }
 
-  // ---------- Drawing ----------
-
-  let redrawing = false;
-  function draw() {
-    redrawing = true;
-    try { redrawScreen(); } finally { redrawing = false; }
-  }
-
   // ---------- Phase 1: pick a transfer ----------
 
   function pickedHtml(sample) {
     if (!sample) return "";
-    const t = sample.transfer;
+    const transfer = sample.transfer;
     return `
-      <p class="rs-story">${esc(sample.story)}</p>
-      <div class="summary-row"><span>To</span><span>${esc(t.payeeName)}</span></div>
-      <div class="summary-row"><span>Amount</span><span>${money(t.amount)}</span></div>
-      <div class="summary-row"><span>Time</span><span>${hourText(t.hour)}</span></div>
-      <div class="stack"><button type="button" class="btn btn-primary" data-rs="score">Check the risk ${icon("arrow")}</button></div>`;
+      <p class="rs-story">${t(`rs.sample.${sample.id}.story`)}</p>
+      <div class="summary-row"><span>${t("rs.to")}</span><span>${esc(transfer.payeeName)}</span></div>
+      <div class="summary-row"><span>${t("rs.amount")}</span><span>${money(transfer.amount)}</span></div>
+      <div class="summary-row"><span>${t("rs.time")}</span><span>${hourText(transfer.hour)}</span></div>
+      <div class="stack"><button type="button" class="btn btn-primary" data-rs="score">${t("rs.checkRisk")} ${icon("arrow")}</button></div>`;
   }
 
   function pickHtml() {
     const selected = findSample(myState().selectedId);
     return `
       <section class="panel" data-read>
-        <p class="eyebrow">Before you send money</p>
-        <h1 tabindex="-1">Check a transfer before you send it</h1>
-        <p class="lead">Pick a transfer to see how risky it looks. Scammers often rush people into sending money.</p>
+        <p class="eyebrow">${t("rs.eyebrow")}</p>
+        <h1 tabindex="-1">${t("rs.title")}</h1>
+        <p class="lead">${t("rs.lead")}</p>
       </section>
       <section class="panel" aria-labelledby="rs-pick-title">
-        <h2 id="rs-pick-title">Pick a transfer</h2>
+        <h2 id="rs-pick-title">${t("rs.pickTitle")}</h2>
         <div class="chips" role="group" aria-labelledby="rs-pick-title">
-          ${data.samples.map(s => `<button type="button" class="chip" data-pick="${esc(s.id)}" aria-pressed="${s.id === myState().selectedId}">${esc(s.title)}</button>`).join("")}
+          ${data.samples.map(s => `<button type="button" class="chip" data-pick="${esc(s.id)}" aria-pressed="${s.id === myState().selectedId}">${t(`rs.sample.${s.id}.title`)}</button>`).join("")}
         </div>
         <div id="rs-picked" class="rs-picked">${pickedHtml(selected)}</div>
       </section>`;
@@ -160,24 +166,24 @@
   function scoringHtml() {
     return `
       <section class="panel" data-read>
-        <h1 tabindex="-1">Checking this transfer…</h1>
-        <ul class="progress-list"><li class="now"><span class="spin" aria-hidden="true"></span><span>Comparing with how you usually send money</span></li></ul>
+        <h1 tabindex="-1">${t("rs.checking")}</h1>
+        <ul class="progress-list"><li class="now"><span class="spin" aria-hidden="true"></span><span>${t("rs.comparing")}</span></li></ul>
       </section>`;
   }
 
   // ---------- Phase 3: the result ----------
 
-  function transferDetailsHtml(t) {
+  function transferDetailsHtml(transfer) {
     return `
       <dl class="rs-details">
-        <div><dt>To</dt><dd>${esc(t.payeeName)}</dd></div>
-        <div><dt>Amount</dt><dd>${money(t.amount)}</dd></div>
-        <div><dt>You usually send</dt><dd>${t.usualAmount > 0 ? money(t.usualAmount) : "No history yet"}</dd></div>
-        <div><dt>Time</dt><dd>${hourText(t.hour)}</dd></div>
-        <div><dt>Payee added</dt><dd>${agoText(t.payeeAddedHoursAgo)}</dd></div>
-        <div><dt>Paid them before?</dt><dd>${t.isNewPayee ? "No, first time" : "Yes"}</dd></div>
-        <div><dt>Reported for scams?</dt><dd>${t.payeeFlagged ? "Yes" : "No"}</dd></div>
-        <div><dt>Recent transfers</dt><dd>${recentText(t.recentTransferMinutes)}</dd></div>
+        <div><dt>${t("rs.to")}</dt><dd>${esc(transfer.payeeName)}</dd></div>
+        <div><dt>${t("rs.amount")}</dt><dd>${money(transfer.amount)}</dd></div>
+        <div><dt>${t("rs.usual")}</dt><dd>${transfer.usualAmount > 0 ? money(transfer.usualAmount) : t("rs.noHistory")}</dd></div>
+        <div><dt>${t("rs.time")}</dt><dd>${hourText(transfer.hour)}</dd></div>
+        <div><dt>${t("rs.payeeAdded")}</dt><dd>${agoText(transfer.payeeAddedHoursAgo)}</dd></div>
+        <div><dt>${t("rs.paidBefore")}</dt><dd>${transfer.isNewPayee ? t("rs.firstTime") : t("rs.yes")}</dd></div>
+        <div><dt>${t("rs.reported")}</dt><dd>${transfer.payeeFlagged ? t("rs.yes") : t("rs.no")}</dd></div>
+        <div><dt>${t("rs.recent")}</dt><dd>${recentText(transfer.recentTransferMinutes)}</dd></div>
       </dl>`;
   }
 
@@ -186,21 +192,21 @@
     const fired = new Map(result.signals.map(s => [s.id, s]));
     return `
       <details class="rs-all">
-        <summary>See every check we made</summary>
+        <summary>${t("rs.seeAll")}</summary>
         <div class="table-wrap">
           <table class="data-table">
-            <caption class="visually-hidden">Every risk check and the points it added</caption>
-            <thead><tr><th scope="col">Check</th><th scope="col">Found?</th><th scope="col">Points</th></tr></thead>
+            <caption class="visually-hidden">${t("rs.tableCaption")}</caption>
+            <thead><tr><th scope="col">${t("rs.colCheck")}</th><th scope="col">${t("rs.colFound")}</th><th scope="col">${t("rs.colPoints")}</th></tr></thead>
             <tbody>
               ${data.config.signals.map(s => `<tr>
-                  <th scope="row">${esc(s.label)}<span class="rs-rule">${esc(s.rule)}</span></th>
-                  <td>${fired.has(s.id) ? "Yes" : "No"}</td>
+                  <th scope="row">${t(`rs.signal.${s.id}.label`)}<span class="rs-rule">${t(`rs.signal.${s.id}.rule`)}</span></th>
+                  <td>${fired.has(s.id) ? t("rs.yes") : t("rs.no")}</td>
                   <td>${fired.has(s.id) ? `+${s.weight}` : "0"}</td>
                 </tr>`).join("")}
             </tbody>
           </table>
         </div>
-        <p class="meta">Points add up to the score, which stops at ${data.config.maxScore}.</p>
+        <p class="meta">${t("rs.pointsCap", { max: data.config.maxScore })}</p>
       </details>`;
   }
 
@@ -212,70 +218,68 @@
       <div class="rs-meter" aria-hidden="true" style="--b1: ${low.below}%; --b2: ${medium.below}%">
         <i style="left: ${score}%"></i>
       </div>
-      <div class="rs-scale" aria-hidden="true"><span>Low</span><span>Medium</span><span>High</span></div>`;
+      <div class="rs-scale" aria-hidden="true"><span>${t("rs.scale.low")}</span><span>${t("rs.scale.medium")}</span><span>${t("rs.scale.high")}</span></div>`;
   }
 
   // The top reasons (R-3) with the points each one added
   function pointsHtml(result) {
     if (!result.signals.length) {
-      return `<ul class="reasons"><li>${icon("check")}<span>We found no warning signs in this transfer.</span></li></ul>`;
+      return `<ul class="reasons"><li>${icon("check")}<span>${t("rs.noSigns")}</span></li></ul>`;
     }
     const top = result.signals.slice(0, data.config.topReasons);
     const more = result.signals.length - top.length;
     return `
       <ul class="reasons">
-        ${top.map(s => `<li>${icon("flag")}<span>${esc(s.reason)}</span><span class="pts">+${s.weight}</span></li>`).join("")}
+        ${top.map(s => `<li>${icon("flag")}<span>${t(`rs.signal.${s.id}.reason`)}</span><span class="pts">+${s.weight}</span></li>`).join("")}
       </ul>
-      ${more > 0 ? `<p class="meta">And ${more} more. See every check we made, below.</p>` : ""}`;
+      ${more > 0 ? `<p class="meta">${t("rs.andMore", { count: more })}</p>` : ""}`;
   }
 
   // What the customer can do next. Medium and High both pause the transfer for a kopi break
   // (Jiliana's #pause-verify); High also sends it to the fraud team.
-  function nextStepHtml(result, caseRef, t) {
+  function nextStepHtml(result, caseRef, transfer) {
     if (result.action === "proceed") {
       return `
-        <p>This looks like your usual transfers.</p>
-        <div class="stack"><button type="button" class="btn btn-primary" data-rs="send">Send ${money(t.amount)}</button></div>`;
+        <p>${t("rs.usualLooks")}</p>
+        <div class="stack"><button type="button" class="btn btn-primary" data-rs="send">${t("rs.send", { amount: money(transfer.amount) })}</button></div>`;
     }
     return `
-      <p><strong>We paused this transfer.</strong> Your money has not left your account.</p>
-      ${result.action === "pause-verify" ? `<p>Check with someone you trust before you send. A new person asking for a big amount is a common scam.</p>` : ""}
-      ${caseRef ? `<p class="rs-next">${icon("briefcase")}<span>We sent this to the bank's fraud team as case <strong>${esc(caseRef)}</strong>.</span></p>` : ""}
+      <p><strong>${t("rs.paused")}</strong> ${t("rs.notLeft")}</p>
+      ${result.action === "pause-verify" ? `<p>${t("rs.checkTrusted")}</p>` : ""}
+      ${caseRef ? `<p class="rs-next">${icon("briefcase")}<span>${t("rs.caseSent", { ref: `<strong>${esc(caseRef)}</strong>` })}</span></p>` : ""}
       <div class="stack">
-        <a class="btn btn-primary" href="#pause-verify">Take a kopi break and check ${icon("arrow")}</a>
-        <button type="button" class="btn btn-secondary" data-rs="cancel">Cancel this transfer</button>
+        <a class="btn btn-primary" href="#pause-verify">${t("rs.kopi")} ${icon("arrow")}</a>
+        <button type="button" class="btn btn-secondary" data-rs="cancel">${t("rs.cancel")}</button>
       </div>`;
   }
 
   function resultHtml() {
     const last = myState().lastResult;
     const sample = findSample(last.sampleId);
-    const t = sample.transfer;
+    const transfer = sample.transfer;
     return `
       <section data-read>
         <div class="verdict ${BAND_BOX[last.band] || "v-careful"}">
           ${icon(BAND_ICONS[last.band] || "question")}
-          <div><p><strong>${esc(last.bandLabel)}</strong></p><h1 tabindex="-1">${money(t.amount)} to ${esc(t.payeeName)}</h1></div>
+          <div><p><strong>${t(`rs.band.${last.band}.label`)}</strong></p><h1 tabindex="-1">${t("rs.headline", { amount: money(transfer.amount), payee: esc(transfer.payeeName) })}</h1></div>
         </div>
         <div class="panel">
-          <p class="rs-score"><span class="rs-score-num">${last.score}</span><span class="rs-score-max"> out of ${data.config.maxScore}</span></p>
+          <p class="rs-score"><span class="rs-score-num">${last.score}</span><span class="rs-score-max"> ${t("rs.outOf", { max: data.config.maxScore })}</span></p>
           ${meterHtml(last.score)}
-          <p class="rs-action"><strong>What happens next:</strong> ${esc(last.actionText)}</p>
-          <h2>What made the score</h2>
+          <p class="rs-action"><strong>${t("rs.nextLabel")}</strong> ${t(`rs.band.${last.band}.action`)}</p>
+          <h2>${t("rs.madeScore")}</h2>
           ${pointsHtml(last)}
         </div>
       </section>
-      <section class="panel" aria-label="What to do now">
-        ${nextStepHtml(last, last.caseRef, t)}
-        <button type="button" class="btn btn-link" data-rs="again">Try another transfer</button>
+      <section class="panel" aria-label="${t("rs.whatToDo")}">
+        ${nextStepHtml(last, last.caseRef, transfer)}
+        <button type="button" class="btn btn-link" data-rs="again">${t("rs.again")}</button>
       </section>
       <section class="panel" aria-labelledby="rs-details-title">
-        <h2 id="rs-details-title">The transfer</h2>
-        ${transferDetailsHtml(t)}
+        <h2 id="rs-details-title">${t("rs.transfer")}</h2>
+        ${transferDetailsHtml(transfer)}
         ${allChecksHtml(last)}
-        <p class="meta rs-source">${last.source === "server"
-          ? "Scored by the bank's server."
-          : "Scored on this device, because the server isn't running. The result is the same."}</p>
+        <p class="meta rs-source">${last.source === "server" ? t("rs.source.server") : t("rs.source.device")}</p>
       </section>`;
   }
 
@@ -286,12 +290,12 @@
     return `
       <section class="panel" data-read>
         <div class="done-mark">${icon("check")}</div>
-        <h1 tabindex="-1">${sent ? "Your transfer is on its way" : "Your transfer is cancelled"}</h1>
-        <p>${sent ? "This is a demo, so no real money was sent." : "No money has left your account."}</p>
+        <h1 tabindex="-1">${sent ? t("rs.done.sent") : t("rs.done.cancelled")}</h1>
+        <p>${sent ? t("rs.done.sentNote") : t("rs.done.cancelledNote")}</p>
         <div class="stack">
-          <a class="btn btn-primary" href="#customer">Back to home</a>
-          ${sent ? "" : `<a class="btn btn-secondary" href="#report">Report a scam</a>`}
-          <button type="button" class="btn btn-link" data-rs="again">Try another transfer</button>
+          <a class="btn btn-primary" href="#customer">${t("common.backHome")}</a>
+          ${sent ? "" : `<a class="btn btn-secondary" href="#report">${t("rs.reportScam")}</a>`}
+          <button type="button" class="btn btn-link" data-rs="again">${t("rs.again")}</button>
         </div>
       </section>`;
   }
@@ -299,7 +303,11 @@
   function screenHtml() {
     const state = myState();
     // Coming here from another screen starts at the picker. The last result is kept for #pause-verify.
-    if (!redrawing) { state.phase = "pick"; state.done = ""; }
+    // If this screen is already showing, it is only being drawn again (the next phase, or a
+    // language change), so stay on the same phase. The old screen is still on the page at
+    // this moment, because the router swaps it only after render() returns.
+    const alreadyHere = document.querySelector(".rs-screen") !== null;
+    if (!alreadyHere) { state.phase = "pick"; state.done = ""; }
     if (state.phase === "result" && !state.lastResult) state.phase = "pick";
     const body = { pick: pickHtml, scoring: scoringHtml, result: resultHtml, done: doneHtml }[state.phase]();
     return customerPageHtml("", `<div class="narrow rs-screen">${homeLinkHtml()}${body}</div>`);
@@ -312,13 +320,13 @@
     const sample = findSample(state.selectedId);
     if (!sample) return;
     state.phase = "scoring";
-    draw();
+    redrawScreen();
     const [{ result, source }] = await Promise.all([score(sample.transfer), wait(MIN_CHECK_MS)]);
     const caseRef = result.action === "pause-and-case" ? openCase(result, sample.transfer) : "";
     state.lastResult = { sampleId: sample.id, ...result, caseRef, source };
     if (state.phase !== "scoring" || !document.querySelector(".rs-screen")) return;   // the customer left
     state.phase = "result";
-    draw();
+    redrawScreen();
   }
 
   function afterRender() {
@@ -335,9 +343,9 @@
       }
       const action = event.target.closest("[data-rs]")?.dataset.rs;
       if (action === "score") checkRisk();
-      if (action === "send") { state.done = "sent"; state.phase = "done"; draw(); }
-      if (action === "cancel") { state.done = "cancelled"; state.phase = "done"; draw(); }
-      if (action === "again") { state.phase = "pick"; state.done = ""; draw(); }
+      if (action === "send") { state.done = "sent"; state.phase = "done"; redrawScreen(); }
+      if (action === "cancel") { state.done = "cancelled"; state.phase = "done"; redrawScreen(); }
+      if (action === "again") { state.phase = "pick"; state.done = ""; redrawScreen(); }
     });
   }
 

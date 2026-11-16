@@ -5,6 +5,7 @@
 // Owner: Jose. Built on frontend-update from the senior flow preview (it was a stub).
 // A short form: two questions answered with buttons, the amount only if money was lost, and
 // two optional boxes. Sending it shows a report number. Nothing is sent anywhere: it is a demo.
+// Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
 //
 // What it remembers (appState.report, cleared by #reset):
 //   phase    "form" or "sent"
@@ -18,6 +19,7 @@
 (function () {
   const data = REPORT_DATA;
   const esc = escapeHtml;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
 
   function freshForm(what = "") {
     return { phase: "form", what, lost: "", amount: "", contact: "", more: "", ref: "" };
@@ -27,16 +29,11 @@
     return appState.report;
   }
 
-  let redrawing = false;
-  function draw() {
-    redrawing = true;
-    try { redrawScreen(); } finally { redrawing = false; }
-  }
-
   // A group of pill buttons for one question. aria-pressed says which one is picked.
+  // The words for each option are under "rp.<question>.<id>", e.g. "rp.what.call".
   function choicesHtml(name, titleId, options, picked) {
     return `<div class="chips" role="group" aria-labelledby="${titleId}" data-group="${name}">
-        ${options.map(o => `<button type="button" class="chip" data-value="${o.id}" aria-pressed="${picked === o.id}">${o.label}</button>`).join("")}
+        ${options.map(o => `<button type="button" class="chip" data-value="${o.id}" aria-pressed="${picked === o.id}">${t(`rp.${name}.${o.id}`)}</button>`).join("")}
       </div>`;
   }
 
@@ -44,58 +41,63 @@
     const lostMoney = state.lost === "yes";
     return `
       <section class="panel" data-read>
-        <h1 tabindex="-1">Report a scam</h1>
-        <p class="lead">Tell us what happened. Short answers are fine.</p>
+        <h1 tabindex="-1">${t("rp.title")}</h1>
+        <p class="lead">${t("rp.lead")}</p>
       </section>
       <form class="panel" id="rp-form" novalidate>
-        <h2 id="rp-what-title">What happened?</h2>
+        <h2 id="rp-what-title">${t("rp.what.title")}</h2>
         ${choicesHtml("what", "rp-what-title", data.what, state.what)}
 
         <div class="field rp-gap">
-          <label for="rp-contact">Their phone number or link (if you have it)</label>
+          <label for="rp-contact">${t("rp.contact")}</label>
           <input type="text" id="rp-contact" autocomplete="off" value="${esc(state.contact)}">
         </div>
 
-        <h2 id="rp-lost-title">Did you lose money?</h2>
+        <h2 id="rp-lost-title">${t("rp.lost.title")}</h2>
         ${choicesHtml("lost", "rp-lost-title", data.lost, state.lost)}
 
         <div id="rp-amount-box"${lostMoney ? "" : " hidden"}>
           <div class="field rp-gap">
-            <label for="rp-amount">About how much? (S$)</label>
+            <label for="rp-amount">${t("rp.amount")}</label>
             <input type="text" id="rp-amount" inputmode="decimal" autocomplete="off" value="${esc(state.amount)}">
           </div>
-          <a class="btn btn-secondary" href="#freeze">${icon("lock")}Freeze my accounts first</a>
+          <a class="btn btn-secondary" href="#freeze">${icon("lock")}${t("rp.freezeFirst")}</a>
         </div>
 
         <div class="field rp-gap">
-          <label for="rp-more">Anything else? (optional)</label>
+          <label for="rp-more">${t("rp.more")}</label>
           <textarea id="rp-more" rows="4">${esc(state.more)}</textarea>
         </div>
 
         <p class="field-error" id="rp-error" role="alert"></p>
-        <div class="stack"><button type="submit" class="btn btn-primary">Send to OCBC</button></div>
+        <div class="stack"><button type="submit" class="btn btn-primary">${t("rp.send")}</button></div>
       </form>`;
   }
 
   function sentHtml(state) {
+    const police = `<a class="tel-link" href="${data.police.tel}">${data.police.phone}</a>`;
+    const scamShield = `<a class="tel-link" href="${data.scamShield.tel}">${data.scamShield.phone}</a>`;
     return `
       <section class="panel" data-read>
         <div class="done-mark">${icon("check")}</div>
-        <h1 tabindex="-1">Your report is sent</h1>
-        <p>Your report number is</p>
+        <h1 tabindex="-1">${t("rp.sent.title")}</h1>
+        <p>${t("rp.sent.refIs")}</p>
         <p class="rp-ref">${state.ref}</p>
-        <p>An OCBC officer will look at it. If they call you, they will never ask for your OTP.</p>
-        <p>You can also tell ${data.police.name}: <a class="tel-link" href="${data.police.tel}">${data.police.phone}</a>,
-          or ${data.scamShield.name}: <a class="tel-link" href="${data.scamShield.tel}">${data.scamShield.phone}</a>.</p>
-        <p class="note">Demo only: this report was not really sent.</p>
-        <div class="stack"><a class="btn btn-primary" href="#customer">Back to home</a></div>
+        <p>${t("rp.sent.officer")}</p>
+        <p>${t("rp.sent.alsoTell", { police, scamShield })}</p>
+        <p class="note">${t("rp.sent.demo")}</p>
+        <div class="stack"><a class="btn btn-primary" href="#customer">${t("common.backHome")}</a></div>
       </section>`;
   }
 
   function screenHtml(param) {
     const state = myState();
     // Coming here from another screen starts a new form. #report/call etc. pick "What happened?".
-    if (!redrawing) Object.assign(state, freshForm(data.what.some(w => w.id === param) ? param : ""));
+    // If this screen is already showing, it is only being drawn again (after "Send", or a
+    // language change), so keep what the customer has filled in. The old screen is still on the
+    // page at this moment, because the router swaps it only after render() returns.
+    const alreadyHere = document.querySelector(".rp-screen") !== null;
+    if (!alreadyHere) Object.assign(state, freshForm(data.what.some(w => w.id === param) ? param : ""));
     return customerPageHtml("", `<div class="narrow rp-screen">${homeLinkHtml()}${state.phase === "sent" ? sentHtml(state) : formHtml(state)}</div>`);
   }
 
@@ -130,13 +132,13 @@
       let problem = "";
       let focusOn = null;
       if (!state.what) {
-        problem = "Please choose what happened.";
+        problem = t("rp.err.what");
         focusOn = form.querySelector('[data-group="what"] .chip');
       } else if (!state.lost) {
-        problem = "Please choose if you lost money.";
+        problem = t("rp.err.lost");
         focusOn = form.querySelector('[data-group="lost"] .chip');
       } else if (state.lost === "yes" && amount && !(Number(amount) > 0)) {
-        problem = "Please type the amount as a number, for example 500.";
+        problem = t("rp.err.amount");
         focusOn = document.getElementById("rp-amount");
         focusOn.setAttribute("aria-invalid", "true");
       }
@@ -151,7 +153,7 @@
         contact: state.contact.trim(), more: state.more.trim(), time: new Date().toISOString()
       });
       state.phase = "sent";
-      draw();
+      redrawScreen();
     });
   }
 
