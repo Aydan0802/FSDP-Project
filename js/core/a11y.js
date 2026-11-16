@@ -7,8 +7,8 @@
 
 // ---------- Text size ----------
 
-// [size name, button label, words a screen reader says]
-const TEXT_SIZES = [["normal", "A", "normal"], ["large", "A+", "large"], ["larger", "A++", "extra large"]];
+// [size name, button label]. The words a screen reader says come from i18n.js ("textSize.large").
+const TEXT_SIZES = [["normal", "A"], ["large", "A+"], ["larger", "A++"]];
 
 // The size in use right now, read from <html data-size="...">
 function currentTextSize() {
@@ -17,15 +17,15 @@ function currentTextSize() {
 
 // The three text size buttons. aria-pressed tells screen readers which one is switched on.
 function textSizeHtml() {
-  return `<div class="text-size" role="group" aria-label="Text size">
-      <span class="text-size-label" aria-hidden="true">Text size</span>
-      ${TEXT_SIZES.map(([size, label, words]) =>
-        `<button type="button" data-size="${size}" aria-pressed="${size === currentTextSize()}">${label}<span class="visually-hidden"> ${words} text</span></button>`).join("")}
+  return `<div class="text-size" role="group" aria-label="${t("header.textSize")}">
+      <span class="text-size-label" aria-hidden="true">${t("header.textSize")}</span>
+      ${TEXT_SIZES.map(([size, label]) =>
+        `<button type="button" data-size="${size}" aria-pressed="${size === currentTextSize()}">${label}<span class="visually-hidden"> ${t(`textSize.${size}`)}</span></button>`).join("")}
     </div>`;
 }
 
 // Changes the text size, updates the buttons, and remembers the choice on this device.
-// (This is the one thing kept in localStorage: it is a personal setting, not demo data.)
+// (Kept in localStorage, like the language in i18n.js: they are personal settings, not demo data.)
 function setTextSize(size) {
   document.documentElement.dataset.size = size;
   document.querySelectorAll(".text-size button").forEach(button => {
@@ -56,7 +56,7 @@ const canSpeak = "speechSynthesis" in window;
 // The "Read aloud" button for the customer header. Returns nothing if the browser can't speak.
 function readAloudButtonHtml() {
   if (!canSpeak) return "";
-  return `<button type="button" class="tool-btn" data-action="read" aria-pressed="false">${icon("speaker")}<span class="tool-label">Read aloud</span></button>`;
+  return `<button type="button" class="tool-btn" data-action="read" aria-pressed="false">${icon("speaker")}<span class="tool-label">${t("header.readAloud")}</span></button>`;
 }
 
 // ---------- Read-along: the word being spoken is highlighted (added on frontend-update) ----------
@@ -152,24 +152,50 @@ function wordAt(charIndex) {
 }
 
 // For voices that never send word events: move the highlight on a timer, guessing how long
-// each word takes to say at this speed (longer words, and a pause after punctuation)
+// each word takes to say at this speed (longer words, and a pause after punctuation).
+// Chinese is written without spaces, so one "word" here can be a whole phrase. Each Chinese
+// character is a syllable and takes much longer to say than one English letter, so it gets
+// more time (about 4 characters a second), or the highlight would race ahead of the voice.
 function startWordTimer(rate) {
   let i = 0;
   function step() {
     if (!readingNow || readGotBoundary || i >= readWords.length) return;
     markWord(i);
     const word = readWords[i].span.textContent;
-    const pause = /[.,?!:;]$/.test(word) ? 260 : 0;
+    const chinese = (word.match(/[一-鿿]/g) || []).length;
+    const pause = /[.,?!:;。，？！：；]$/.test(word) ? 260 : 0;
     i += 1;
-    readFallbackTimer = setTimeout(step, (180 + word.length * 55 + pause) / rate);
+    readFallbackTimer = setTimeout(step, (180 + (word.length - chinese) * 55 + chinese * 230 + pause) / rate);
   }
   step();
 }
 
-// On-device voices are the ones most likely to report each word as it is spoken
+// The voices we would like for each language, best first (see LANGUAGES in i18n.js)
+const VOICE_LANGS = { en: ["en-SG", "en-GB"], zh: ["zh-CN", "zh-SG"], ms: ["ms-MY"] };
+
+// Finds a voice for one language. Some phones write "zh_CN" instead of "zh-CN", so we tidy that first.
+// On-device voices are preferred: they are the ones most likely to report each word as it is
+// spoken, which keeps the word highlighting exact.
+function voiceFor(lang, voices) {
+  const mine = voices.filter(v => v.lang && v.lang.replace("_", "-").startsWith(lang));
+  for (const wanted of VOICE_LANGS[lang]) {
+    const exact = mine.filter(v => v.lang.replace("_", "-") === wanted);
+    const found = exact.find(v => v.localService) || exact[0];
+    if (found) return found;
+  }
+  return mine.find(v => v.localService) || mine[0] || null;
+}
+
+// The voice for the language the customer picked. If this device has no voice for it, an
+// English one, and fellBack: true so we can say so politely.
 function pickVoice() {
-  const voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith("en"));
-  return voices.find(v => v.localService && /SG|GB/.test(v.lang)) || voices.find(v => v.localService) || voices[0] || null;
+  const voices = speechSynthesis.getVoices();
+  const lang = getLanguage();
+  const voice = voiceFor(lang, voices);
+  if (voice || lang === "en") return { voice, fellBack: false };
+  // No voices listed at all means the browser hasn't loaded them yet, not that the language is
+  // missing. Then we don't warn: the browser picks a voice from talk.lang by itself.
+  return { voice: voiceFor("en", voices), fellBack: voices.length > 0 };
 }
 
 function setReading(on) {
@@ -200,8 +226,10 @@ function toggleReading() {
   if (!readWords.length) return;
   const talk = new SpeechSynthesisUtterance(text);
   talk.rate = 0.9;   // a little slower than normal, for older listeners
-  const voice = pickVoice();
+  talk.lang = getLocale();   // used if no voice can be chosen below
+  const { voice, fellBack } = pickVoice();
   if (voice) { talk.voice = voice; talk.lang = voice.lang; }
+  if (fellBack) showToast(t("read.noVoice"));   // say why it sounds English, instead of leaving them puzzled
   readGotBoundary = false;
   currentTalk = talk;
   // Events from an older, cancelled reading are ignored, so they can't stop this one
