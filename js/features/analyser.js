@@ -10,9 +10,9 @@
 // "checking" steps for that kind, then the result and what to do now.
 //
 // Which check runs:
-//   message     (pasted text, an example, or a .txt file)  checkMessage() in this file:
-//               an example's hand-written result if it is exactly an example, otherwise a real
-//               scan for scam phrases (scanMessage(), patterns in js/data/analyser.js)
+//   message     (pasted text, an example, or a .txt file)  checkMessage() in this file: the real
+//               text detector, TextDetector.checkMessage() in "text detector prototype/detector/"
+//               (hand-written red-flag rules in English, Chinese and Malay; runs on this device)
 //   voice       (audio or video file)   checkClip() in this file: PLACEHOLDER, the demo picker's result
 //   screenshot  (image file)            EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
 //   document    (pdf, doc, anything else) EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
@@ -93,25 +93,12 @@
 
   // ---------- The checks ----------
 
-  // A real scan of any typed or pasted message: every scam phrase pattern it contains is one
-  // warning sign. 2 or more is high risk, 1 is medium, none is low.
-  // flags are { phrase, reason } with the exact words found, so they can be marked in the message.
-  function scanMessage(text) {
-    const flags = [];
-    data.phrases.forEach(({ pattern, reason }) => {
-      const found = text.match(pattern);
-      if (found) flags.push({ phrase: found[0], reason });
-    });
-    const risk = flags.length >= 2 ? "high" : flags.length === 1 ? "medium" : "low";
-    return { risk, flags };
-  }
-
-  // A message: an example's own hand-written result if the text is exactly that example,
-  // otherwise the phrase scan
+  // A message (typed, pasted, a .txt file, or an example): the text detector checks it.
+  // result: { risk, type, confidence, summary, flags: [{ phrase, reason }], lang, score }.
+  // Each flag's phrase is copied exactly from the text, so it can be marked in the message.
   function checkMessage(text) {
-    const example = data.examples.find(ex => ex.text === text.trim());
-    if (example) return { kind: "message", exampleId: example.id };
-    return { kind: "message", text: text.trim(), scan: scanMessage(text) };
+    const clean = text.trim();
+    return { kind: "message", text: clean, result: TextDetector.checkMessage(clean) };
   }
 
   // A voice clip. PLACEHOLDER: whichever of the five results the demo picker is set to.
@@ -120,11 +107,18 @@
   }
 
   // Runs the right check for the kind, and returns the outcome kept in appState.analyser.outcome
+  // If a check breaks (for example a detector file didn't load), the customer sees the
+  // friendly "We couldn't check this" screen instead of a stuck page.
   function check(state, fail) {
     if (fail) return { kind: "error" };
-    if (state.kind === "message") return checkMessage(state.text);
-    if (state.kind === "voice") return checkClip();
-    return { kind: state.kind, evidence: EVIDENCE_CHECKER.check(state.kind, state.fileName) };
+    try {
+      if (state.kind === "message") return checkMessage(state.text);
+      if (state.kind === "voice") return checkClip();
+      return { kind: state.kind, evidence: EVIDENCE_CHECKER.check(state.kind, state.fileName) };
+    } catch (e) {
+      console.error("The check failed:", e);
+      return { kind: "error" };
+    }
   }
 
   // Adds a finished check to this visit's history, for the home screen's "My recent checks"
@@ -132,7 +126,7 @@
     const o = state.outcome;
     if (o.kind === "error") return;
     const entry = { kind: o.kind, what: state.fileName || state.label, when: `Today ${timeNow()}` };
-    if (o.kind === "message") entry.risk = o.exampleId ? findExample(o.exampleId).result.risk : o.scan.risk;
+    if (o.kind === "message") entry.risk = o.result.risk;
     else if (o.kind === "voice") entry.result = o.result;
     else entry.result = o.evidence.result;
     state.history.unshift(entry);
@@ -332,66 +326,43 @@
     return `<ol class="an-steps">${steps.map(step => `<li>${esc(step)}</li>`).join("")}</ol>`;
   }
 
-  // A message that matched one of the examples: its hand-written result, in its own language
-  function exampleResultHtml(example) {
-    const r = example.result;
-    const words = data.labels[example.lang] || data.labels.en;
-    const typeName = words.types[r.type] || data.labels.en.types[r.type];
-    const steps = r.steps || data.nextSteps[r.type] || [];
+  // A message: the text detector's result, in the message's own language (English, Chinese or
+  // Malay). Any wording we don't have in that language falls back to English.
+  function messageResultHtml(outcome) {
+    const r = outcome.result;
+    const lang = data.labels[r.lang] ? r.lang : "en";
+    const words = { ...data.labels.en, ...data.labels[lang] };
+    const typeName = (data.labels[lang].types || {})[r.type] || data.labels.en.types[r.type];
+    // A low-risk message isn't called "a normal message": rules can't prove a message is safe
+    const heading = r.risk === "low" ? words.lowTitle : typeName;
+    const steps = lang === "en"
+      ? data.nextSteps[r.type]
+      : data.otherLangSteps[lang][r.risk === "low" ? "none" : "scam"];
     return `
       <section data-read>
         ${detectedHtml()}
-        <div class="verdict ${RISK_BOX[r.risk]}" lang="${example.lang}">
+        <div class="verdict ${RISK_BOX[r.risk]}" lang="${lang}">
           ${icon(RISK_ICONS[r.risk])}
-          <div><p><strong>${words.risk[r.risk]}</strong> · ${words.looksLike}</p><h1 tabindex="-1">${esc(typeName)}</h1></div>
+          <div><p><strong>${words.risk[r.risk]}</strong>${r.risk === "low" ? "" : ` · ${words.looksLike}`}</p><h1 tabindex="-1">${esc(heading)}</h1></div>
         </div>
       </section>
-      <section class="panel an-result" aria-labelledby="an-why-title" lang="${example.lang}">
-        <div class="an-result-top"><h2 id="an-why-title">${words.flagsTitle}</h2><span class="an-demo-tag" lang="en">Demo result</span></div>
+      <section class="panel an-result" aria-labelledby="an-why-title" lang="${lang}">
+        <h2 id="an-why-title">${words.flagsTitle}</h2>
         <div data-read>
           <p class="an-summary">${esc(r.summary)}</p>
           <p class="an-sure">${words.howSure}: <strong>${words.sure[r.confidence]}</strong>${dotsHtml(r.confidence)}</p>
         </div>
         ${r.flags.length
-          ? highlightedHtml(example.text, r.flags)
-          : `<blockquote class="an-message">${esc(example.text)}</blockquote>
+          ? highlightedHtml(outcome.text, r.flags)
+          : `<blockquote class="an-message">${esc(outcome.text)}</blockquote>
              <p class="an-none">${icon("check")}<span>${words.noFlags}</span></p>`}
       </section>
-      <section class="panel" aria-labelledby="an-todo-title" lang="${example.lang}">
+      <section class="panel" aria-labelledby="an-todo-title" lang="${lang}">
         <div data-read>
           <h2 id="an-todo-title">${words.stepsTitle}</h2>
           ${stepsListHtml(steps)}
         </div>
         <div lang="en">${actionsHtml("message", r.risk !== "low")}</div>
-        <p class="an-honesty">${icon("question")}<span>${words.honesty}</span></p>
-      </section>`;
-  }
-
-  // A typed or pasted message: the result of the real phrase scan
-  function scanResultHtml(outcome) {
-    const { risk, flags } = outcome.scan;
-    const words = data.labels.en;
-    return `
-      <section data-read>
-        ${detectedHtml()}
-        <div class="verdict ${RISK_BOX[risk]}">
-          ${icon(RISK_ICONS[risk])}
-          <div><p><strong>${words.risk[risk]}</strong></p><h1 tabindex="-1">${data.scan.titles[risk]}</h1></div>
-        </div>
-      </section>
-      <section class="panel an-result" aria-labelledby="an-why-title">
-        <h2 id="an-why-title">Why we think so</h2>
-        ${flags.length
-          ? highlightedHtml(outcome.text, flags)
-          : `<blockquote class="an-message">${esc(outcome.text)}</blockquote>
-             <ul class="reasons" data-read>${data.scan.noSigns.map(x => `<li>${icon("check")}<span>${x}</span></li>`).join("")}</ul>`}
-      </section>
-      <section class="panel" aria-labelledby="an-todo-title">
-        <div data-read>
-          <h2 id="an-todo-title">What to do now</h2>
-          ${stepsListHtml(data.scan.steps[risk])}
-        </div>
-        ${actionsHtml("message", risk !== "low")}
         <p class="an-honesty">${icon("question")}<span>${words.honesty}</span></p>
       </section>`;
   }
@@ -483,7 +454,7 @@
   function resultHtml() {
     const o = myState().outcome;
     if (o.kind === "error") return errorHtml();
-    if (o.kind === "message") return o.exampleId ? exampleResultHtml(findExample(o.exampleId)) : scanResultHtml(o);
+    if (o.kind === "message") return messageResultHtml(o);
     if (o.kind === "voice") return voiceResultHtml(o.result);
     return evidenceResultHtml(o.evidence);
   }
