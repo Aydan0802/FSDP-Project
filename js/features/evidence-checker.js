@@ -17,9 +17,13 @@
 //
 // PLACEHOLDER: check() returns the hand-written result for that kind (js/data/evidence-checker.js).
 // The file itself is never opened, read or uploaded. A real checker would replace check() only.
+//
+// Languages: label, steps, title, reasons and a sample's label are translation keys. The screen
+// that shows them puts each through t() (js/core/i18n.js), so they follow the customer's language.
 
 const EVIDENCE_CHECKER = (function () {
   const data = EVIDENCE_CHECKER_DATA;
+  addTranslations(data.text);   // this checker's English, Chinese and Malay words
 
   function handles(kind) {
     return Object.prototype.hasOwnProperty.call(data.kinds, kind);
@@ -42,7 +46,7 @@ const EVIDENCE_CHECKER = (function () {
   registerRoute({
     name: "evidence",
     role: "customer",
-    render: () => customerPageHtml("", `<h1 tabindex="-1">Check anything you are not sure about</h1><p>Opening the checker…</p>`),
+    render: () => customerPageHtml("", `<h1 tabindex="-1">${t("ev.redirect.title")}</h1><p>${t("ev.redirect.text")}</p>`),
     afterRender: () => location.replace("#analyser")
   });
 })();
