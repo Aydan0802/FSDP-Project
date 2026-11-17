@@ -34,7 +34,7 @@
     </section>
 
     <main class="login-main" tabindex="-1">
-      <div class="login-tools">${textSizeHtml()}</div>
+      <div class="login-tools">${languageSwitchHtml()}${textSizeHtml()}</div>
       ${signingUp ? signupCardHtml() : loginCardHtml()}
     </main>`;
   }

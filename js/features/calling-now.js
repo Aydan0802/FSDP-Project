@@ -13,8 +13,11 @@
 //   step     the last step shown: "1", "2" or "safe"
 //   answer   the answer to step 2: "no", "yes" or "unsure" ("" until answered)
 // Everything is inside (function () { ... })(); so its names stay private to this file.
+// Every word comes from t() (js/core/i18n.js); the words are in js/data/calling-now.js.
 
 (function () {
+  addTranslations(CALLING_NOW_DATA.text);   // this screen's English, Chinese and Malay words
+
   function myState() {
     if (!appState.callingNow) appState.callingNow = { step: "1", answer: "" };
     return appState.callingNow;
@@ -23,24 +26,24 @@
   // "Leave" on the left, "Step N of 2" on the right. The words say the same as the dots.
   function flowTopHtml(step) {
     return `<div class="flow-top">
-        <a class="btn btn-link" href="#customer">Leave</a>
-        <p class="step-dots"><i class="on" aria-hidden="true"></i><i class="${step >= 2 ? "on" : ""}" aria-hidden="true"></i>Step ${step} of 2</p>
+        <a class="btn btn-link" href="#customer">${t("cn.leave")}</a>
+        <p class="step-dots"><i class="on" aria-hidden="true"></i><i class="${step >= 2 ? "on" : ""}" aria-hidden="true"></i>${t("cn.stepOf", { step })}</p>
       </div>`;
   }
 
   function stepOneHtml() {
     return `${flowTopHtml(1)}
       <section class="panel" data-read>
-        <p class="calm">${icon("heart")}You are doing the right thing</p>
-        <h1 tabindex="-1">Hang up the phone now.</h1>
-        <p>It is safe to hang up. A real bank officer will not mind.</p>
+        <p class="calm">${icon("heart")}${t("cn.calm")}</p>
+        <h1 tabindex="-1">${t("cn.hangUp.title")}</h1>
+        <p>${t("cn.hangUp.text")}</p>
         <ul class="rules">
-          <li>${icon("cross")}<span>Do not share any code.</span></li>
-          <li>${icon("cross")}<span>Do not send any money.</span></li>
+          <li>${icon("cross")}<span>${t("cn.rule.code")}</span></li>
+          <li>${icon("cross")}<span>${t("cn.rule.money")}</span></li>
         </ul>
         <div class="stack">
-          <a class="btn btn-primary" href="#calling-now/2">I have hung up</a>
-          <a class="btn btn-link" href="#caller-check">I want to check who is calling first</a>
+          <a class="btn btn-primary" href="#calling-now/2">${t("cn.hungUp")}</a>
+          <a class="btn btn-link" href="#caller-check">${t("cn.checkFirst")}</a>
         </div>
       </section>`;
   }
@@ -51,27 +54,27 @@
       `<button type="button" class="btn btn-secondary" data-answer="${value}" aria-pressed="${answer === value}">${label}</button>`;
     return `${flowTopHtml(2)}
       <section class="panel" data-read>
-        <h1 tabindex="-1">Did you give a code or send money?</h1>
-        <p>It is okay if you did. We can still help.</p>
-        <div class="stack answer-btns" role="group" aria-label="Did you give a code or send money?">
-          ${choice("no", "No, I did not")}
-          ${choice("yes", "Yes, I did")}
-          ${choice("unsure", "I am not sure")}
+        <h1 tabindex="-1">${t("cn.q.title")}</h1>
+        <p>${t("cn.q.text")}</p>
+        <div class="stack answer-btns" role="group" aria-label="${t("cn.q.title")}">
+          ${choice("no", t("cn.q.no"))}
+          ${choice("yes", t("cn.q.yes"))}
+          ${choice("unsure", t("cn.q.unsure"))}
         </div>
       </section>
-      <a class="btn btn-link" href="#calling-now">Back</a>`;
+      <a class="btn btn-link" href="#calling-now">${t("cn.back")}</a>`;
   }
 
   function safeHtml() {
     return `
       <section class="panel" data-read>
         <div class="done-mark">${icon("check")}</div>
-        <h1 tabindex="-1">Your money is safe.</h1>
-        <p>If you want to check with the bank, call OCBC yourself. Use the number on the back of your card. Never call back the number that called you.</p>
+        <h1 tabindex="-1">${t("cn.safe.title")}</h1>
+        <p>${t("cn.safe.text")}</p>
         <div class="stack">
-          <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
-          <a class="btn btn-secondary" href="#report/call">Tell the bank about this call</a>
-          <a class="btn btn-link" href="#customer">Back to home</a>
+          <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
+          <a class="btn btn-secondary" href="#report/call">${t("cn.safe.tell")}</a>
+          <a class="btn btn-link" href="#customer">${t("common.backHome")}</a>
         </div>
       </section>`;
   }

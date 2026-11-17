@@ -3,8 +3,11 @@
 // Feature: Is the caller a real person? (Senior Mahjong & Kopitiam CAPTCHA + AI Detection)
 // Owner: Yan Lin
 
+// Every word comes from t() (js/core/i18n.js); the words are in CALLER_CHECK_DATA.text.
+
 (function () {
   const data = CALLER_CHECK_DATA;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
   const STEP_OF = { captcha: 1, code: 2, waiting: 3, otp: 4 };
 
   function shuffle(arr) {
@@ -77,31 +80,31 @@
     return `
       <div class="page-top" style="display:flex;justify-content:space-between;align-items:center;">
         ${homeLinkHtml()}
-        ${phase === "captcha" ? `<button type="button" class="chip" data-cc="swap">Change puzzle</button>` : ""}
+        ${phase === "captcha" ? `<button type="button" class="chip" data-cc="swap">${t("cc.swap")}</button>` : ""}
       </div>
-      ${step ? `<p class="step-dots cc-steps">${[1, 2, 3, 4].map(n => `<i class="${n <= step ? "on" : ""}" aria-hidden="true"></i>`).join("")}Step ${step} of 4</p>` : ""}`;
+      ${step ? `<p class="step-dots cc-steps">${[1, 2, 3, 4].map(n => `<i class="${n <= step ? "on" : ""}" aria-hidden="true"></i>`).join("")}${t("cc.stepOf", { step })}</p>` : ""}`;
   }
 
   function captchaHtml(state) {
     const sc = state.scenario;
     return `
       <section class="panel" data-read>
-        <span class="rp-theme-pill">${sc.theme}</span>
-        <h1 tabindex="-1">First, a quick check for you</h1>
-        <p class="lead">Tap the right picture below to get a secret code. You will read it to the caller—AI voice bots cannot solve live picture puzzles.</p>
-        <h2 id="cc-puzzle-title">${sc.prompt}</h2>
+        <span class="rp-theme-pill">${t(sc.theme)}</span>
+        <h1 tabindex="-1">${t("cc.captcha.title")}</h1>
+        <p class="lead">${t("cc.captcha.lead")}</p>
+        <h2 id="cc-puzzle-title">${t(sc.prompt)}</h2>
       </section>
       <p class="field-error" id="cc-wrong" role="alert">
-        ${state.botFlagged ? "That tap was faster than humanly possible! Please tap normally." : state.wrong ? `Not that one, take your time! Look for: ${sc.prompt.replace("Tap the ", "")}.` : ""}
+        ${state.botFlagged ? t("cc.bot") : state.wrong ? t("cc.wrong", { what: t(sc.lookFor) }) : ""}
       </p>
       <div class="rp-grid" role="group" aria-labelledby="cc-puzzle-title">
         ${sc.options.map(opt => `
-          <button type="button" class="rp-card" data-picture="${opt.id}" aria-label="${opt.title}, ${opt.hint}">
+          <button type="button" class="rp-card" data-picture="${opt.id}" aria-label="${t(opt.title)}, ${t(opt.hint)}">
             ${opt.type === "mj"
               ? `<span class="rp-mj-tile ${opt.color}" aria-hidden="true">${opt.char}<span class="rp-mj-sub">${opt.sub}</span></span>`
               : `<span class="rp-kopi-icon" aria-hidden="true">${opt.emoji}</span>`}
-            <span class="rp-cap-title">${opt.title}</span>
-            <span class="rp-cap-hint">${opt.hint}</span>
+            <span class="rp-cap-title">${t(opt.title)}</span>
+            <span class="rp-cap-hint">${t(opt.hint)}</span>
           </button>`).join("")}
       </div>`;
   }
@@ -110,19 +113,19 @@
     const chars = state.code.replace("-", "").split("");
     return `
       <section class="panel" data-read>
-        <p class="rp-theme-pill">Unlocked! Stamp: ${state.scenario.stamp}</p>
-        <h1 tabindex="-1">Read this code to the caller</h1>
+        <p class="rp-theme-pill">${t("cc.unlocked", { stamp: t(state.scenario.stamp) })}</p>
+        <h1 tabindex="-1">${t("cc.code.title")}</h1>
         <p class="cc-code"><span aria-hidden="true">${state.code}</span><span class="visually-hidden">${spelled(state.code)}</span></p>
         <div class="cc-say">
-          <span>Say it slowly, one by one:</span>
+          <span>${t("cc.code.say")}</span>
           <div class="cc-say-pills" aria-hidden="true">
             ${chars.map(ch => `<span>${ch}</span>`).join("")}
           </div>
         </div>
-        <p>Ask them to open the OCBC Verify page, type this code in, and solve their own live Mahjong or Kopi puzzle.</p>
+        <p>${t("cc.code.ask")}</p>
         <div class="stack">
-          <button type="button" class="btn btn-primary" data-cc="told">I have told them the code</button>
-          <button type="button" class="btn btn-secondary" data-cc="sms">Send the code by SMS instead</button>
+          <button type="button" class="btn btn-primary" data-cc="told">${t("cc.told")}</button>
+          <button type="button" class="btn btn-secondary" data-cc="sms">${t("cc.sms")}</button>
         </div>
       </section>`;
   }
@@ -130,14 +133,14 @@
   function callerLogHtml(state) {
     return state.log.length
       ? state.log.map(line => `<li>${line}</li>`).join("")
-      : "<li>Waiting for the caller to open the page…</li>";
+      : `<li>${t("cc.log.waiting")}</li>`;
   }
 
   function callerViewHtml(state) {
     return `
       <aside class="cc-caller" aria-labelledby="cc-caller-title">
-        <span class="cc-tag">Demo: the caller's screen</span>
-        <h2 id="cc-caller-title">OCBC Verify page</h2>
+        <span class="cc-tag">${t("cc.caller.tag")}</span>
+        <h2 id="cc-caller-title">${t("cc.caller.title")}</h2>
         <ol id="cc-log" aria-live="polite">${callerLogHtml(state)}</ol>
       </aside>`;
   }
@@ -146,21 +149,22 @@
     const chip = (value, label) => `<button type="button" class="chip" data-sim="${value}" aria-pressed="${state.sim === value}">${label}</button>`;
     return `
       <div class="cc-demo" role="group" aria-labelledby="cc-demo-title">
-        <strong id="cc-demo-title">Demo: who is calling?</strong>
-        ${chip("human", "A real person")}${chip("ai", "An AI voice bot")}
+        <strong id="cc-demo-title">${t("cc.demo.title")}</strong>
+        ${chip("human", t("cc.demo.human"))}${chip("ai", t("cc.demo.ai"))}
       </div>`;
   }
 
   function waitingHtml(state) {
+    const seconds = `<span class="cc-timer-pill"><strong id="cc-left">${state.left}</strong>s</span>`;
     return `
       ${demoSwitchHtml(state)}
       <div class="cc-split">
         <section class="panel cc-wait-box" data-read>
-          <h1 tabindex="-1">Waiting for the caller…</h1>
-          <p class="lead">They have <span class="cc-timer-pill"><strong id="cc-left">${state.left}</strong>s</span> to type your code <strong>${state.code}</strong> and solve the live puzzle.</p>
+          <h1 tabindex="-1">${t("cc.wait.title")}</h1>
+          <p class="lead">${t("cc.wait.lead", { seconds, code: `<strong>${state.code}</strong>` })}</p>
           <div class="cc-wait-status">
             <span class="spin" aria-hidden="true"></span>
-            <span>Analysing caller response &amp; puzzle…</span>
+            <span>${t("cc.wait.status")}</span>
           </div>
         </section>
         ${callerViewHtml(state)}
@@ -171,14 +175,14 @@
     return `
       <div class="cc-split">
         <section class="panel" data-read>
-          <h1 tabindex="-1">The caller finished the check</h1>
-          <p>Ask the caller to read <strong>both</strong> their picture stamp and their 6-digit number to you:</p>
-          <div class="rp-stamp-box">Stamp: ${state.scenario.stamp}</div>
+          <h1 tabindex="-1">${t("cc.otp.title")}</h1>
+          <p>${t("cc.otp.ask")}</p>
+          <div class="rp-stamp-box">${t("cc.stamp", { stamp: t(state.scenario.stamp) })}</div>
           <p class="cc-code">${state.otp.slice(0, 3)} ${state.otp.slice(3)}</p>
-          <h2 id="cc-match-title">Do both match what they said?</h2>
+          <h2 id="cc-match-title">${t("cc.match.title")}</h2>
           <div class="stack answer-btns" role="group" aria-labelledby="cc-match-title">
-            <button type="button" class="btn btn-secondary" data-cc="same">Yes, both match</button>
-            <button type="button" class="btn btn-secondary" data-cc="different">No, it is different</button>
+            <button type="button" class="btn btn-secondary" data-cc="same">${t("cc.same")}</button>
+            <button type="button" class="btn btn-secondary" data-cc="different">${t("cc.different")}</button>
           </div>
         </section>
         ${callerViewHtml(state)}
@@ -188,34 +192,32 @@
   function matchedHtml(state) {
     return `
       <section data-read>
-        <div class="verdict v-good">${icon("check")}<div><p><strong>Real person</strong></p><h1 tabindex="-1">The caller is a real person</h1></div></div>
+        <div class="verdict v-good">${icon("check")}<div><p><strong>${t("cc.ok.tag")}</strong></p><h1 tabindex="-1">${t("cc.ok.title")}</h1></div></div>
         <div class="panel">
-          <p>They solved the live visual puzzle with natural human timing and matched your <strong>${state.scenario.stamp}</strong> stamp.</p>
-          <p class="cc-warning"><strong>This does not show they are from OCBC. Never share your OTP or send money.</strong></p>
+          <p>${t("cc.ok.text", { stamp: `<strong>${t(state.scenario.stamp)}</strong>` })}</p>
+          <p class="cc-warning"><strong>${t("cc.ok.warning")}</strong></p>
         </div>
       </section>
       <div class="stack">
-        <a class="btn btn-primary" href="#call-match">Check if OCBC is really calling</a>
-        <a class="btn btn-secondary" href="#customer">Back to home</a>
+        <a class="btn btn-primary" href="#call-match">${t("cc.ok.callMatch")}</a>
+        <a class="btn btn-secondary" href="#customer">${t("common.backHome")}</a>
       </div>`;
   }
 
   function failedHtml(state) {
-    const why = state.phase === "failed"
-      ? "They could not see or solve the live Kopitiam/Mahjong visual puzzle in time."
-      : "Their picture stamp or number did not match yours.";
+    const why = state.phase === "failed" ? t("cc.fail.timeout") : t("cc.fail.mismatch");
     return `
       <section data-read>
-        <div class="verdict v-bad">${icon("warning")}<div><p><strong>Check failed</strong></p><h1 tabindex="-1">The caller could not pass the check. Hang up.</h1></div></div>
+        <div class="verdict v-bad">${icon("warning")}<div><p><strong>${t("cc.fail.tag")}</strong></p><h1 tabindex="-1">${t("cc.fail.title")}</h1></div></div>
         <div class="panel">
-          <p>${why} This may be an <strong>AI voice bot</strong> or someone you should not trust.</p>
-          <p><strong>Hang up now.</strong> Do not share any code or send money.</p>
+          <p>${t("cc.fail.text", { why })}</p>
+          <p>${t("cc.fail.hangUp")}</p>
         </div>
       </section>
       <div class="stack">
-        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
-        <a class="btn btn-secondary" href="#report/call">Report this call</a>
-        <button type="button" class="btn btn-link" data-cc="again">Start the check again</button>
+        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
+        <a class="btn btn-secondary" href="#report/call">${t("cc.fail.report")}</a>
+        <button type="button" class="btn btn-link" data-cc="again">${t("cc.fail.again")}</button>
       </div>`;
   }
 
@@ -242,11 +244,10 @@
     state.log = [];
     state.left = data.waitSeconds || 60;
 
-    const script = data.callerScripts[state.sim].map(([ms, text]) => [
+    // Each line is a translation key; t() fills in {code} and {callerPrompt}
+    const script = data.callerScripts[state.sim].map(([ms, key]) => [
       ms,
-      text
-        .replace("{code}", state.code)
-        .replace("{callerPrompt}", state.scenario.callerPrompt)
+      t(key, { code: state.code, callerPrompt: t(state.scenario.callerPrompt) })
     ]);
 
     const log = () => document.getElementById("cc-log");
@@ -268,7 +269,7 @@
       if (state.phase !== "waiting") return;
       if (state.sim === "human") {
         state.otp = randomDigits(6);
-        state.log.push(`Their screen now shows: <strong>${state.scenario.stamp}</strong> &amp; <strong>${state.otp.slice(0, 3)} ${state.otp.slice(3)}</strong>`);
+        state.log.push(t("cc.log.shows", { stamp: t(state.scenario.stamp), otp: `${state.otp.slice(0, 3)} ${state.otp.slice(3)}` }));
         state.phase = "otp";
       } else {
         state.phase = "failed";
@@ -304,7 +305,7 @@
         if (event.detail > 0 && elapsed < 250 && state.pointerMoves === 0) {
           state.botFlagged = true;
           state.startedAt = Date.now();
-          document.getElementById("cc-wrong").textContent = "That tap was faster than humanly possible! Please tap normally.";
+          document.getElementById("cc-wrong").textContent = t("cc.bot");
           return;
         }
 
@@ -316,7 +317,7 @@
           draw();
         } else {
           state.wrong = true;
-          document.getElementById("cc-wrong").textContent = `Not that one, take your time! Look for: ${state.scenario.prompt.replace("Tap the ", "")}.`;
+          document.getElementById("cc-wrong").textContent = t("cc.wrong", { what: t(state.scenario.lookFor) });
         }
         return;
       }
@@ -332,7 +333,7 @@
       const action = event.target.closest("[data-cc]")?.dataset.cc;
       if (action === "swap" || action === "again") { appState.callerCheck = freshState(); draw(); }
       if (action === "told") { state.phase = "waiting"; draw(); runCaller(); }
-      if (action === "sms") showToast("Code sent by SMS (demo)");
+      if (action === "sms") showToast(t("cc.smsSent"));
       if (action === "same") { state.phase = "matched"; draw(); }
       if (action === "different") { state.phase = "mismatch"; draw(); }
     });

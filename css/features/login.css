@@ -59,11 +59,13 @@
 
 .screen-login {
   grid-template-columns: 1fr; align-content: start; justify-items: center;
-  /* Two soft circles on the band, then the band itself (19rem tall), then the grey page */
+  /* Two soft circles on the band, then the band itself (22.5rem tall), then the grey page.
+     22.5rem (was 19rem) leaves room for the language buttons' row, so the white
+     "Text size" label still sits on red and can be read. */
   background:
-    radial-gradient(circle at 8% 0, rgba(255, 255, 255, .12) 0 10rem, transparent 10rem) top / 100% 19rem no-repeat,
-    radial-gradient(circle at 94% 85%, rgba(158, 27, 50, .45) 0 8rem, transparent 8rem) top / 100% 19rem no-repeat,
-    linear-gradient(var(--red) 0 19rem, var(--bg) 19rem);
+    radial-gradient(circle at 8% 0, rgba(255, 255, 255, .12) 0 10rem, transparent 10rem) top / 100% 22.5rem no-repeat,
+    radial-gradient(circle at 94% 85%, rgba(158, 27, 50, .45) 0 8rem, transparent 8rem) top / 100% 22.5rem no-repeat,
+    linear-gradient(var(--red) 0 22.5rem, var(--bg) 22.5rem);
 }
 /* All text on the red band is bold and at least 19px, so 4.4:1 counts as large text */
 .login-brand { width: 100%; max-width: 34rem; padding: 1.75rem 1.25rem 7rem; color: var(--white); text-align: center; }
@@ -73,7 +75,8 @@
 .login-tagline { font-size: 2.25rem; }
 .login-points { display: none; }
 .login-main { position: relative; width: 100%; max-width: 32rem; margin-top: -5.5rem; padding: 0 1rem 3rem; }
-.login-tools { position: static; margin-bottom: .75rem; }
+/* Language and text size buttons side by side, wrapping onto a second line at bigger text sizes */
+.login-tools { position: static; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .5rem .75rem; margin-bottom: .75rem; }
 .login-tools .text-size-label { color: var(--white); font-size: 1.1875rem; font-weight: 700; }
 .login-card { padding: 2rem 1.5rem; background: var(--surface); border-radius: 24px; box-shadow: 0 16px 48px rgba(54, 59, 64, .16); }
 @media (min-width: 40rem) { .login-card { padding: 2.5rem; } }
