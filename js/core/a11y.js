@@ -60,15 +60,25 @@ function readAloudButtonHtml() {
 }
 
 // ---------- Read-along: the word being spoken is highlighted (added on frontend-update) ----------
-// Each word in the areas being read is wrapped in <span class="w"> (once per area). Each word
-// remembers where it starts in the text being spoken, so the browser's "now at character N"
-// (boundary) event can be matched to the word on screen. Some voices never send boundary
-// events: then, if none arrives within 700 ms of starting, the highlight moves on a timer instead.
+// When reading starts, each piece of text in the areas being read is swapped for one
+// <read-run> holding a <read-word class="w"> per word. Each word remembers where it starts in
+// the text being spoken, so the browser's "now at character N" (boundary) event can be matched
+// to the word on screen. Some voices never send boundary events: then, if none arrives within
+// 700 ms of starting, the highlight moves on a timer instead.
+//
+// Why <read-run> and <read-word>, not <span>: some screens style every span inside a card
+// (for example ".big-choice-text span { display: block }"), which turned each word into its own
+// line. A made-up tag name with a dash is shown by the browser as plain inline text, and no CSS
+// on the site targets it. One <read-run> replaces one piece of text, so a flex or grid box still
+// sees exactly one item where the text was. When reading stops, every original piece of text is
+// put back (unwrapWords), so the page is exactly as it was.
 
 let readWords = [];           // [{ span, start }] in reading order
+let readRuns = [];            // [{ run, original }]: each wrapper and the text it replaced, to put back
 let readFallbackTimer = null;
 let readGotBoundary = false;
 let readingNow = false;
+let readFollow = true;        // scroll to follow the highlighted word, until the person scrolls themselves
 let currentTalk = null;       // the reading in progress, so a cancelled one's late events are ignored
 
 // Text that should never be wrapped or read: form boxes, code, and anything hidden from screen readers
@@ -84,33 +94,44 @@ function readAreas() {
   return [main.querySelector("h1"), main.querySelector("p")].filter(Boolean);
 }
 
-// Wraps each word of one area in <span class="w">, once
+// Wraps each word of one area. Only the text inside existing elements changes: no element is
+// moved, and each piece of text is swapped for exactly one <read-run>.
+// Chinese has no spaces, so a Chinese phrase stays one "word" and is highlighted as a whole.
 function wrapWords(area) {
-  if (area.dataset.wrapped) return;
   const walker = document.createTreeWalker(area, NodeFilter.SHOW_TEXT, {
-    acceptNode: node => node.nodeValue.trim() && !node.parentElement.closest(READ_SKIP) && !node.parentElement.closest(".w")
+    acceptNode: node => node.nodeValue.trim() && !node.parentElement.closest(READ_SKIP) && !node.parentElement.closest("read-run")
       ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
   });
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
   nodes.forEach(node => {
-    const pieces = document.createDocumentFragment();
+    const run = document.createElement("read-run");
     node.nodeValue.split(/(\s+)/).forEach(piece => {
       if (!piece) return;
-      if (/^\s+$/.test(piece)) { pieces.appendChild(document.createTextNode(piece)); return; }
-      const span = document.createElement("span");
-      span.className = "w";
-      span.textContent = piece;
-      pieces.appendChild(span);
+      if (/^\s+$/.test(piece)) { run.appendChild(document.createTextNode(piece)); return; }
+      const word = document.createElement("read-word");
+      word.className = "w";
+      word.textContent = piece;
+      run.appendChild(word);
     });
-    node.parentNode.replaceChild(pieces, node);
+    node.parentNode.replaceChild(run, node);
+    readRuns.push({ run, original: node });
   });
-  area.dataset.wrapped = "yes";
+}
+
+// Puts every original piece of text back where it was, so the page is exactly as before.
+// (A wrapper that a screen has already removed is skipped.)
+function unwrapWords() {
+  readRuns.forEach(({ run, original }) => {
+    if (run.parentNode) run.parentNode.replaceChild(original, run);
+  });
+  readRuns = [];
+  readWords = [];
 }
 
 // Wraps the words and builds the text to speak, remembering where each word starts in it
 function prepareWords() {
-  readWords = [];
+  unwrapWords();
   let text = "";
   readAreas().forEach(area => {
     wrapWords(area);
@@ -129,14 +150,15 @@ function clearWordMark() {
   document.querySelectorAll(".w.now").forEach(span => span.classList.remove("now"));
 }
 
-// Highlights one word. Only scrolls when the word is near the top or bottom edge of the screen.
+// Highlights one word. Scrolls only when the word is near the top or bottom edge of the screen,
+// and never after the person has scrolled by themselves (readFollow), so they are not pulled back.
 function markWord(i) {
   clearWordMark();
   const word = readWords[i];
   if (!word) return;
   word.span.classList.add("now");
   const box = word.span.getBoundingClientRect();
-  if (box.top < 80 || box.bottom > window.innerHeight - 90) {
+  if (readFollow && (box.top < 80 || box.bottom > window.innerHeight - 90)) {
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     word.span.scrollIntoView({ block: "center", behavior: calm ? "auto" : "smooth" });
   }
@@ -198,20 +220,42 @@ function pickVoice() {
   return { voice: voiceFor("en", voices), fellBack: voices.length > 0 };
 }
 
+// Shows whether reading is on: the header button says "Stop" while reading, and a "Stop reading"
+// button is fixed to the bottom corner of the screen, so it can always be reached even after the
+// page has scrolled far away from the header. It is added to <body>, outside the screen, and
+// removed again when reading stops.
 function setReading(on) {
   readingNow = on;
-  document.querySelectorAll('[data-action="read"]').forEach(b => b.setAttribute("aria-pressed", String(on)));
+  document.querySelectorAll('[data-action="read"]').forEach(b => {
+    b.setAttribute("aria-pressed", String(on));
+    const label = b.querySelector(".tool-label");
+    if (label) label.textContent = on ? t("read.stop") : t("header.readAloud");
+  });
   const app = document.getElementById("app");
   if (app) app.classList.toggle("is-reading", on);
+
+  let stop = document.getElementById("read-stop");
+  if (on && !stop) {
+    stop = document.createElement("button");
+    stop.type = "button";
+    stop.id = "read-stop";
+    stop.className = "btn btn-primary read-stop";
+    stop.dataset.action = "read-stop";
+    stop.innerHTML = `${icon("cross")}<span>${t("read.stopReading")}</span>`;
+    document.body.appendChild(stop);
+  }
+  if (!on && stop) stop.remove();
 }
 
-// Stops speaking, clears the highlight and shows every Read aloud button as off.
-// The router calls this on every screen change.
+// Stops speaking, removes the highlight, puts the page's text back exactly as it was, and
+// shows every Read aloud button as off. The router calls this on every screen change (so it
+// also runs when the address changes, the language changes, or someone signs out).
 function stopReading() {
   currentTalk = null;
   if (canSpeak) speechSynthesis.cancel();
   clearTimeout(readFallbackTimer);
   clearWordMark();
+  unwrapWords();
   setReading(false);
 }
 
@@ -223,7 +267,8 @@ function toggleReading() {
   }
   speechSynthesis.cancel();
   const text = prepareWords();
-  if (!readWords.length) return;
+  if (!readWords.length) { unwrapWords(); return; }
+  readFollow = true;   // follow the words again, until the person scrolls by themselves
   const talk = new SpeechSynthesisUtterance(text);
   talk.rate = 0.9;   // a little slower than normal, for older listeners
   talk.lang = getLocale();   // used if no voice can be chosen below
@@ -274,7 +319,27 @@ document.addEventListener("click", event => {
     setTextSize(el.dataset.size);
   } else if (el.dataset.action === "read") {
     toggleReading();
+  } else if (el.dataset.action === "read-stop") {
+    stopReading();   // also removes this button
+    // Keep keyboard focus somewhere sensible (the header's Read aloud button), without jumping the page
+    const read = document.querySelector('[data-action="read"]');
+    if (read) read.focus({ preventScroll: true });
   }
+});
+
+// Esc stops reading, from anywhere on the page
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && readingNow) stopReading();
+});
+
+// The moment the person scrolls by themselves (mouse wheel, finger swipe, clicking or dragging
+// the scrollbar, or the keyboard), stop following the highlighted word, so they are never
+// pulled back. These events only come from the person: our own scrolling doesn't fire them.
+["wheel", "touchmove", "mousedown"].forEach(type => {
+  window.addEventListener(type, () => { if (readingNow) readFollow = false; }, { passive: true });
+});
+document.addEventListener("keydown", event => {
+  if (readingNow && ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) readFollow = false;
 });
 
 loadTextSize();
