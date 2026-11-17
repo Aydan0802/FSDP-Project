@@ -76,7 +76,7 @@ function slug(text) {
 // The shield logo and name. href is where it links to; tag is an optional label like "Staff".
 function brandHtml(href, tag = "") {
   return `<a class="brand" href="${href}">
-      <span class="brand-mark">${icon("shield")}</span>
+      <span class="brand-mark brand-mark--logo"><img src="img/pause&prove_logo.png" alt=""></span>
       <span class="brand-name">Pause & Prove</span>
       ${tag ? `<span class="brand-tag">${tag}</span>` : ""}
     </a>`;
