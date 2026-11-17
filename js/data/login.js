@@ -2,13 +2,15 @@
 
 // Made-up data for: Sign in.
 // Owner: Jiliana
-// The details "Fill in demo details" types in. Any ID and password work anyway.
+// The details "Fill in demo details" types in. They are real accounts: the same ones as in
+// database/supabase-setup.sql (customer01 to 03, staff01 to 03). Customers can also make their own
+// account on the sign-up screen (#login/signup).
 // text: the screen's words in English, Chinese and Malay (see "How to translate your screen" in
 // TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native speaker to check them.
 
 const LOGIN_DATA = {
-  demoIds: { customer: "demo.customer", staff: "demo.staff" },
-  demoPassword: "demo",
+  demoIds: { customer: "customer01", staff: "staff01" },
+  demoPasswords: { customer: "Demo#Cust01", staff: "Demo#Staff01" },
 
   text: {
     en: {
@@ -34,8 +36,33 @@ const LOGIN_DATA = {
       "login.passwordHidden": " password",
       "login.submit": "Sign in",
       "login.demoFill": "Fill in demo details",
-      "login.note": "Demo only: any ID and password work. Never type a real password here.",
-      "login.err.empty": "Type your ID and password, or choose \"Fill in demo details\"."
+      "login.note": "Demo accounts only. Use \"Fill in demo details\", and never type a real password here.",
+      "login.err.empty": "Type your ID and password, or choose \"Fill in demo details\".",
+      "login.err.wrong": "That ID or password is not right. Please try again.",
+      "login.err.locked": "Too many wrong tries. Please wait {minutes} minutes, then try again.",
+      "login.err.server": "We can't reach the sign-in server right now. Please try again in a moment.",
+      "login.err.database": "Sign in is not working right now. Please try again later.",
+      "login.newHere": "New here?",
+      "login.createLink": "Create a customer account",
+      "signup.title": "Create an account",
+      "signup.sub": "For customers. Pick an ID and a password.",
+      "signup.userId": "Choose a User ID",
+      "signup.idHint": "4 to 30 characters: letters, numbers, dots, dashes or underscores.",
+      "signup.password": "Choose a password",
+      "signup.pwHint": "At least 8 characters. Something only you would think of.",
+      "signup.password2": "Type the password again",
+      "signup.submit": "Create account",
+      "signup.haveAccount": "Already have an account?",
+      "signup.signInLink": "Sign in",
+      "signup.note": "Prototype only. Please don't use a password you use anywhere else.",
+      "signup.err.empty": "Fill in all three boxes.",
+      "signup.err.id": "That ID doesn't fit the rules: 4 to 30 letters, numbers, dots, dashes or underscores, starting with a letter or number.",
+      "signup.err.short": "That password is too short. Use at least 8 characters.",
+      "signup.err.mismatch": "The two passwords are not the same.",
+      "signup.err.sameAsId": "Your password shouldn't contain your ID.",
+      "signup.err.common": "That password is too easy to guess. Try something else.",
+      "signup.err.taken": "That ID can't be used. Please pick another one.",
+      "signup.err.tooMany": "That's a lot of new accounts from this computer. Please try again later."
     },
     zh: {
       "login.about": "关于 Verify the Caller",
@@ -60,8 +87,33 @@ const LOGIN_DATA = {
       "login.passwordHidden": "密码",
       "login.submit": "登录",
       "login.demoFill": "填入示范资料",
-      "login.note": "只是示范：任何用户名和密码都可以。千万不要在这里输入真的密码。",
-      "login.err.empty": "请输入用户名和密码，或者选“填入示范资料”。"
+      "login.note": "只限示范账户。可以选“填入示范资料”，千万不要在这里输入真的密码。",
+      "login.err.empty": "请输入用户名和密码，或者选“填入示范资料”。",
+      "login.err.wrong": "用户名或密码不对，请再试一次。",
+      "login.err.locked": "输错太多次了，请等 {minutes} 分钟后再试。",
+      "login.err.server": "暂时连不上登录服务器，请稍后再试。",
+      "login.err.database": "登录暂时无法使用，请稍后再试。",
+      "login.newHere": "第一次使用？",
+      "login.createLink": "创建客户账户",
+      "signup.title": "创建账户",
+      "signup.sub": "供客户使用。选一个用户名和密码。",
+      "signup.userId": "选择用户名",
+      "signup.idHint": "4 到 30 个字符：字母、数字、点、横线或下划线。",
+      "signup.password": "设置密码",
+      "signup.pwHint": "至少 8 个字符，最好是只有你想得到的。",
+      "signup.password2": "再输入一次密码",
+      "signup.submit": "创建账户",
+      "signup.haveAccount": "已经有账户了？",
+      "signup.signInLink": "登录",
+      "signup.note": "这只是原型。请不要使用你在别处用过的密码。",
+      "signup.err.empty": "请填好三个框。",
+      "signup.err.id": "用户名不符合规则：4 到 30 个字母、数字、点、横线或下划线，并以字母或数字开头。",
+      "signup.err.short": "密码太短了，至少需要 8 个字符。",
+      "signup.err.mismatch": "两次输入的密码不一样。",
+      "signup.err.sameAsId": "密码里不要包含你的用户名。",
+      "signup.err.common": "这个密码太容易被猜到了，请换一个。",
+      "signup.err.taken": "这个用户名不能用，请换一个。",
+      "signup.err.tooMany": "这台电脑创建的账户太多了，请稍后再试。"
     },
     ms: {
       "login.about": "Tentang Verify the Caller",
@@ -86,8 +138,33 @@ const LOGIN_DATA = {
       "login.passwordHidden": " kata laluan",
       "login.submit": "Log masuk",
       "login.demoFill": "Isi butiran demo",
-      "login.note": "Demo sahaja: apa-apa ID dan kata laluan boleh digunakan. Jangan sekali-kali taip kata laluan sebenar di sini.",
-      "login.err.empty": "Taip ID dan kata laluan anda, atau pilih \"Isi butiran demo\"."
+      "login.note": "Akaun demo sahaja. Gunakan \"Isi butiran demo\", dan jangan sekali-kali taip kata laluan sebenar di sini.",
+      "login.err.empty": "Taip ID dan kata laluan anda, atau pilih \"Isi butiran demo\".",
+      "login.err.wrong": "ID atau kata laluan tidak betul. Sila cuba lagi.",
+      "login.err.locked": "Terlalu banyak percubaan salah. Sila tunggu {minutes} minit, kemudian cuba lagi.",
+      "login.err.server": "Kami tidak dapat menghubungi pelayan log masuk buat masa ini. Sila cuba sebentar lagi.",
+      "login.err.database": "Log masuk tidak berfungsi buat masa ini. Sila cuba lagi nanti.",
+      "login.newHere": "Baru di sini?",
+      "login.createLink": "Buat akaun pelanggan",
+      "signup.title": "Buat akaun",
+      "signup.sub": "Untuk pelanggan. Pilih ID dan kata laluan.",
+      "signup.userId": "Pilih ID pengguna",
+      "signup.idHint": "4 hingga 30 aksara: huruf, nombor, titik, sengkang atau garis bawah.",
+      "signup.password": "Pilih kata laluan",
+      "signup.pwHint": "Sekurang-kurangnya 8 aksara. Sesuatu yang hanya anda terfikir.",
+      "signup.password2": "Taip kata laluan sekali lagi",
+      "signup.submit": "Buat akaun",
+      "signup.haveAccount": "Sudah ada akaun?",
+      "signup.signInLink": "Log masuk",
+      "signup.note": "Prototaip sahaja. Jangan guna kata laluan yang anda guna di tempat lain.",
+      "signup.err.empty": "Isi ketiga-tiga kotak.",
+      "signup.err.id": "ID itu tidak mengikut peraturan: 4 hingga 30 huruf, nombor, titik, sengkang atau garis bawah, bermula dengan huruf atau nombor.",
+      "signup.err.short": "Kata laluan terlalu pendek. Guna sekurang-kurangnya 8 aksara.",
+      "signup.err.mismatch": "Kedua-dua kata laluan tidak sama.",
+      "signup.err.sameAsId": "Kata laluan tidak sepatutnya mengandungi ID anda.",
+      "signup.err.common": "Kata laluan itu terlalu mudah diteka. Cuba yang lain.",
+      "signup.err.taken": "ID itu tidak boleh digunakan. Sila pilih yang lain.",
+      "signup.err.tooMany": "Terlalu banyak akaun baharu daripada komputer ini. Sila cuba lagi nanti."
     }
   }
 };

@@ -82,3 +82,10 @@
 @media (min-width: 40rem) { .login-card { padding: 2.5rem; } }
 .role { border-radius: 16px; }
 .role:has(input:checked) { background: var(--red-tint); }
+
+/* ---------- Sign up (#login/signup): small hint under a box, and the switch link at the bottom of the card ---------- */
+
+.field-hint { margin: .375rem 0 0; font-size: .9375rem; color: var(--muted, #565b61); }
+.login-switch { margin: 1.25rem 0 0; text-align: center; font-size: 1rem; }
+.login-switch a { font-weight: 700; color: var(--red-dark, var(--red)); text-underline-offset: 3px; }
+.login-switch a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; border-radius: 4px; }
