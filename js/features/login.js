@@ -70,7 +70,7 @@
         <button type="submit" class="btn btn-primary">${t("login.submit")} ${icon("arrow")}</button>
         <button type="button" class="btn btn-link" id="demo-fill">${t("login.demoFill")}</button>
         <p class="login-note">${icon("lock")}<span>${t("login.note")}</span></p>
-        <p class="login-switch">${t("login.newHere")} <a href="#login/signup">${t("login.createLink")}</a></p>
+        <p class="login-switch" id="signup-switch">${t("login.newHere")} <a href="#login/signup">${t("login.createLink")}</a></p>
       </form>`;
   }
 
@@ -273,7 +273,9 @@
     // Staff sign in with a "Staff ID", customers with a "User ID"
     form.addEventListener("change", event => {
       if (event.target.name === "role") {
-        document.getElementById("login-id-label").textContent = chosenRole(form) === "staff" ? t("login.staffId") : t("login.userId");
+        const isStaff = chosenRole(form) === "staff";
+        document.getElementById("login-id-label").textContent = isStaff ? t("login.staffId") : t("login.userId");
+        document.getElementById("signup-switch").hidden = isStaff;   // only customers can sign up
       }
     });
     form.addEventListener("submit", submitLogin);
