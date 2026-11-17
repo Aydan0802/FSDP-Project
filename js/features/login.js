@@ -27,7 +27,7 @@
     </section>
 
     <main class="login-main" tabindex="-1">
-      <div class="login-tools">${textSizeHtml()}</div>
+      <div class="login-tools">${languageSwitchHtml()}${textSizeHtml()}</div>
       <form class="login-card" id="login-form" novalidate>
         <h1 tabindex="-1">${t("login.title")}</h1>
         <p class="login-sub">${t("login.sub")}</p>
