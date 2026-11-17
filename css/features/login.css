@@ -106,3 +106,11 @@
 /* ---------- "Bank staff? Staff sign-in": small and last, so customers come first ---------- */
 .staff-entry { margin: 1.75rem 0 0; color: var(--muted); font-size: 1rem; text-align: center; }
 .staff-entry a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 .25rem; color: var(--text); font-weight: 700; }
+
+/* ---------- Sign up (#login/signup) link at the bottom of the card (from main, Wei Ye) ---------- */
+.login-switch { margin: 1.25rem 0 0; text-align: center; font-size: 1rem; }
+.login-switch a { font-weight: 700; color: var(--red-dark, var(--red)); text-underline-offset: 3px; }
+.login-switch a:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; border-radius: 4px; }
+/* Demo mode note (no sign-in server here) */
+.login-demo { margin: 0 0 1rem; padding: .625rem .875rem; border-radius: var(--radius); background: var(--slate-tint); color: var(--charcoal); font-size: 1rem; font-weight: 600; }
+.login-demo:empty { display: none; }
