@@ -1,11 +1,80 @@
-/* Feature: Sign in.
+/* Feature: Sign in (#login) and Staff sign-in (#staff-login).
    Owner: Jiliana
-   Moved out of the theme samples: first the layout (from base.css), then the Clarity look
-   (from clarity.css). The order matters, so Clarity's rules come last and win. */
+   Clarity look: a coloured band at the top (red for customers, charcoal for staff, so staff can
+   see at once they are somewhere else), with the white card sitting over its bottom edge.
+   Rebuilt on website-refresh for the simpler name/mobile sign-in. Clarity variables only. */
 
-/* ---------- Layout (from base.css) ---------- */
+.screen-login, .screen-staff-login {
+  --band: 21rem;
+  display: grid; justify-items: center; align-content: start; min-height: calc(100vh - 3rem);
+  /* Two soft circles on the band, then the band itself, then the grey page */
+  background:
+    radial-gradient(circle at 8% 0, rgba(255, 255, 255, .12) 0 10rem, transparent 10rem) top / 100% var(--band) no-repeat,
+    radial-gradient(circle at 94% 85%, rgba(158, 27, 50, .45) 0 8rem, transparent 8rem) top / 100% var(--band) no-repeat,
+    linear-gradient(var(--red) 0 var(--band), var(--bg) var(--band));
+}
+/* On a phone the top row wraps onto two lines, so the band is taller to still reach behind the card */
+@media (max-width: 40rem) { .screen-login, .screen-staff-login { --band: 24.5rem; } }
+.screen-staff-login {
+  background:
+    radial-gradient(circle at 8% 0, rgba(255, 255, 255, .08) 0 10rem, transparent 10rem) top / 100% var(--band) no-repeat,
+    linear-gradient(var(--charcoal) 0 var(--band), var(--bg) var(--band));
+}
 
-.role-pick legend { display: block; margin: 0 0 .4rem; padding: 0; font-weight: 700; }
+/* ---------- Top row on the band: "Home" on the left, language and text size on the right ----------
+   All text on the band is bold and at least 19px, so white on OCBC red (4.4:1) counts as large text. */
+.login-top {
+  --focus: var(--white);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
+  width: 100%; max-width: 60rem; padding: 1rem 1rem 0; color: var(--white);
+}
+.login-home {
+  display: inline-flex; align-items: center; gap: .25rem; min-height: 48px; padding: 0 .75rem 0 .375rem;
+  color: var(--white); font-size: 1.1875rem; font-weight: 700; text-decoration: none; border-radius: 999px;
+  transition: background-color .15s;
+}
+.login-home:hover { background: rgba(255, 255, 255, .14); }
+/* The Back button (a button, not a link, on the customer sign-in) looks the same on the band */
+.login-home.back-btn { background: transparent; border-color: transparent; font: inherit; font-size: 1.1875rem; font-weight: 700; }
+@media (hover: hover) { .login-home.back-btn:hover { background: rgba(255, 255, 255, .14); border-color: transparent; } }
+.login-home .icon { width: 1.375rem; height: 1.375rem; }
+.login-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .5rem .75rem; }
+.login-tools .text-size-label { color: var(--white); font-size: 1.1875rem; font-weight: 700; }
+.login-tools .lang-pick, .login-tools .text-size button { --focus: var(--white); border-color: transparent; }
+/* On the charcoal staff band the picked size (charcoal) needs a white edge to be seen */
+.screen-staff-login .login-tools .text-size button[aria-pressed="true"] { border-color: var(--white); }
+
+/* ---------- Brand and tagline ---------- */
+.login-brand { width: 100%; max-width: 34rem; padding: .75rem 1.25rem 6.5rem; color: var(--white); text-align: center; }
+.login-brand .brand-mark { background: var(--white); border-radius: 12px; }
+.login-kicker { margin: .75rem 0 .25rem; font-size: 1.1875rem; font-weight: 700; }
+.login-tagline { margin: 0; font-family: var(--font-head); font-size: 2.125rem; font-weight: 800; line-height: 1.15; letter-spacing: -.02em; }
+@media (min-width: 40rem) { .login-tagline { font-size: 2.5rem; } }
+
+/* ---------- The card ---------- */
+.login-main { position: relative; width: 100%; max-width: 32rem; margin-top: -5.25rem; padding: 0 1rem 3rem; }
+.login-card {
+  width: 100%; padding: 2rem 1.5rem; background: var(--surface);
+  border-radius: 24px; box-shadow: 0 16px 48px rgba(54, 59, 64, .16);
+}
+@media (min-width: 40rem) { .login-card { padding: 2.5rem; } }
+.login-sub { color: var(--muted); }
+.login-card .btn-link { display: block; margin: .5rem auto 0; }
+
+/* A message from access.js ("Please sign in to use this"): calm grey, not an error */
+.login-message {
+  margin: 0 0 1.25rem; padding: .75rem 1rem; border-radius: var(--radius);
+  background: var(--slate-tint); color: var(--charcoal); font-weight: 700;
+}
+.login-message:empty { display: none; }
+
+.field input { transition: border-color .15s, box-shadow .15s; }
+.field input:hover { border-color: var(--text); }
+
+.login-note { display: flex; gap: .5rem; align-items: flex-start; margin: 1rem 0 0; color: var(--muted); font-size: 1rem; }
+.login-note .icon { width: 1.25rem; height: 1.25rem; margin-top: .1rem; }
+
+/* Password / PIN row with its Show button (customers and staff) */
 .pw-row { display: flex; gap: .5rem; }
 .pw-row input { flex: 1; min-width: 0; }
 .pw-toggle {
@@ -14,71 +83,26 @@
   border: 2px solid var(--field-border); border-radius: var(--radius);
 }
 
-.role-pick { min-width: 0; margin: 0 0 1.5rem; padding: 0; border: 0; }
-.role-options { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); }
-.role {
-  display: flex; align-items: center; gap: .75rem; min-height: 76px; padding: .875rem 1rem; cursor: pointer;
-  background: var(--surface); border: 2px solid var(--field-border); border-radius: var(--radius);
+/* ---------- "In a hurry?": the urgent tools, one tap away, no sign-in needed ---------- */
+.login-hurry {
+  margin-top: 1.25rem; padding: 1.25rem 1.5rem 1rem;
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
 }
-.role input { flex: none; width: 1.375rem; height: 1.375rem; margin: 0; accent-color: var(--red-dark); }
-.role .icon { width: 2rem; height: 2rem; color: var(--accent); }
-.role-text strong { display: block; line-height: 1.25; }
-.role-text span { display: block; color: var(--muted); font-size: 1rem; line-height: 1.3; }
-.role:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.role:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px; }
-
-.screen-login { display: grid; min-height: calc(100vh - 3rem); }
-.login-brand { position: relative; overflow: hidden; padding: 1.5rem 1.25rem; }
-.login-brand > * { position: relative; z-index: 1; }
-.login-kicker { margin: 1.25rem 0 .25rem; font-weight: 700; }
-.login-tagline { margin: 0; font-family: var(--font-head); font-size: 1.625rem; font-weight: 700; line-height: 1.15; }
-.login-points { display: none; gap: .875rem; margin-top: 2rem; }
-.login-points li { display: flex; align-items: center; gap: .75rem; }
-.login-art { display: none; }
-.login-main { display: flex; flex-direction: column; align-items: center; padding: 1.25rem 1rem 3rem; }
-.login-tools { align-self: flex-end; margin-bottom: 1rem; }
-.login-card { width: 100%; max-width: 30rem; }
-.login-sub { color: var(--muted); }
-.login-card .btn-link { display: block; margin: .5rem auto 0; }
-.login-note { display: flex; gap: .5rem; align-items: flex-start; margin: 1rem 0 0; color: var(--muted); font-size: 1rem; }
-.login-note .icon { width: 1.25rem; height: 1.25rem; margin-top: .1rem; }
-
-@media (min-width: 60rem) {
-  .screen-login { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
-  .login-brand { display: flex; flex-direction: column; justify-content: center; padding: 3rem 3.5rem; }
-  .login-brand .brand { position: absolute; top: 2rem; left: 3.5rem; }
-  .login-tagline { font-size: 2.75rem; }
-  .login-points { display: grid; }
-  .login-main { position: relative; justify-content: center; padding: 6rem 3rem 3rem; }
-  .login-tools { position: absolute; top: 1.5rem; right: 2rem; }
+.login-hurry h2 { margin-bottom: .125rem; font-size: 1.25rem; }
+.login-hurry p { margin-bottom: .5rem; color: var(--muted); }
+.hurry-link {
+  display: flex; align-items: center; gap: .75rem; min-height: 56px; padding: .5rem 0;
+  color: var(--text); font-weight: 700; text-decoration: none; border-top: 1px solid var(--border);
 }
-
-/* ---------- Clarity look (from clarity.css): a red band at the top, with the white card sitting over its edge ---------- */
-
-.login-tagline { font-weight: 800; letter-spacing: -.02em; }
-
-.screen-login {
-  grid-template-columns: 1fr; align-content: start; justify-items: center;
-  /* Two soft circles on the band, then the band itself (22.5rem tall), then the grey page.
-     22.5rem (was 19rem) leaves room for the language buttons' row, so the white
-     "Text size" label still sits on red and can be read. */
-  background:
-    radial-gradient(circle at 8% 0, rgba(255, 255, 255, .12) 0 10rem, transparent 10rem) top / 100% 22.5rem no-repeat,
-    radial-gradient(circle at 94% 85%, rgba(158, 27, 50, .45) 0 8rem, transparent 8rem) top / 100% 22.5rem no-repeat,
-    linear-gradient(var(--red) 0 22.5rem, var(--bg) 22.5rem);
+.hurry-link > .icon:first-child {
+  flex: none; width: 2.5rem; height: 2.5rem; padding: .5rem; border-radius: 50%;
+  background: var(--red-tint); color: var(--red-dark);
 }
-/* All text on the red band is bold and at least 19px, so 4.4:1 counts as large text */
-.login-brand { width: 100%; max-width: 34rem; padding: 1.75rem 1.25rem 7rem; color: var(--white); text-align: center; }
-.login-brand .brand { position: static; }
-.login-brand .brand-mark { background: var(--white); color: var(--red); border-radius: 12px; }
-.login-kicker { font-size: 1.1875rem; }
-.login-tagline { font-size: 2.25rem; }
-.login-points { display: none; }
-.login-main { position: relative; width: 100%; max-width: 32rem; margin-top: -5.5rem; padding: 0 1rem 3rem; }
-/* Language and text size buttons side by side, wrapping onto a second line at bigger text sizes */
-.login-tools { position: static; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .5rem .75rem; margin-bottom: .75rem; }
-.login-tools .text-size-label { color: var(--white); font-size: 1.1875rem; font-weight: 700; }
-.login-card { padding: 2rem 1.5rem; background: var(--surface); border-radius: 24px; box-shadow: 0 16px 48px rgba(54, 59, 64, .16); }
-@media (min-width: 40rem) { .login-card { padding: 2.5rem; } }
-.role { border-radius: 16px; }
-.role:has(input:checked) { background: var(--red-tint); }
+.hurry-link span { flex: 1; }
+.hurry-arrow { color: var(--red-dark); transition: transform .15s; }
+.hurry-link:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.hurry-link:hover .hurry-arrow { transform: translateX(3px); }
+
+/* ---------- "Bank staff? Staff sign-in": small and last, so customers come first ---------- */
+.staff-entry { margin: 1.75rem 0 0; color: var(--muted); font-size: 1rem; text-align: center; }
+.staff-entry a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 .25rem; color: var(--text); font-weight: 700; }

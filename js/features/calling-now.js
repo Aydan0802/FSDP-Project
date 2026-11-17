@@ -70,7 +70,11 @@
       <section class="panel" data-read>
         <div class="done-mark">${icon("check")}</div>
         <h1 tabindex="-1">${t("cn.safe.title")}</h1>
-        <p>${t("cn.safe.text")}</p>
+        <ul class="points">
+          <li>${t("cn.safe.1")}</li>
+          <li>${t("cn.safe.2")}</li>
+          <li>${t("cn.safe.3")}</li>
+        </ul>
         <div class="stack">
           <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
           <a class="btn btn-secondary" href="#report/call">${t("cn.safe.tell")}</a>
@@ -98,7 +102,7 @@
 
   registerRoute({
     name: "calling-now",
-    role: "customer",
+    role: "public",   // open to everyone: no sign-in needed (website-refresh)
     render: screenHtml,
     afterRender
   });

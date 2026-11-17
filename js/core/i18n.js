@@ -31,6 +31,31 @@ const LANGUAGE_STORAGE_KEY = "vtc-language";
 // Each feature adds its own words with addTranslations(), from its own data file.
 const I18N = {
   en: {
+    "nav.back": "Back",
+    "nav.main": "Main menu",
+    "nav.tabs": "Quick menu",
+    "tab.home": "Home",
+    "tab.check": "Check",
+    "tab.helpNow": "Help now",
+    "tab.learn": "Learn",
+    "tab.menu": "Menu",
+    "side.close": "Close menu",
+    "side.urgent": "Someone is calling me now",
+    "side.group.now": "Need help now?",
+    "side.group.check": "Check before you act",
+    "side.group.ready": "Be ready",
+    "side.freeze": "Freeze my accounts",
+    "side.analyser": "Check a message or call",
+    "side.callMatch": "Is the bank really calling?",
+    "side.callerCheck": "Is the caller a real person?",
+    "side.riskScorer": "Check a transfer",
+    "side.passphrase": "Family passphrase",
+    "side.learnSigns": "Learn the signs",
+    "side.report": "Report a scam",
+    "side.display": "Language and text size",
+    "side.signedInAs": "Signed in as {name}",
+    "side.signedIn": "You are signed in",
+    "side.signInHint": "Use your user ID, mobile number or name, and your password or PIN.",
     "lang.label": "Language",
     "skip": "Skip to main content",
     "demo.title": "Student prototype.",
@@ -42,6 +67,10 @@ const I18N = {
     "header.readAloud": "Read aloud",
     "header.textSize": "Text size",
     "header.signOut": "Sign out",
+    "header.signIn": "Sign in",
+    "header.signedOut": "You have signed out.",
+    "lock.tag": "Sign in needed",
+    "lang.autoPicked": "Showing English. You can change the language at the top.",
     "textSize.normal": "normal text",
     "textSize.large": "large text",
     "textSize.larger": "extra large text",
@@ -60,6 +89,31 @@ const I18N = {
     "result.real": "Probably real"
   },
   zh: {
+    "nav.back": "返回",
+    "nav.main": "主菜单",
+    "nav.tabs": "快捷菜单",
+    "tab.home": "主页",
+    "tab.check": "检查",
+    "tab.helpNow": "紧急求助",
+    "tab.learn": "学习",
+    "tab.menu": "菜单",
+    "side.close": "关闭菜单",
+    "side.urgent": "现在有人打电话给我",
+    "side.group.now": "现在需要帮忙吗？",
+    "side.group.check": "行动前先检查",
+    "side.group.ready": "做好准备",
+    "side.freeze": "冻结我的户口",
+    "side.analyser": "检查信息或电话",
+    "side.callMatch": "真的是银行打来的吗？",
+    "side.callerCheck": "打电话来的是真人吗？",
+    "side.riskScorer": "检查转账",
+    "side.passphrase": "家人暗号",
+    "side.learnSigns": "认识诈骗迹象",
+    "side.report": "举报诈骗",
+    "side.display": "语言和字体大小",
+    "side.signedInAs": "已登录：{name}",
+    "side.signedIn": "您已登录",
+    "side.signInHint": "用用户名、手机号码或名字，加上密码或 PIN 登录。",
     "lang.label": "语言",
     "skip": "跳到主要内容",
     "demo.title": "学生作品。",
@@ -71,6 +125,10 @@ const I18N = {
     "header.readAloud": "朗读",
     "header.textSize": "字体大小",
     "header.signOut": "退出",
+    "header.signIn": "登录",
+    "header.signedOut": "您已退出。",
+    "lock.tag": "需要登录",
+    "lang.autoPicked": "您的手机用中文，所以这里也用中文显示。可以在上方更改语言。",
     "textSize.normal": "正常字体",
     "textSize.large": "大字体",
     "textSize.larger": "特大字体",
@@ -88,6 +146,31 @@ const I18N = {
     "result.real": "可能是真的"
   },
   ms: {
+    "nav.back": "Kembali",
+    "nav.main": "Menu utama",
+    "nav.tabs": "Menu pantas",
+    "tab.home": "Utama",
+    "tab.check": "Semak",
+    "tab.helpNow": "Bantuan",
+    "tab.learn": "Belajar",
+    "tab.menu": "Menu",
+    "side.close": "Tutup menu",
+    "side.urgent": "Ada orang sedang telefon saya",
+    "side.group.now": "Perlu bantuan sekarang?",
+    "side.group.check": "Semak sebelum bertindak",
+    "side.group.ready": "Bersedia",
+    "side.freeze": "Bekukan akaun saya",
+    "side.analyser": "Semak mesej atau panggilan",
+    "side.callMatch": "Betulkah bank yang telefon?",
+    "side.callerCheck": "Adakah pemanggil orang sebenar?",
+    "side.riskScorer": "Semak pindahan",
+    "side.passphrase": "Kata laluan keluarga",
+    "side.learnSigns": "Kenali tanda-tanda",
+    "side.report": "Laporkan penipuan",
+    "side.display": "Bahasa dan saiz tulisan",
+    "side.signedInAs": "Log masuk sebagai {name}",
+    "side.signedIn": "Anda telah log masuk",
+    "side.signInHint": "Gunakan ID pengguna, nombor telefon bimbit atau nama, serta kata laluan atau PIN.",
     "lang.label": "Bahasa",
     "skip": "Langkau ke kandungan utama",
     "demo.title": "Prototaip pelajar.",
@@ -99,6 +182,10 @@ const I18N = {
     "header.readAloud": "Bacakan",
     "header.textSize": "Saiz tulisan",
     "header.signOut": "Log keluar",
+    "header.signIn": "Log masuk",
+    "header.signedOut": "Anda telah log keluar.",
+    "lock.tag": "Perlu log masuk",
+    "lang.autoPicked": "Telefon anda menggunakan Bahasa Melayu, jadi kami tunjukkan dalam Bahasa Melayu. Anda boleh tukar bahasa di atas.",
     "textSize.normal": "tulisan biasa",
     "textSize.large": "tulisan besar",
     "textSize.larger": "tulisan paling besar",
@@ -121,17 +208,37 @@ const I18N = {
 
 // Reads the saved choice. Falls back to English if nothing is saved, the saved value is not
 // one we know, or storage is blocked (a private window, or the Node tests, which have no browser).
+// On a first visit (nothing saved), it looks at the language the phone or computer is set to:
+// a senior whose phone is in Chinese sees Chinese straight away, without hunting for the menu.
 function loadLanguage() {
   try {
     const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
     if (LANGUAGES[saved]) return saved;
   } catch (e) {
-    // Storage is not available: just start in English
+    // Storage is not available: fall through to the device's language
   }
-  return "en";
+  return deviceLanguage() || "en";
+}
+
+// "zh" or "ms" if the device's preferred language is Chinese or Malay, otherwise "".
+// navigator.languages is the browser's list, most preferred first, e.g. ["zh-SG", "en"].
+function deviceLanguage() {
+  if (typeof navigator === "undefined" || !navigator.languages) return "";
+  const first = String(navigator.languages[0] || "").toLowerCase();
+  if (first.startsWith("zh")) return "zh";
+  if (first.startsWith("ms")) return "ms";
+  return "";
 }
 
 let currentLanguage = loadLanguage();
+// True when the language came from the device rather than a choice the person made. The page
+// then shows a short note saying so, once (see the bottom of this file).
+let languageWasGuessed = currentLanguage !== "en";
+try {
+  if (localStorage.getItem(LANGUAGE_STORAGE_KEY)) languageWasGuessed = false;
+} catch (e) {
+  // Storage is blocked: keep the guess
+}
 
 function getLanguage() {
   return currentLanguage;
@@ -198,34 +305,48 @@ function setLanguage(lang) {
   if (typeof redrawScreen === "function" && document.querySelector("#app .screen")) redrawScreen();
 }
 
-// ---------- The language buttons (put in the customer header by helpers.js) ----------
+// ---------- The language picker (put in the customer header by helpers.js) ----------
 
-// Three real buttons, so they work with Tab and Enter/Space without any extra code.
-// Each name is written in its own language, because someone who can't read English must still
-// find their language. lang="..." on each button makes screen readers pronounce it properly.
-// aria-pressed says which one is switched on.
-function languageSwitchHtml() {
-  return `<div class="lang-switch" role="group" aria-label="${t("lang.label")}">
-      ${Object.keys(LANGUAGES).map(lang =>
-        `<button type="button" data-lang="${lang}" lang="${LANGUAGES[lang].locale}" aria-pressed="${lang === currentLanguage}">${LANGUAGES[lang].name}</button>`).join("")}
-    </div>`;
+// One drop-down instead of three buttons, so the header has less to read (changed on
+// website-refresh). It is a real <select>: phones open their own big, easy list, and it works
+// with Tab and the arrow keys without any extra code. The globe is the sign for "language" that
+// people know even when they can't read the words. Each name is written in its own language,
+// and lang="..." on each option makes screen readers pronounce it properly.
+// where ("top", "side" or empty) says which copy this is when a screen shows two (the top bar
+// and the sidebar), so focus goes back to the same one after switching.
+function languageSwitchHtml(where = "") {
+  return `<label class="lang-pick${where ? ` lang-pick--${where}` : ""}">
+      ${icon("globe", "lang-globe")}
+      <span class="visually-hidden">${t("lang.label")}</span>
+      <select data-lang-select="${where}">
+        ${Object.keys(LANGUAGES).map(lang =>
+          `<option value="${lang}" lang="${LANGUAGES[lang].locale}"${lang === currentLanguage ? " selected" : ""}>${LANGUAGES[lang].name}</option>`).join("")}
+      </select>
+      ${icon("caret", "lang-caret")}
+    </label>`;
 }
 
 if (typeof document !== "undefined") {
-  // One listener for the whole page catches every language button, even on screens drawn later
-  document.addEventListener("click", event => {
-    const button = event.target.closest("[data-lang]");
-    if (!button) return;
-    const lang = button.dataset.lang;
-    setLanguage(lang);
-    // Redrawing replaced the buttons and moved focus to the heading. Put keyboard focus back on
-    // the button just pressed, so a keyboard user is not sent away from where they were.
-    const again = document.querySelector(`[data-lang="${lang}"]`);
+  // One listener for the whole page catches the picker, even on screens drawn later
+  document.addEventListener("change", event => {
+    const select = event.target.closest("[data-lang-select]");
+    if (!select) return;
+    const where = select.dataset.langSelect;
+    setLanguage(select.value);
+    // Redrawing replaced the picker and moved focus to the heading. Put keyboard focus back on
+    // the same picker, so a keyboard user is not sent away from where they were.
+    const again = document.querySelector(`[data-lang-select="${where}"]`);
     if (again) again.focus();
   });
 
   // Put the saved language on the page as soon as it loads
   applyLanguage();
+
+  // If the language was picked from the device, say so once, so nobody is confused about why
+  // the page is not in English. showToast() is in helpers.js, which has loaded by then.
+  document.addEventListener("DOMContentLoaded", () => {
+    if (languageWasGuessed && typeof showToast === "function") setTimeout(() => showToast(t("lang.autoPicked")), 600);
+  });
 }
 
 // Lets the Node tests (server/test/) use t(). Browsers skip this line.

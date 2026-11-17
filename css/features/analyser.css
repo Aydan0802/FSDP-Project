@@ -83,6 +83,11 @@
 .an-dots { display: inline-flex; gap: .25rem; }
 .an-dots span { width: .625rem; height: .625rem; border-radius: 50%; background: var(--divider); }
 .an-dots .on { background: var(--charcoal); }
+/* website-refresh: the dots take the result's traffic-light colour (red, orange or green),
+   so "very sure it is a scam" is never shown in green */
+.an-dots--v-bad .on { background: var(--red-dark); }
+.an-dots--v-careful .on { background: var(--amber); }
+.an-dots--v-good .on { background: var(--green); }
 
 /* The message, with the warning phrases marked */
 .an-message {

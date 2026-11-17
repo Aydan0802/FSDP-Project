@@ -8,7 +8,10 @@
 const CALLING_NOW_DATA = {
   text: {
     en: {
-      "cn.leave": "Leave",
+      "cn.safe.1": "Want to check with the bank? Call OCBC yourself.",
+      "cn.safe.2": "Use the number on the back of your card.",
+      "cn.safe.3": "Never call back the number that called you.",
+      "cn.leave": "Back to home",
       "cn.stepOf": "Step {step} of 2",
       "cn.calm": "You are doing the right thing",
       "cn.hangUp.title": "Hang up the phone now.",
@@ -16,7 +19,7 @@ const CALLING_NOW_DATA = {
       "cn.rule.code": "Do not share any code.",
       "cn.rule.money": "Do not send any money.",
       "cn.hungUp": "I have hung up",
-      "cn.checkFirst": "I want to check who is calling first",
+      "cn.checkFirst": "Check who is calling first",
       "cn.q.title": "Did you give a code or send money?",
       "cn.q.text": "It is okay if you did. We can still help.",
       "cn.q.no": "No, I did not",
@@ -28,6 +31,9 @@ const CALLING_NOW_DATA = {
       "cn.safe.tell": "Tell the bank about this call"
     },
     zh: {
+      "cn.safe.1": "想向银行确认？自己打电话给 OCBC。",
+      "cn.safe.2": "用卡背面的号码。",
+      "cn.safe.3": "千万不要回拨打给您的号码。",
       "cn.leave": "离开",
       "cn.stepOf": "第 {step} 步，共 2 步",
       "cn.calm": "你做得很对",
@@ -48,6 +54,9 @@ const CALLING_NOW_DATA = {
       "cn.safe.tell": "把这通电话告诉银行"
     },
     ms: {
+      "cn.safe.1": "Mahu semak dengan bank? Telefon OCBC sendiri.",
+      "cn.safe.2": "Gunakan nombor di belakang kad anda.",
+      "cn.safe.3": "Jangan sekali-kali telefon semula nombor yang menelefon anda.",
       "cn.leave": "Keluar",
       "cn.stepOf": "Langkah {step} daripada 2",
       "cn.calm": "Anda buat perkara yang betul",

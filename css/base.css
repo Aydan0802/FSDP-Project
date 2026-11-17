@@ -15,6 +15,15 @@
   --red-tint: #FDEDEE;
   --slate-tint: #EEF2F4;
   --divider: #C9D2D7;
+  /* Traffic-light colours for results only (website-refresh, from the team's feedback):
+     green = looks safe, orange = be careful. Red stays the OCBC red above. Each text colour
+     passes WCAG AA on white and on its own pale background. Always used with icon + words. */
+  --green: #1B7A3A;        /* 5.4:1 on white */
+  --green-dark: #14612D;   /* text on --green-tint, 6.7:1 */
+  --green-tint: #E7F4EC;
+  --amber: #A35200;        /* 5.6:1 on white */
+  --amber-dark: #8A4500;   /* text on --amber-tint, 6.5:1 */
+  --amber-tint: #FFF1E0;
 
   /* Theme slots: clarity.css sets its own values for some of these */
   --font-body: "Segoe UI", Arial, sans-serif;
@@ -142,22 +151,55 @@ h1:focus, main:focus { outline: none; }
 .field input[aria-invalid="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .field-error { margin: 0 0 1rem; color: var(--accent-text); font-weight: 700; }
 .field-error:empty { display: none; }
+/* A short hint under a box, e.g. "8 digits, like 9123 4567" */
+.field-hint { margin: .375rem 0 0; color: var(--muted); font-size: 1rem; }
+.field-hint + .field-error { margin-top: .5rem; }
 
 /* ---------- Text size buttons ---------- */
 
-/* The language buttons (i18n.js) share this look: same 48px tap targets and "pressed" style */
-.text-size, .lang-switch { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
+.text-size { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
 .text-size-label { margin-right: .25rem; color: var(--muted); font-size: 1rem; }
-.text-size button, .lang-switch button {
+.text-size button {
   min-width: 48px; min-height: 48px; padding: 0 .5rem; cursor: pointer; line-height: 1;
   background: var(--surface); color: var(--text); font-weight: 700;
   border: 2px solid var(--field-border); border-radius: var(--radius);
+  transition: background-color .15s, color .15s, border-color .15s, transform .12s;
 }
+.text-size button:hover { border-color: var(--text); }
 .text-size [data-size="normal"] { font-size: 1rem; }
 .text-size [data-size="large"] { font-size: 1.125rem; }
 .text-size [data-size="larger"] { font-size: 1.3rem; }
-.text-size button[aria-pressed="true"], .lang-switch button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-.lang-switch button { font-size: 1rem; padding: 0 .75rem; }   /* words, not "A", so a little wider */
+.text-size button[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* ---------- Language picker (i18n.js): one drop-down with a globe, 48px tall ----------
+   The real <select> sits on top of the globe and arrow, so tapping anywhere on the pill opens it. */
+.lang-pick {
+  position: relative; display: inline-flex; align-items: center; min-height: 48px;
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--field-border); border-radius: var(--radius);
+  transition: border-color .15s, box-shadow .15s;
+}
+.lang-pick:hover { border-color: var(--text); }
+.lang-pick:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.lang-pick select {
+  appearance: none; -webkit-appearance: none; min-height: 44px; margin: 0; padding: 0 2.4rem 0 2.6rem; cursor: pointer;
+  background: transparent; color: inherit; border: 0; font: inherit; font-size: 1rem; font-weight: 700;
+  field-sizing: content;   /* as wide as the language picked, not the longest one (newer browsers) */
+}
+.lang-pick select:focus { outline: none; }   /* the whole pill shows the focus ring instead */
+.lang-pick .icon { position: absolute; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.lang-globe { left: .75rem; width: 1.375rem; height: 1.375rem; }
+.lang-caret { right: .75rem; width: 1.125rem; height: 1.125rem; }
+
+/* "Sign in needed": a small grey pill on locked tiles and menu links (guests only) */
+.lock-tag {
+  display: inline-flex; align-items: center; gap: .25rem; margin-top: .375rem; padding: .125rem .5rem;
+  background: var(--slate-tint); color: var(--charcoal); border-radius: 999px;
+  font-size: .9375rem; font-weight: 700; line-height: 1.4;
+}
+.lock-tag .icon { width: 1rem; height: 1rem; }
+.menu-lock { display: inline-flex; margin-left: .125rem; color: var(--muted); }
+.menu-lock .icon { width: 1rem; height: 1rem; }
 
 /* ---------- App header (customer and staff) ---------- */
 
@@ -198,6 +240,218 @@ h1:focus, main:focus { outline: none; }
 /* ---------- Customer pages: the main column every customer screen sits in ---------- */
 
 .cust-main { max-width: 72rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+/* ---------- App frame for customer screens (website-refresh) ----------
+   One menu, three layouts, following Google's Material Design and Apple's guidelines:
+     phone (under 600px):            top bar + bottom bar with 5 labelled buttons; "Menu" slides in the sidebar
+     tablet, iPad upright (600-1023px): the same 5 buttons as a rail on the left; "Menu" slides in the sidebar
+     iPad sideways, desktop (1024px+): the sidebar stays open on the left; no bottom bar or rail
+   The sizes are in rem, which media queries measure from the browser's default (16px), so the
+   A / A+ / A++ text sizes make things bigger without changing the layout. */
+
+.shell { min-height: calc(100vh - 2.5rem); }
+.shell-main { min-width: 0; }
+
+/* Top bar: brand on the left, tools on the right. It stays at the top while the page scrolls. */
+.topbar {
+  position: sticky; top: 0; z-index: 15;
+  display: flex; align-items: center; gap: .5rem; min-height: 4rem; padding: .5rem 1rem;
+  background: rgba(255, 255, 255, .94); box-shadow: 0 1px 0 var(--border), 0 4px 16px rgba(54, 59, 64, .05);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px);
+}
+.topbar-tools { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+
+/* The Back button: top-left on every screen you open (helpers.js), for phones without a back button */
+.back-btn {
+  display: inline-flex; align-items: center; gap: .25rem; min-height: 48px; padding: 0 1rem 0 .625rem; cursor: pointer;
+  background: var(--surface); color: var(--text); font: inherit; font-weight: 700; line-height: 1; white-space: nowrap;
+  border: 2px solid var(--field-border); border-radius: 999px;
+  transition: border-color .15s, background-color .15s, transform .12s;
+}
+.back-btn .icon { width: 1.375rem; height: 1.375rem; }
+.back-btn:active { transform: scale(.97); }
+@media (hover: hover) { .back-btn:hover { border-color: var(--text); background: var(--surface-2); } }
+.topbar .tool-btn { white-space: nowrap; }
+.topbar .tool-btn--signin { padding: .5rem 1rem; }
+
+/* Bottom bar (phone): 5 buttons, each an icon above its word. The words always show, because
+   icons alone are hard to understand. The current screen gets a soft red pill behind its icon. */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end;
+  padding: .375rem .25rem calc(.375rem + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); box-shadow: 0 -1px 0 var(--border), 0 -8px 24px rgba(54, 59, 64, .08);
+}
+.tabbar-logo { display: none; }
+.tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .125rem;
+  min-width: 0; min-height: 3.75rem; padding: .25rem 0; cursor: pointer;
+  background: none; border: 0; color: var(--muted); font: inherit; font-size: .9375rem; font-weight: 700; line-height: 1.15;
+  text-align: center; text-decoration: none; -webkit-tap-highlight-color: transparent;
+}
+.tab-icon {
+  display: grid; place-items: center; width: 3.5rem; height: 2rem; border-radius: 999px;
+  transition: background-color .2s, transform .12s;
+}
+.tab-icon .icon { width: 1.5rem; height: 1.5rem; }
+.tab-label { max-width: 100%; overflow-wrap: anywhere; }
+.tab[aria-current="page"] { color: var(--red-dark); }
+.tab[aria-current="page"] .tab-icon { background: var(--red-tint); }
+.tab:active .tab-icon { transform: scale(.92); }
+@media (hover: hover) { .tab:hover .tab-icon { background: var(--surface-2); } .tab[aria-current="page"]:hover .tab-icon { background: var(--red-tint); } }
+/* "Help now": a raised red circle in the middle, the one button that always stands out */
+.tab--urgent { color: var(--red-dark); }
+.tab--urgent .tab-icon {
+  width: 3.5rem; height: 3.5rem; margin-top: -1.5rem; border-radius: 50%;
+  background: var(--red); color: var(--white); box-shadow: 0 0 0 4px var(--surface), 0 8px 18px rgba(158, 27, 50, .35);
+}
+.tab--urgent[aria-current="page"] .tab-icon, .tab--urgent:hover .tab-icon { background: var(--red-dark); }
+
+/* The sidebar. On phones and tablets it waits off the left edge and slides in over the page. */
+.sidebar {
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 40;
+  display: flex; flex-direction: column; gap: .25rem; width: min(21rem, 88vw); padding: .75rem .75rem 1.25rem;
+  overflow-y: auto; overscroll-behavior: contain; background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border), 0 24px 64px rgba(54, 59, 64, .25);
+  transform: translateX(-105%); visibility: hidden;
+  transition: transform .3s cubic-bezier(.2, .7, .2, 1), visibility 0s .3s;
+}
+body.menu-open .sidebar { transform: none; visibility: visible; transition: transform .3s cubic-bezier(.2, .7, .2, 1), visibility 0s; }
+body.menu-open { overflow: hidden; }   /* the page behind stays still while the menu is open */
+.scrim {
+  position: fixed; inset: 0; z-index: 39; background: rgba(28, 32, 36, .45);
+  opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s .25s;
+}
+body.menu-open .scrim { opacity: 1; visibility: visible; transition: opacity .25s, visibility 0s; }
+
+.side-top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: 0 0 .5rem .5rem; }
+.side-close {
+  display: grid; place-items: center; flex: none; width: 48px; height: 48px; cursor: pointer;
+  background: var(--surface-2); color: var(--text); border: 0; border-radius: 50%;
+}
+.side-group { margin: 1rem .75rem .375rem; color: var(--muted); font-size: .9375rem; font-weight: 700; letter-spacing: .01em; }
+.side-list { display: grid; gap: .125rem; }
+.side-link {
+  display: flex; align-items: center; gap: .75rem; min-height: 48px; padding: .5rem .75rem;
+  color: var(--text); font-weight: 600; line-height: 1.25; text-decoration: none; border-radius: 14px;
+  transition: background-color .15s;
+}
+.side-link .icon { width: 1.375rem; height: 1.375rem; color: var(--slate); }
+.side-link > span:first-of-type { flex: 1; }
+.side-link[aria-current="page"] { background: var(--red-tint); color: var(--red-dark); font-weight: 800; }
+.side-link[aria-current="page"] .icon { color: var(--red-dark); }
+@media (hover: hover) { .side-link:hover { background: var(--surface-2); } .side-link[aria-current="page"]:hover { background: var(--red-tint); } }
+/* "Someone is calling me now": the red button at the top of the menu */
+.side-urgent {
+  --focus: var(--charcoal);
+  display: flex; align-items: center; gap: .75rem; min-height: 56px; margin: 0 0 .25rem; padding: .625rem .875rem;
+  /* 19px bold counts as large text, so white on OCBC red (4.4:1) passes WCAG AA */
+  background: var(--red); color: var(--white); font-size: 1.1875rem; font-weight: 800; line-height: 1.25; text-decoration: none;
+  border-radius: 16px; box-shadow: 0 8px 20px rgba(237, 28, 36, .25); transition: background-color .15s, transform .12s;
+}
+.side-urgent .icon { width: 1.5rem; height: 1.5rem; }
+.side-urgent:hover, .side-urgent[aria-current="page"] { background: var(--red-dark); }
+.side-urgent:active { transform: scale(.98); }
+/* Language and text size: inside the menu on phones only (tablets and desktops have them in the top bar) */
+.side-display { display: grid; gap: .5rem; justify-items: start; padding: 0 .5rem; }
+.side-display .side-group { margin-left: .25rem; }
+.side-display .lang-pick { width: 100%; }
+.side-display .lang-pick select { width: 100%; }
+.side-display .text-size-label { display: inline; }
+/* Signed in as ... / Sign in, at the bottom */
+.side-account { display: grid; gap: .5rem; margin-top: auto; padding: 1.25rem .5rem 0; border-top: 1px solid var(--border); }
+.side-account .btn { width: 100%; }
+.side-who { display: flex; align-items: center; gap: .5rem; margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.side-hint { margin: 0; color: var(--muted); font-size: 1rem; }
+
+/* In the menu, Read aloud keeps its words even on a phone */
+.side-display .tool-btn { padding: .5rem 1rem; }
+.side-display .tool-label { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; }
+.side-link:active { background: var(--surface-2); }
+
+/* Touch screens: no grey flash or double-tap zoom delay when tapping (every button has its own
+   pressed look instead), and no "sticky" hover lifts after a tap */
+a, button, select, summary, label { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* ----- Phone (under 600px) ----- */
+@media (max-width: 37.49rem) {
+  .shell-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }   /* room for the bottom bar */
+  .topbar { padding-left: .75rem; padding-right: .75rem; }
+  .topbar .brand { gap: .5rem; min-width: 0; }
+  .topbar .brand-mark { width: 2.5rem; height: 2.5rem; }
+  .topbar .brand-name { font-size: 1.125rem; white-space: nowrap; }
+  /* On screens you opened, Back takes the logo's place, like the top bar of a phone app */
+  .topbar:has(.topbar-back) .brand { display: none; }
+  .topbar .tool-btn--signin { padding: .5rem 1rem; white-space: nowrap; }
+  .topbar .tool-btn--signin .icon { display: none; }   /* the words "Sign in" are enough here */
+  .topbar-tools { flex: none; }
+  /* With bigger text there is no room for the name next to the logo, so the logo stands alone */
+  html[data-size="large"] .topbar .brand-name, html[data-size="larger"] .topbar .brand-name { display: none; }
+  /* Read aloud, text size and Sign out live in the menu on a phone, to keep the top bar short.
+     The language stays in the top bar as a globe button, for anyone who can't read English. */
+  .topbar [data-action="read"], .topbar .text-size, .topbar button.topbar-account { display: none; }
+  .topbar .lang-pick { width: 48px; min-height: 48px; }
+  .topbar .lang-pick select { width: 100%; min-height: 44px; padding: 0; color: transparent; }
+  .topbar .lang-pick select option { color: var(--text); }
+  .topbar .lang-globe { left: 50%; transform: translate(-50%, -50%); }
+  .topbar .lang-caret { display: none; }
+  /* Stressful screens with the "Call OCBC" bar hide the bottom bar, so there is one thing to do */
+  body:has(.call-bar) .tabbar { display: none; }
+  body:has(.call-bar) .shell-main { padding-bottom: 0; }
+  .read-stop { bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ----- Tablet and iPad upright (600px to 1023px): the rail ----- */
+@media (min-width: 37.5rem) and (max-width: 63.99rem) {
+  .shell-main { margin-left: 6.5rem; }
+  .tabbar {
+    top: 0; right: auto; width: 6.5rem; grid-template-columns: none; grid-auto-rows: min-content; align-content: start; align-items: center;
+    gap: .875rem; padding: .875rem .375rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: 1px 0 0 var(--border);
+  }
+  .tabbar-logo { display: block; justify-self: center; width: 3rem; height: 3rem; margin-bottom: .5rem; overflow: hidden; border-radius: 12px; }
+  .tabbar-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .tab { min-height: 4rem; font-size: .9375rem; }
+  .tab--urgent .tab-icon { width: 3.25rem; height: 3.25rem; margin-top: 0; box-shadow: 0 8px 18px rgba(158, 27, 50, .3); }
+  .topbar .brand { display: none; }   /* the logo is at the top of the rail */
+  .topbar .text-size-label { display: none; }   /* the A / A+ / A++ buttons stay; screen readers still hear "Text size" */
+  .side-display { display: none; }
+  .call-bar { left: 6.5rem; }
+  body:has(.shell) .demo-bar { padding-left: 7.5rem; }   /* clear of the rail */
+}
+
+/* ----- iPad sideways and desktop (1024px and up): the sidebar stays open ----- */
+@media (min-width: 64rem) {
+  .shell { display: grid; grid-template-columns: 19rem minmax(0, 1fr); }
+  .sidebar {
+    position: sticky; top: 0; z-index: 16; width: auto; height: 100vh; padding: 1rem .75rem 1.25rem; scrollbar-width: thin;
+    transform: none; visibility: visible; transition: none; box-shadow: 1px 0 0 var(--border);
+  }
+  body.menu-open { overflow: visible; }
+  .scrim, .side-close, .side-display, .tabbar { display: none; }
+  .topbar { justify-content: flex-end; }
+  .topbar .brand { display: none; }   /* it is at the top of the sidebar */
+  /* Sign out is at the bottom of the sidebar; "Sign in" also stays in the top bar, where guests look for it */
+  .topbar button.topbar-account { display: none; }
+}
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .topbar .text-size-label { display: none; }
+}
+
+/* With Back on the left, Read aloud shows just its speaker icon on tablets and smaller laptops,
+   so the top bar stays on one row (screen readers still hear "Read aloud") */
+@media (min-width: 37.5rem) and (max-width: 79.99rem) {
+  .topbar:has(.topbar-back) [data-action="read"] { min-width: 48px; justify-content: center; padding: .5rem; }
+  .topbar:has(.topbar-back) [data-action="read"] .tool-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+}
+/* Small tablets (600 to 767px): text size moves into the menu, as on phones */
+@media (min-width: 37.5rem) and (max-width: 47.99rem) {
+  .topbar .text-size { display: none; }
+  .side-display { display: grid; }
+  .call-bar { left: 19rem; }
+}
 .eyebrow { margin: 0 0 .25rem; color: var(--accent-text); font-weight: 700; }
 
 /* ---------- Staff pages: side menu and main column every staff screen sits in ---------- */
@@ -252,7 +506,9 @@ h1:focus, main:focus { outline: none; }
 }
 .badge .icon { width: 1.25rem; height: 1.25rem; }
 .badge--likely { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
-.badge--partial, .badge--uncertain { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.badge--partial { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.badge--uncertain { background: var(--amber-tint); border-color: var(--amber); color: var(--amber-dark); }
+.badge--real { background: var(--green-tint); border-color: var(--green); color: var(--green-dark); }
 .badge--unsure { background: var(--slate-tint); color: var(--charcoal); }
 
 /* ---------- Tables scroll inside their own box on small screens ---------- */
@@ -322,13 +578,20 @@ h1:focus, main:focus { outline: none; }
 }
 .done-mark .icon { width: 2rem; height: 2rem; }
 
+/* Short bullet points instead of long sentences (website-refresh): easier to take in when
+   someone is stressed or on a call. A small dark red dot before each line. */
+.points { display: grid; gap: .5rem; margin: .75rem 0 1rem; }
+.points li { position: relative; padding-left: 1.5rem; }
+.points li::before { content: ""; position: absolute; left: .25rem; top: .6em; width: .5rem; height: .5rem; border-radius: 50%; background: var(--red-dark); }
+
 /* "Do not ..." rules with a cross */
 .rules { display: grid; gap: .5rem; margin: 1rem 0; }
 .rules li { display: flex; align-items: flex-start; gap: .625rem; font-size: 1.1875rem; font-weight: 700; }
 .rules .icon { margin-top: .1rem; color: var(--red-dark); }
 
 /* A result: icon + words + heading, never colour alone.
-   bad = solid dark red, careful = red tint, good = grey (the same as the result badges). */
+   Traffic lights (website-refresh): bad = solid dark red, careful = orange, good = green
+   (the same as the result badges). */
 .verdict {
   display: flex; align-items: flex-start; gap: .875rem; margin-bottom: 1rem; padding: 1.125rem 1.25rem;
   border: 2px solid; border-radius: var(--radius-lg);
@@ -339,9 +602,10 @@ h1:focus, main:focus { outline: none; }
 .verdict .badge { margin-bottom: .5rem; }
 .v-bad { --focus: var(--white); background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
 .v-bad .badge--likely { border-color: var(--white); }
-.v-careful { background: var(--red-tint); border-color: var(--red); color: var(--red-dark); }
+.v-careful { background: var(--amber-tint); border-color: var(--amber); color: var(--amber-dark); }
 .v-careful p { color: var(--text); }
-.v-good { background: var(--slate-tint); border-color: var(--slate); color: var(--text); }
+.v-good { background: var(--green-tint); border-color: var(--green); color: var(--green-dark); }
+.v-good p { color: var(--text); }
 
 /* A list of reasons, each with an icon, and points on the right if there are any */
 .reasons { display: grid; gap: .625rem; margin: .5rem 0 1rem; }
@@ -401,8 +665,92 @@ read-run, read-word { display: inline; margin: 0; padding: 0; border: 0; }
 }
 body:has(.call-bar) .read-stop { bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
 
+/* ---------- Feedback and polish (added on website-refresh) ----------
+   Small touches so every tap answers back: each new screen fades in, buttons sink a little when
+   pressed, "done" screens draw their tick, and short messages slide up. All of it is short
+   (under half a second) and switches off for people who turn off animation (below). */
+
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+.step-dots, .count, .tabular { font-variant-numeric: tabular-nums; }
+
+/* ---------- Page transitions, like the Grab app (router.js decides which one) ----------
+   forward: the new screen slides in from the right over the old one, which drifts left and dims
+   back:    the screen slides off to the right, showing the one before
+   lateral: switching tabs, a quick fade
+   With View Transitions the browser takes a picture of the old and new page and slides them.
+   The bars that should stay still get their own name, so they are left out of the slide. */
+.topbar { view-transition-name: topbar; }
+.tabbar { view-transition-name: tabbar; }
+.sidebar { view-transition-name: sidebar; }
+.demo-bar { view-transition-name: demobar; }
+.call-bar { view-transition-name: callbar; }
+
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .32s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+html[data-nav="forward"]::view-transition-old(root) { animation-name: vt-drift-left; }
+html[data-nav="forward"]::view-transition-new(root) { animation-name: vt-in-from-right; filter: drop-shadow(-12px 0 24px rgba(28, 32, 36, .12)); }
+html[data-nav="back"]::view-transition-old(root) { z-index: 1; animation-name: vt-out-to-right; filter: drop-shadow(-12px 0 24px rgba(28, 32, 36, .12)); }
+html[data-nav="back"]::view-transition-new(root) { animation-name: vt-drift-in-left; }
+html[data-nav="lateral"]::view-transition-old(root) { animation: vt-fade-out .14s ease-out both; }
+html[data-nav="lateral"]::view-transition-new(root) { animation: vt-fade-in .2s ease-out both; }
+@keyframes vt-in-from-right { from { transform: translateX(100%); } }
+@keyframes vt-drift-left { to { transform: translateX(-28%); opacity: .7; } }
+@keyframes vt-out-to-right { to { transform: translateX(100%); } }
+@keyframes vt-drift-in-left { from { transform: translateX(-28%); opacity: .7; } }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+
+/* Browsers without View Transitions: the new content slides a little (router.js adds the class).
+   Only the content moves: a transform on the whole screen would pin the fixed bars to the page
+   instead of the window, and "backwards" leaves nothing behind once it finishes. */
+.screen-enter { animation: vtc-fade-in .24s ease-out backwards; }
+.screen-enter--forward main > :not(.call-bar):not(.call-bar-space), .screen-enter--forward .login-main {
+  animation: vtc-from-right .3s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+.screen-enter--back main > :not(.call-bar):not(.call-bar-space), .screen-enter--back .login-main {
+  animation: vtc-from-left .3s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+@keyframes vtc-fade-in { from { opacity: 0; } }
+@keyframes vtc-from-right { from { transform: translateX(2.5rem); } }
+@keyframes vtc-from-left { from { transform: translateX(-2.5rem); } }
+@keyframes vtc-screen-in { from { opacity: 0; transform: translateY(10px); } }
+
+/* Results rise in too, so an answer arrives instead of just appearing */
+.verdict { animation: vtc-screen-in .4s cubic-bezier(.2, .7, .2, 1) backwards; }
+/* The step being checked right now is a little stronger, and finished steps tick in */
+.progress-list li { transition: color .2s; }
+.progress-list li.done .icon { animation: vtc-pop .3s cubic-bezier(.2, 1.4, .4, 1) both; }
+
+/* Pressed: the button sinks a little under the finger */
+.btn:active, .tool-btn:active, .chip:active, .text-size button:active { transform: scale(.97); }
+.btn-primary:hover { box-shadow: 0 6px 18px rgba(158, 27, 50, .22); }
+.tool-btn { text-decoration: none; transition: background-color .15s, border-color .15s, transform .12s; }
+.tool-btn:hover { border-color: var(--text); }
+/* "Sign in" in the header (guests): the one filled button there, so it is easy to find */
+.tool-btn--signin { background: var(--charcoal); color: var(--white); border-color: var(--charcoal); }
+.tool-btn--signin:hover { background: var(--slate); border-color: var(--slate); }
+
+/* Short messages slide up from the bottom */
+.toast { animation: vtc-toast-in .28s cubic-bezier(.2, .7, .2, 1) backwards; text-align: center; }
+@keyframes vtc-toast-in { from { opacity: 0; transform: translate(-50%, 12px); } }
+
+/* "Done" screens: the round mark pops in, a soft ring spreads out once, then the tick draws itself.
+   This is the moment people remember, so it gets the most care (the peak-end rule). */
+.done-mark { position: relative; animation: vtc-pop .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+.done-mark::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  box-shadow: 0 0 0 0 var(--red); opacity: .35; animation: vtc-ring 1s .2s ease-out both;
+}
+.done-mark .icon * { stroke-dasharray: 80; stroke-dashoffset: 80; animation: vtc-draw .6s .25s ease-out forwards; }
+@keyframes vtc-pop { from { opacity: 0; transform: scale(.6); } }
+@keyframes vtc-ring { to { box-shadow: 0 0 0 1.25rem var(--red); opacity: 0; } }
+@keyframes vtc-draw { to { stroke-dashoffset: 0; } }
+
 /* Respect people who turn off animation in their device settings */
 @media (prefers-reduced-motion: reduce) {
+  .done-mark .icon * { stroke-dashoffset: 0; }
+  .done-mark::after { display: none; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   /* The spinner stands still, so give it a second red edge to show it is busy */
   .spin { border-right-color: var(--red); }

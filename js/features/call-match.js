@@ -71,7 +71,11 @@
     return `
       <section data-read>
         <div class="verdict v-bad">${icon("warning")}<div><p><strong>${t("cm.no.tag")}</strong></p><h1 tabindex="-1">${t("cm.no.title")}</h1></div></div>
-        <div class="panel"><p>${t("cm.no.text")}</p></div>
+        <div class="panel"><ul class="points">
+          <li>${t("cm.no.1")}</li>
+          <li>${t("cm.no.2")}</li>
+          <li>${t("cm.no.3")}</li>
+        </ul></div>
       </section>
       <div class="stack">
         <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
@@ -81,10 +85,49 @@
       </div>`;
   }
 
+  // website-refresh: a short "Checking..." step before the answer (about 1.6 seconds). The match
+  // itself is instant, but an answer that appears with no visible work feels less trustworthy
+  // for something this important (the "labour illusion"). The three steps tick off one by one.
+  const CHECK_STEPS = ["cm.checking.step1", "cm.checking.step2", "cm.checking.step3"];
+  const STEP_MS = 550;
+
+  function checkingHtml(state) {
+    return `
+      <section class="panel" data-read aria-busy="true">
+        <h1 tabindex="-1">${t("cm.checking.title")}</h1>
+        <p class="lead tabular">${esc(state.number)}</p>
+        <ol class="progress-list" id="cm-steps">
+          ${CHECK_STEPS.map((key, i) => `<li class="${i === 0 ? "now" : ""}"><span class="${i === 0 ? "spin" : "dot"}" aria-hidden="true"></span>${t(key)}</li>`).join("")}
+        </ol>
+      </section>`;
+  }
+
+  // Ticks off each step in place (no redraw, so focus stays put), then shows the answer
+  function runChecking() {
+    const state = myState();
+    CHECK_STEPS.forEach((key, i) => {
+      setTimeout(() => {
+        const items = document.querySelectorAll("#cm-steps li");
+        if (!items.length || state.phase !== "checking") return;   // they left this screen
+        items.forEach((item, j) => {
+          const status = j < i + 1 ? "done" : j === i + 1 ? "now" : "";
+          item.className = status;
+          item.firstElementChild.outerHTML = status === "done" ? icon("check") : `<span class="${status === "now" ? "spin" : "dot"}" aria-hidden="true"></span>`;
+        });
+      }, STEP_MS * (i + 1));
+    });
+    setTimeout(() => {
+      if (state.phase !== "checking" || !document.getElementById("cm-steps")) return;
+      state.phase = "result";
+      draw();
+    }, STEP_MS * CHECK_STEPS.length + 150);
+  }
+
   function screenHtml() {
     if (!redrawing) appState.callMatch = freshState();   // coming here from another screen starts again
     const state = myState();
     const body = state.phase === "input" ? inputHtml(state)
+      : state.phase === "checking" ? checkingHtml(state)
       : state.result.matched ? matchedHtml(state.result.call) : noMatchHtml();
     return customerPageHtml("", `<div class="narrow call-match">${homeLinkHtml()}${body}</div>`);
   }
@@ -119,15 +162,16 @@
         return;
       }
       state.result = matchCall(box.value, "");
-      state.phase = "result";
+      state.phase = "checking";
       state.error = "";
       draw();
+      runChecking();
     });
   }
 
   registerRoute({
     name: "call-match",
-    role: "customer",
+    role: "public",   // open to everyone: no sign-in needed (website-refresh)
     render: screenHtml,
     afterRender
   });
