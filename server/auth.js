@@ -3,10 +3,13 @@
 // Verify the Caller: sign in (the server side).
 // Owner: Wei Ye
 // POST /api/auth/login    body { role, userId, password }  checks the account and password
+// POST /api/auth/signup   body { userId, password }        makes a CUSTOMER account and signs it in
 // GET  /api/auth/me       who is signed in on this browser
 // POST /api/auth/logout   forgets this sign-in
 // The sign-in screen (js/features/login.js) calls these. A correct ID and password for the picked
 // side (customer or staff) gives a session cookie. Anything else is refused.
+// Only customers can sign up. Staff accounts are made by the bank (see database/README.md), because
+// if anyone could make a staff account, the staff pages would be open to everyone.
 // The accounts live in a "user store" (db/user-store.js): Supabase, or the built-in demo accounts.
 // Two things are kept only in the server's memory, so they reset when the server restarts:
 // who is signed in (a random code in a cookie), and how many wrong passwords each account has had.
@@ -22,6 +25,13 @@ const SESSION_HOURS = 8;        // how long a sign-in stays valid
 const COOKIE_NAME = "vtc_session";
 
 const ROLES = ["customer", "staff"];
+
+// Rules for a new account
+const NEW_ID = /^[a-z0-9][a-z0-9._-]{3,29}$/;   // 4 to 30 characters: lowercase letters, numbers and . _ -
+const RESERVED_PREFIXES = ["admin", "staff", "root", "ocbc", "bank", "demo", "system"];   // kept for the bank
+const MIN_PASSWORD = 8;
+const COMMON_PASSWORDS = ["password", "password1", "passw0rd", "12345678", "123456789", "1234567890", "qwerty123", "qwertyui", "11111111", "iloveyou", "letmein1", "welcome1", "abc12345", "admin123"];
+const MAX_SIGNUPS_PER_HOUR = 10;   // per computer, so nobody can fill the database with junk accounts
 
 // ---------- The sign-in rules (no web code in here, so they are easy to test) ----------
 
@@ -66,7 +76,27 @@ function createAuthService(store, { now = () => new Date() } = {}) {
     return { ok: true, user: { userId: user.userId, role: user.role, loginId: user.loginId } };
   }
 
-  return { login };
+  // Makes a customer account. Returns { ok: true, user }, or { ok: false, reason, problem? } where
+  // reason is "invalid" (problem: "id", "short", "same-as-id" or "common") or "taken".
+  async function signup(loginId, password) {
+    const id = String(loginId).trim().toLowerCase();
+    if (!NEW_ID.test(id)) return { ok: false, reason: "invalid", problem: "id" };
+    if (password.length < MIN_PASSWORD) return { ok: false, reason: "invalid", problem: "short" };
+    if (password.toLowerCase().includes(id)) return { ok: false, reason: "invalid", problem: "same-as-id" };
+    if (COMMON_PASSWORDS.includes(password.toLowerCase())) return { ok: false, reason: "invalid", problem: "common" };
+    if (RESERVED_PREFIXES.some(prefix => id.startsWith(prefix))) return { ok: false, reason: "taken" };
+
+    const passwordHash = await hashPassword(password);   // only the hash is ever stored
+    try {
+      const created = await store.createUser("customer", id, passwordHash);
+      return { ok: true, user: { userId: created.userId, role: "customer", loginId: id } };
+    } catch (error) {
+      if (error.code === "USER_EXISTS") return { ok: false, reason: "taken" };
+      throw error;
+    }
+  }
+
+  return { login, signup };
 }
 
 // ---------- The web part ----------
@@ -85,6 +115,18 @@ function createAuthRouter(store, options = {}) {
   const router = express.Router();
   const auth = createAuthService(store, options);
   const sessions = new Map();   // session code -> { userId, role, loginId, expires }
+  const signups = new Map();    // computer address -> times of its recent sign-ups
+  const maxSignups = options.maxSignupsPerHour || MAX_SIGNUPS_PER_HOUR;
+
+  // True if this computer may make another account right now. Counts one each time it says yes.
+  function allowSignup(address) {
+    const hourAgo = Date.now() - 3600 * 1000;
+    const recent = (signups.get(address) || []).filter(time => time > hourAgo);
+    if (recent.length >= maxSignups) { signups.set(address, recent); return false; }
+    recent.push(Date.now());
+    signups.set(address, recent);
+    return true;
+  }
 
   function sessionFor(req) {
     const code = readCookie(req, COOKIE_NAME);
@@ -127,6 +169,29 @@ function createAuthRouter(store, options = {}) {
     }
     if (result.reason === "locked") return res.status(423).json({ ok: false, error: "locked", minutes: result.minutes });
     return res.status(401).json({ ok: false, error: "invalid" });
+  });
+
+  router.post("/signup", async (req, res) => {
+    const { userId, password } = req.body || {};
+    if (typeof userId !== "string" || userId.length > 60 || typeof password !== "string" || password.length < 1 || password.length > 200) {
+      return res.status(400).json({ ok: false, error: "invalid", problem: "id" });
+    }
+    if (!allowSignup(req.ip)) return res.status(429).json({ ok: false, error: "too-many" });
+
+    let result;
+    try {
+      result = await auth.signup(userId, password);
+    } catch (error) {
+      console.error("Sign up failed because of a server or database problem:", error.message);
+      return res.status(503).json({ ok: false, error: "unavailable" });
+    }
+
+    if (result.ok) {
+      startSession(res, result.user);   // a new customer is signed in straight away
+      return res.status(201).json({ ok: true, role: result.user.role, userId: result.user.loginId });
+    }
+    if (result.reason === "taken") return res.status(409).json({ ok: false, error: "taken" });
+    return res.status(400).json({ ok: false, error: "invalid", problem: result.problem });
   });
 
   router.get("/me", (req, res) => {

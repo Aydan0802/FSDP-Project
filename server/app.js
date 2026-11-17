@@ -26,7 +26,7 @@ function createApp(options = {}) {
   // Sign in: POST /api/auth/login, GET /api/auth/me, POST /api/auth/logout (see auth.js).
   // It needs a "user store" (db/user-store.js); server.js passes one in. Without one (as in the
   // risk scorer tests) these addresses simply don't exist.
-  if (options.userStore) app.use("/api/auth", createAuthRouter(options.userStore));
+  if (options.userStore) app.use("/api/auth", createAuthRouter(options.userStore, options.authOptions));
 
   // POST /api/risk/score: score one transfer.
   // Body: a transfer (fields in docs/risk-scorer.md). Reply: 200 with the result, or 400 with problems.

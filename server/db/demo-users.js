@@ -2,8 +2,9 @@
 
 // Verify the Caller: the six demo accounts.
 // Owner: Wei Ye
-// Used when the server runs WITHOUT SQL Server, so everyone on the team can still sign in. They are
-// the same six accounts as in database/02-seed-users.sql (a test checks the two lists match).
+// Used when the server runs WITHOUT Supabase (no server/.env), so everyone on the team can still
+// sign in. They are the same six accounts as in database/supabase-setup.sql (a test checks the two
+// lists match).
 // Only hashes are kept here, never the passwords themselves. The demo passwords are in
 // database/README.md, and "Fill in demo details" on the sign-in screen types the first one for you.
 // To add or change an account: run  node scripts/hash-password.js "the password"  and paste the result.

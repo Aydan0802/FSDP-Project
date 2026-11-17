@@ -23,8 +23,8 @@ const PASSWORDS = {
 };
 
 // Starts the real app on a free port with the given store, and gives back a tiny helper for calling it
-async function startServer(t, store = createMemoryUserStore()) {
-  const app = createApp({ userStore: store });
+async function startServer(t, store = createMemoryUserStore(), authOptions) {
+  const app = createApp({ userStore: store, authOptions });
   const server = await new Promise(resolve => { const s = app.listen(0, () => resolve(s)); });
   t.after(() => server.close());
   const base = `http://localhost:${server.address().port}`;
@@ -47,13 +47,26 @@ async function startFakeSupabase(t, { secretKey = "sb_secret_test", status = 200
     customer_users: DEMO_USERS.filter(u => u.role === "customer"),
     staff_users: DEMO_USERS.filter(u => u.role === "staff")
   };
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://fake");
-    seen.push({ path: url.pathname, query: url.search, headers: req.headers });
+    seen.push({ path: url.pathname, query: url.search, headers: req.headers, method: req.method });
     if (status !== 200) { res.writeHead(status, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ message: "nope" })); }
     if (req.headers.apikey !== secretKey) { res.writeHead(401, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ message: "Invalid API key" })); }
     const table = url.pathname.replace("/rest/v1/", "");
     if (!tables[table]) { res.writeHead(404, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ message: "no such table" })); }
+    if (req.method === "POST") {
+      let raw = "";
+      for await (const chunk of req) raw += chunk;
+      const body = JSON.parse(raw);
+      if (tables[table].some(u => u.loginId === body.user_id)) {
+        res.writeHead(409, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ code: "23505", message: "duplicate key value violates unique constraint" }));
+      }
+      const created = { userId: tables[table].length + 100, loginId: body.user_id, passwordHash: body.user_password };
+      tables[table].push(created);
+      res.writeHead(201, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify([{ id: created.userId, user_id: created.loginId, user_password: created.passwordHash }]));
+    }
     const wanted = (url.searchParams.get("user_id") || "").replace(/^eq\./, "");
     const rows = tables[table].filter(u => u.loginId === wanted).map(u => ({ id: u.userId, user_id: u.loginId, user_password: u.passwordHash }));
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -61,7 +74,7 @@ async function startFakeSupabase(t, { secretKey = "sb_secret_test", status = 200
   });
   await new Promise(resolve => server.listen(0, resolve));
   t.after(() => server.close());
-  return { url: `http://localhost:${server.address().port}`, seen, secretKey };
+  return { url: `http://localhost:${server.address().port}`, seen, secretKey, tables };
 }
 
 // ---------- Passwords ----------
@@ -300,4 +313,107 @@ test("which store is used depends on the settings", () => {
     assert.equal(createUserStore({ SUPABASE_URL: "https://x.supabase.co", SUPABASE_SECRET_KEY: "k" }).kind, "supabase");
     assert.equal(createUserStore({ SUPABASE_URL: "https://x.supabase.co" }).kind, "memory");   // half set up: falls back, with a warning
   } finally { console.log = log; console.warn = warn; }
+});
+
+// ---------- Sign up ----------
+
+test("sign up: a new customer is made, signed in, and can sign in again later", async t => {
+  const { post, base } = await startServer(t);
+  const { res, data } = await post("/api/auth/signup", { userId: "Mei.Lin_88", password: "Blue-Kettle-42" });
+  assert.equal(res.status, 201);
+  assert.deepEqual(data, { ok: true, role: "customer", userId: "mei.lin_88" });
+  const cookie = res.headers.get("set-cookie").split(";")[0];
+  const me = await (await fetch(base + "/api/auth/me", { headers: { Cookie: cookie } })).json();
+  assert.equal(me.role, "customer");
+  const again = await post("/api/auth/login", { role: "customer", userId: "mei.lin_88", password: "Blue-Kettle-42" });
+  assert.equal(again.res.status, 200);
+  // and a customer account never works on the staff side
+  assert.equal((await post("/api/auth/login", { role: "staff", userId: "mei.lin_88", password: "Blue-Kettle-42" })).res.status, 401);
+});
+
+test("sign up: only a hash is stored, never the password", async t => {
+  const store = createMemoryUserStore();
+  const { post } = await startServer(t, store);
+  await post("/api/auth/signup", { userId: "hash-check", password: "Blue-Kettle-42" });
+  const row = await store.findByLogin("customer", "hash-check");
+  assert.match(row.passwordHash, /^scrypt\$/);
+  assert.ok(!row.passwordHash.includes("Blue-Kettle-42"));
+});
+
+test("sign up: a taken ID is refused (demo accounts, earlier sign-ups, and IDs kept for the bank)", async t => {
+  const { post } = await startServer(t);
+  assert.equal((await post("/api/auth/signup", { userId: "customer01", password: "Blue-Kettle-42" })).res.status, 409);
+  assert.equal((await post("/api/auth/signup", { userId: "CUSTOMER01", password: "Blue-Kettle-42" })).res.status, 409);
+  assert.equal((await post("/api/auth/signup", { userId: "staff99", password: "Blue-Kettle-42" })).res.status, 409);
+  assert.equal((await post("/api/auth/signup", { userId: "adminjoe", password: "Blue-Kettle-42" })).res.status, 409);
+  assert.equal((await post("/api/auth/signup", { userId: "fresh-one", password: "Blue-Kettle-42" })).res.status, 201);
+  assert.equal((await post("/api/auth/signup", { userId: "fresh-one", password: "Other-Kettle-77" })).res.status, 409);
+  // the original account still has its original password
+  assert.equal((await post("/api/auth/login", { role: "customer", userId: "customer01", password: "Demo#Cust01" })).res.status, 200);
+});
+
+test("sign up: bad IDs and weak passwords are refused with the reason", async t => {
+  const { post } = await startServer(t);
+  const cases = [
+    [{ userId: "abc", password: "Blue-Kettle-42" }, "id"],
+    [{ userId: "has space", password: "Blue-Kettle-42" }, "id"],
+    [{ userId: "-leading", password: "Blue-Kettle-42" }, "id"],
+    [{ userId: "x".repeat(31), password: "Blue-Kettle-42" }, "id"],
+    [{ userId: "okay-id", password: "short" }, "short"],
+    [{ userId: "okay-id", password: "xx-okay-id-xx" }, "same-as-id"],
+    [{ userId: "okay-id", password: "password1" }, "common"],
+    [{ userId: "okay-id", password: "12345678" }, "common"]
+  ];
+  for (const [body, problem] of cases) {
+    const { res, data } = await post("/api/auth/signup", body);
+    assert.equal(res.status, 400, JSON.stringify(body));
+    assert.equal(data.problem, problem, JSON.stringify(body));
+  }
+  assert.equal((await post("/api/auth/signup", {})).res.status, 400);
+  assert.equal((await post("/api/auth/signup", { userId: 5, password: {} })).res.status, 400);
+});
+
+test("sign up: one computer can only make a few accounts an hour", async t => {
+  const { post } = await startServer(t, createMemoryUserStore(), { maxSignupsPerHour: 3 });
+  for (let i = 1; i <= 3; i++) assert.equal((await post("/api/auth/signup", { userId: "bulk-user-" + i, password: "Blue-Kettle-42" })).res.status, 201);
+  assert.equal((await post("/api/auth/signup", { userId: "bulk-user-4", password: "Blue-Kettle-42" })).res.status, 429);
+});
+
+test("sign up (memory store): a sign-up never changes the shared demo list", async () => {
+  const before = DEMO_USERS.length;
+  const store = createMemoryUserStore();
+  await store.createUser("customer", "newcomer", "scrypt$x");
+  assert.equal(DEMO_USERS.length, before);
+  assert.equal((await createMemoryUserStore().findByLogin("customer", "newcomer")), null);
+});
+
+test("Supabase: sign up adds a row to customer_users only, with a lowercase ID and a hash", async t => {
+  const fake = await startFakeSupabase(t);
+  const { post } = await startServer(t, createSupabaseUserStore({ url: fake.url, secretKey: fake.secretKey }));
+  const { res } = await post("/api/auth/signup", { userId: "Sam.Tan", password: "Blue-Kettle-42" });
+  assert.equal(res.status, 201);
+  const inserts = fake.seen.filter(r => r.method === "POST");
+  assert.equal(inserts.length, 1);
+  assert.equal(inserts[0].path, "/rest/v1/customer_users");
+  assert.equal(fake.tables.customer_users.at(-1).loginId, "sam.tan");
+  assert.match(fake.tables.customer_users.at(-1).passwordHash, /^scrypt\$/);
+  assert.equal(fake.tables.staff_users.length, 3);
+  assert.equal((await post("/api/auth/login", { role: "customer", userId: "sam.tan", password: "Blue-Kettle-42" })).res.status, 200);
+});
+
+test("Supabase: if the database says the ID is a duplicate (a race), the answer is 'taken', not an error", async t => {
+  const fake = await startFakeSupabase(t);
+  const store = createSupabaseUserStore({ url: fake.url, secretKey: fake.secretKey });
+  // Skip the "does it exist?" look-up, as if two people pressed Create at the same moment
+  store.findByLogin = async () => null;
+  const { post } = await startServer(t, store);
+  assert.equal((await post("/api/auth/signup", { userId: "customer01", password: "Blue-Kettle-42" })).res.status, 409);
+});
+
+test("Supabase: sign up with a wrong key means 503", async t => {
+  const quiet = t.mock.method(console, "error", () => {});
+  const fake = await startFakeSupabase(t);
+  const { post } = await startServer(t, createSupabaseUserStore({ url: fake.url, secretKey: "wrong-key" }));
+  assert.equal((await post("/api/auth/signup", { userId: "someone-new", password: "Blue-Kettle-42" })).res.status, 503);
+  assert.ok(quiet.mock.callCount() >= 1);
 });
