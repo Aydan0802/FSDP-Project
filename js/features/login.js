@@ -2,9 +2,13 @@
 
 // Feature: Sign in.
 // Owner: Jiliana
-// Moved out of the theme samples (shared/samples.js). Choose "A customer" or "Bank staff";
-// any ID and password work. Customers go to #customer, staff go to #staff.
-// Nothing is checked, saved or sent anywhere, and the password is never kept.
+// Moved out of the theme samples (shared/samples.js). Choose "A customer" or "Bank staff", type an
+// ID and password, and the server checks them against the accounts in the database
+// (POST /api/auth/login, see server/auth.js). Only a right ID and password for the chosen side gets
+// in. Customers go to #customer, staff go to #staff.
+// The password is only sent to the server to be checked. It is never kept in the page.
+// This needs the server running (npm start in /server, then open http://localhost:3000): a plain file
+// server such as Live Server or python -m http.server has nothing to check the password with.
 // Everything is inside (function () { ... })(); so the names you create in this file stay
 // private to it and can't clash with a teammate's file.
 
@@ -69,7 +73,7 @@
   function fillDemo(form) {
     const { userid, password } = form.elements;
     userid.value = LOGIN_DATA.demoIds[chosenRole(form)];
-    password.value = LOGIN_DATA.demoPassword;
+    password.value = LOGIN_DATA.demoPasswords[chosenRole(form)];
     userid.removeAttribute("aria-invalid");
     password.removeAttribute("aria-invalid");
     document.getElementById("login-error").textContent = "";
@@ -83,8 +87,33 @@
     button.innerHTML = `${show ? t("login.hide") : t("login.show")}<span class="visually-hidden">${t("login.passwordHidden")}</span>`;
   }
 
-  // Checks both boxes are filled in, then signs in and goes to that person's home screen
-  function submitLogin(event) {
+  // Asks the server whether this ID and password are right for this side.
+  // Gives back { ok: true, userId } or { ok: false, key, values } where key is the words to show.
+  async function checkCredentials(role, userId, password) {
+    let response;
+    try {
+      response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, userId, password })
+      });
+    } catch (error) {
+      console.warn("Sign in needs the server: run npm start in the /server folder, then open http://localhost:3000");
+      return { ok: false, key: "login.err.server" };
+    }
+    let data = {};
+    try { data = await response.json(); } catch (error) { /* not JSON: probably a plain file server with no sign-in */ }
+
+    if (response.ok && data.ok) return { ok: true, userId: data.userId };
+    if (response.status === 400 || response.status === 401) return { ok: false, key: "login.err.wrong" };
+    if (response.status === 423) return { ok: false, key: "login.err.locked", values: { minutes: data.minutes || 5 } };
+    if (response.status === 503) return { ok: false, key: "login.err.database" };
+    console.warn("Sign in needs the server: run npm start in the /server folder, then open http://localhost:3000");
+    return { ok: false, key: "login.err.server" };
+  }
+
+  // Checks both boxes are filled in, asks the server, then signs in and goes to that person's home screen
+  async function submitLogin(event) {
     event.preventDefault();   // stop the browser reloading the page, which is what a form does by default
     const form = event.currentTarget;
     const { userid, password } = form.elements;
@@ -97,10 +126,31 @@
       return;
     }
     error.textContent = "";
-    password.value = "";   // never keep a password, even in a demo
-    signIn(chosenRole(form), userid.value.trim());
-    location.hash = chosenRole(form) === "staff" ? "#staff" : "#customer";
+
+    // Ask the server. The button is switched off meanwhile so a second click can't send it twice.
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    const role = chosenRole(form);
+    const result = await checkCredentials(role, userid.value.trim(), password.value);
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    password.value = "";   // never keep a password, whatever the answer
+
+    if (!result.ok) {
+      error.textContent = t(result.key, result.values);
+      password.setAttribute("aria-invalid", "true");
+      password.focus();
+      return;
+    }
+    signIn(role, result.userId);
+    location.hash = role === "staff" ? "#staff" : "#customer";
   }
+
+  // Tell the server to forget this sign-in too. Best effort: the page signs out either way.
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="signout"]')) fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+  });
 
   // Runs once the screen is on the page: connects the form's buttons, and shows any message
   // left by access.js (e.g. "That page is for bank staff only").

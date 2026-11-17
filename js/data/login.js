@@ -2,13 +2,14 @@
 
 // Made-up data for: Sign in.
 // Owner: Jiliana
-// The details "Fill in demo details" types in. Any ID and password work anyway.
+// The details "Fill in demo details" types in. They are real accounts: the same ones as in
+// database/02-seed-users.sql (customer01 to 03, staff01 to 03). Any other ID or password is refused.
 // text: the screen's words in English, Chinese and Malay (see "How to translate your screen" in
 // TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native speaker to check them.
 
 const LOGIN_DATA = {
-  demoIds: { customer: "demo.customer", staff: "demo.staff" },
-  demoPassword: "demo",
+  demoIds: { customer: "customer01", staff: "staff01" },
+  demoPasswords: { customer: "Demo#Cust01", staff: "Demo#Staff01" },
 
   text: {
     en: {
@@ -34,8 +35,12 @@ const LOGIN_DATA = {
       "login.passwordHidden": " password",
       "login.submit": "Sign in",
       "login.demoFill": "Fill in demo details",
-      "login.note": "Demo only: any ID and password work. Never type a real password here.",
-      "login.err.empty": "Type your ID and password, or choose \"Fill in demo details\"."
+      "login.note": "Demo accounts only. Use \"Fill in demo details\", and never type a real password here.",
+      "login.err.empty": "Type your ID and password, or choose \"Fill in demo details\".",
+      "login.err.wrong": "That ID or password is not right. Please try again.",
+      "login.err.locked": "Too many wrong tries. Please wait {minutes} minutes, then try again.",
+      "login.err.server": "We can't reach the sign-in server right now. Please try again in a moment.",
+      "login.err.database": "Sign in is not working right now. Please try again later."
     },
     zh: {
       "login.about": "关于 Verify the Caller",
@@ -60,8 +65,12 @@ const LOGIN_DATA = {
       "login.passwordHidden": "密码",
       "login.submit": "登录",
       "login.demoFill": "填入示范资料",
-      "login.note": "只是示范：任何用户名和密码都可以。千万不要在这里输入真的密码。",
-      "login.err.empty": "请输入用户名和密码，或者选“填入示范资料”。"
+      "login.note": "只限示范账户。可以选“填入示范资料”，千万不要在这里输入真的密码。",
+      "login.err.empty": "请输入用户名和密码，或者选“填入示范资料”。",
+      "login.err.wrong": "用户名或密码不对，请再试一次。",
+      "login.err.locked": "输错太多次了，请等 {minutes} 分钟后再试。",
+      "login.err.server": "暂时连不上登录服务器，请稍后再试。",
+      "login.err.database": "登录暂时无法使用，请稍后再试。"
     },
     ms: {
       "login.about": "Tentang Verify the Caller",
@@ -86,8 +95,12 @@ const LOGIN_DATA = {
       "login.passwordHidden": " kata laluan",
       "login.submit": "Log masuk",
       "login.demoFill": "Isi butiran demo",
-      "login.note": "Demo sahaja: apa-apa ID dan kata laluan boleh digunakan. Jangan sekali-kali taip kata laluan sebenar di sini.",
-      "login.err.empty": "Taip ID dan kata laluan anda, atau pilih \"Isi butiran demo\"."
+      "login.note": "Akaun demo sahaja. Gunakan \"Isi butiran demo\", dan jangan sekali-kali taip kata laluan sebenar di sini.",
+      "login.err.empty": "Taip ID dan kata laluan anda, atau pilih \"Isi butiran demo\".",
+      "login.err.wrong": "ID atau kata laluan tidak betul. Sila cuba lagi.",
+      "login.err.locked": "Terlalu banyak percubaan salah. Sila tunggu {minutes} minit, kemudian cuba lagi.",
+      "login.err.server": "Kami tidak dapat menghubungi pelayan log masuk buat masa ini. Sila cuba sebentar lagi.",
+      "login.err.database": "Log masuk tidak berfungsi buat masa ini. Sila cuba lagi nanti."
     }
   }
 };

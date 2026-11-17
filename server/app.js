@@ -12,15 +12,21 @@
 const path = require("path");
 const express = require("express");
 const RISK_SCORER = require("../js/features/risk-scorer-logic.js");
+const { createAuthRouter } = require("./auth.js");   // sign in (Wei Ye)
 
 const SITE_ROOT = path.join(__dirname, "..");
 
 // Builds a new app with its own empty case list. server.js starts one; the tests make their own.
-function createApp() {
+function createApp(options = {}) {
   const app = express();
   const cases = [];   // High-risk transfers waiting for a bank officer (R-4)
 
   app.use(express.json({ limit: "10kb" }));
+
+  // Sign in: POST /api/auth/login, GET /api/auth/me, POST /api/auth/logout (see auth.js).
+  // It needs a "user store" (db/user-store.js); server.js passes one in. Without one (as in the
+  // risk scorer tests) these addresses simply don't exist.
+  if (options.userStore) app.use("/api/auth", createAuthRouter(options.userStore));
 
   // POST /api/risk/score: score one transfer.
   // Body: a transfer (fields in docs/risk-scorer.md). Reply: 200 with the result, or 400 with problems.

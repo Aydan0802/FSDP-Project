@@ -30,3 +30,7 @@ results/
 .DS_Store
 Thumbs.db
 node_modules/
+
+# Supabase secret key and other private settings (never commit)
+.env
+server/.env
