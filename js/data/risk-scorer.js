@@ -242,6 +242,14 @@ const RISK_SCORER_DATA = {
       "rs.signal.oddHour.rule": "The transfer is made between midnight and 5:59 am.",
       "rs.signal.oddHour.reason": "It is very late at night, when scammers often call.",
 
+      // The same signals written about the customer, for bank staff (the staff case screen)
+      "rs.signal.flaggedPayee.staff": "Other people have reported this payee's account for scams.",
+      "rs.signal.amountVsUsual.staff": "Much more than this customer usually sends.",
+      "rs.signal.recentlyAddedPayee.staff": "The customer added this payee less than a day ago.",
+      "rs.signal.rapidRepeat.staff": "The customer made several transfers in a short time.",
+      "rs.signal.newPayee.staff": "The customer has never paid this payee before.",
+      "rs.signal.oddHour.staff": "Sent very late at night, when scam calls are common.",
+
       "rs.sample.allowance.title": "Monthly allowance to my daughter",
       "rs.sample.allowance.story": "Mdm Lim sends her daughter Rachel the usual $300 after dinner, like every month.",
       "rs.sample.bill-split.title": "Paying friends back after a late dinner",
@@ -343,6 +351,13 @@ const RISK_SCORER_DATA = {
       "rs.signal.oddHour.rule": "转账时间在半夜 12 点到早上 5 点 59 分之间。",
       "rs.signal.oddHour.reason": "现在是深夜，骗子常常在这个时候打电话。",
 
+      "rs.signal.flaggedPayee.staff": "其他人举报过这个收款人的户口和诈骗有关。",
+      "rs.signal.amountVsUsual.staff": "比这位客户平时转的钱多很多。",
+      "rs.signal.recentlyAddedPayee.staff": "客户加这个收款人还不到一天。",
+      "rs.signal.rapidRepeat.staff": "客户在很短的时间内转了好几次钱。",
+      "rs.signal.newPayee.staff": "客户以前从来没有转钱给这个收款人。",
+      "rs.signal.oddHour.staff": "在深夜转账，这是诈骗电话常见的时间。",
+
       "rs.sample.allowance.title": "每月给女儿的零用钱",
       "rs.sample.allowance.story": "林女士像每个月一样，吃完晚饭后把平时的 $300 转给女儿 Rachel。",
       "rs.sample.bill-split.title": "宵夜后还钱给朋友",
@@ -443,6 +458,13 @@ const RISK_SCORER_DATA = {
       "rs.signal.oddHour.label": "Waktu luar biasa",
       "rs.signal.oddHour.rule": "Pindahan dibuat antara tengah malam dan 5:59 pagi.",
       "rs.signal.oddHour.reason": "Sekarang sudah lewat malam, waktu penipu selalu menelefon.",
+
+      "rs.signal.flaggedPayee.staff": "Orang lain pernah melaporkan akaun penerima ini sebagai penipuan.",
+      "rs.signal.amountVsUsual.staff": "Jauh lebih banyak daripada jumlah biasa yang pelanggan ini hantar.",
+      "rs.signal.recentlyAddedPayee.staff": "Pelanggan menambah penerima ini kurang daripada sehari yang lalu.",
+      "rs.signal.rapidRepeat.staff": "Pelanggan membuat beberapa pindahan dalam masa yang singkat.",
+      "rs.signal.newPayee.staff": "Pelanggan tidak pernah membayar penerima ini sebelum ini.",
+      "rs.signal.oddHour.staff": "Dihantar lewat malam, waktu panggilan penipuan biasa berlaku.",
 
       "rs.sample.allowance.title": "Elaun bulanan untuk anak perempuan saya",
       "rs.sample.allowance.story": "Puan Lim hantar $300 seperti biasa kepada anaknya Rachel selepas makan malam, sama seperti setiap bulan.",
