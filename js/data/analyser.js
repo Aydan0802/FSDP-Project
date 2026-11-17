@@ -179,7 +179,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "Check this message",
 
-      "an.privacy": "Messages are checked on this device. Voice recordings are sent to our voice checker, checked and deleted straight away. Please only use the sample or a recording of your own voice. Pictures and documents are never opened.",
+      "an.privacy": "Messages, screenshots and documents are checked on this device and are not uploaded. Voice recordings are sent to our voice checker, checked and deleted straight away. Please only use the sample or a recording of your own voice.",
 
       "an.samplesTitle": "No file? Try a sample",
 
@@ -397,7 +397,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "检查这条信息",
 
-      "an.privacy": "信息在这部设备上检查。语音录音会发送到我们的语音检查程序，检查后马上删除。请只使用示例录音或您自己声音的录音。图片和文件不会被打开。",
+      "an.privacy": "信息、截图和文件都在这部设备上检查，不会上传。语音录音会发送到我们的语音检查程序，检查后马上删除。请只使用示例录音或您自己声音的录音。",
 
       "an.samplesTitle": "没有文件？试试示范",
 
@@ -615,7 +615,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "Semak mesej ini",
 
-      "an.privacy": "Mesej disemak pada peranti ini. Rakaman suara dihantar ke penyemak suara kami, disemak dan terus dipadam. Sila guna sampel atau rakaman suara anda sendiri sahaja. Gambar dan dokumen tidak dibuka.",
+      "an.privacy": "Mesej, tangkapan skrin dan dokumen disemak pada peranti ini dan tidak dimuat naik. Rakaman suara dihantar ke penyemak suara kami, disemak dan terus dipadam. Sila guna sampel atau rakaman suara anda sendiri sahaja.",
 
       "an.samplesTitle": "Tiada fail? Cuba contoh",
 

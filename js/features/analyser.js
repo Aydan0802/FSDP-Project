@@ -20,9 +20,8 @@
 //               shows, marked "Demo result".
 //   screenshot  (image file)            EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
 //   document    (pdf, doc, anything else) EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
-// A file's name and type tell us what it is. A .txt file's words are read on this device only.
-// A voice recording only goes to our voice checker, which deletes it straight after checking.
-// Pictures and documents are never opened.
+// Text, screenshots and documents are read on this device. A voice recording is sent to our
+// voice checker, which deletes it straight after checking.
 //
 // What it remembers (appState.analyser, cleared by #reset):
 //   phase      "input", "analysing" or "result"
@@ -180,7 +179,8 @@
     try {
       if (state.kind === "message") return checkMessage(state.text);
       if (state.kind === "voice") return await checkClip(state);
-      return { kind: state.kind, evidence: EVIDENCE_CHECKER.check(state.kind, state.fileName) };
+      const evidence = await EVIDENCE_CHECKER.check(state.kind, state.fileName, state.file);
+      return { kind: state.kind, evidence };
     } catch (e) {
       console.error("The check failed:", e);
       return { kind: "error" };
@@ -420,7 +420,7 @@
   // of scam it looks like, then what to do, and only then why we think so.
   // A low-risk message isn't called "safe": rules can't prove a message is safe.
   function messageResultHtml(outcome) {
-    const r = detectMessage(outcome.text);
+    const r = outcome.detectorResult || detectMessage(outcome.text);
     // "What to do now": the detector's steps, matched to the red flags it found (from KakiGuard),
     // already in the customer's language. The general steps for the kind of scam are a fallback.
     const steps = r.steps && r.steps.length
@@ -546,6 +546,11 @@
 
   // A screenshot or document: Yan Lin's evidence checker result (its words are translation keys)
   function evidenceResultHtml(r) {
+    if (r.detectorResult && r.extractedText) {
+      return messageResultHtml({
+        text: r.extractedText
+      });
+    }
     return `
       <section data-read>
         ${detectedHtml()}
@@ -665,8 +670,8 @@
     if (message) box.focus();
   }
 
-  // A file was added (picked or dropped). A .txt file is read on this device; a voice recording
-  // goes to the voice checker on this computer; pictures and documents are never opened.
+  // A file was added (picked or dropped). Text, screenshots and documents are read on this
+  // device; a voice recording goes to the voice checker on this computer.
   async function takeFile(file) {
     if (!file) return;
     const kind = detectKind(file);
@@ -675,7 +680,7 @@
       return;
     }
     if (kind !== "message") {
-      startCheck({ kind, label: t(kindInfo(kind).label), fileName: file.name });
+      startCheck({ kind, label: t(kindInfo(kind).label), fileName: file.name, file });
       return;
     }
     let text = "";
