@@ -30,6 +30,20 @@ for (const lang of ["en", "zh", "ms"]) {
   details.push(...lines);
 }
 print("");
+
+// The teammate's Singapore-style lines from KakiGuard (eval/teammate_messages.json)
+const team = JSON.parse(fs.readFileSync(path.join(__dirname, "teammate_messages.json"), "utf8")).messages
+  .map(m => ({ ...m, lang: "en", r: checkMessage(m.text) }));
+const tScams = team.filter(m => m.label === "scam"), tNormal = team.filter(m => m.label === "normal");
+const tCaught = tScams.filter(m => m.r.risk !== "low");
+const tTyped = tCaught.filter(m => m.type);   // only her community reports say the kind of scam
+print("# Teammate's lines (KakiGuard), English, Singapore-style");
+print("| Scam lines | Caught (medium or high) | Caught as high | Right kind of scam | Normal lines | False alarms |");
+print("|---:|---:|---:|---:|---:|---:|");
+print(`| ${tScams.length} | ${tCaught.length}/${tScams.length} | ${tScams.filter(m => m.r.risk === "high").length}/${tScams.length} | ${tTyped.filter(m => m.r.type === m.type).length}/${tTyped.length} | ${tNormal.length} | ${tNormal.filter(m => m.r.risk !== "low").length}/${tNormal.length} |`);
+print("");
+details.push(...team.map(m => ({ ...m, lang: "en-teammate" })));
+
 print("## Every line");
 for (const m of details) {
   const mark = (m.label === "scam") === (m.r.risk !== "low") ? "ok  " : "MISS";

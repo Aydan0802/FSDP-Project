@@ -23,6 +23,7 @@ node -e "console.log(require('./detector/checker.js').checkMessage('Your card ha
   confidence: "medium",         // "low" | "medium" | "high"  (how sure we are)
   summary: "This looks like a message made to steal your details. ...",
   flags: [ { phrase: "card has been suspended", reason: "A scary threat to make you act fast", rule: "threat" }, ... ],
+  steps: [ "Do not click the link.", ..., "Unsure? Call the ScamShield Helpline at 1799." ],   // what to do now
   lang: "en",                   // extra: the language it thinks the message is in ("en" | "zh" | "ms")
   score: 7                      // extra: the risk points added up
 }
@@ -32,7 +33,7 @@ Each `phrase` is copied exactly from the message, so the screen can highlight it
 
 ## How it works (4 steps, all in `detector/checker.js`)
 
-1. **Find red flags.** Every pattern in `rules.js` (English), `rules_zh.js` (Chinese) and `rules_ms.js` (Malay) is run on the message, and links are checked separately (shortened links, odd endings like `.xyz`, words like "verify" in the address). "Never share your OTP" is skipped, because that is a real bank's advice.
+1. **Find red flags.** Every pattern in `rules.js` (English), `rules_zh.js` (Chinese) and `rules_ms.js` (Malay) is run on the message, and links are checked separately: links to official websites (`ocbc.com`, `*.gov.sg`) are not flagged, links that copy a brand name (`dbs-sg-secure.com`) are a strong sign, and shortened links, odd endings like `.xyz` or words like "verify" are a clear sign. "Never share your OTP" is skipped, because that is a real bank's advice.
 2. **Overlaps.** If two flagged phrases overlap, the stronger one is kept.
 3. **Points to risk.** Each rule found adds its points once (1 = small sign, 3 = strong sign). 2+ points = medium. 4+ points **and** the message asks you to do something risky (tap, pay, call, reply, share a code) = high.
 4. **Kind of scam.** The rules found vote; the kind with the most votes wins.
@@ -87,7 +88,11 @@ Load the files in this order before `js/features/analyser.js`, then call `TextDe
 <script src="text detector prototype/detector/checker.js"></script>
 ```
 
-The screen's "What to do now" steps exist only in English (`ANALYSER_DATA.nextSteps`), so Chinese and Malay steps for every kind of scam still need writing.
+Each result now has its own `steps` in the message's language, matched to the red flags found, and the screen already shows a result's own `steps` when it has them. The screen's label for "impersonation" says "pretending to be the bank or government"; it now also covers someone pretending to be family ("Hi Mum, this is my new number"), so the label could become "pretending to be someone you trust".
+
+## Credit
+
+Several parts come from **KakiGuard**, a teammate's NCS Hackathon 2026 project, reused with her permission: the official-website list and fake-brand link check, Singapore-specific phrases, the "what to do now" steps in three languages, and 20 test messages. Details are in `CITATIONS.md`.
 
 ## Limits
 

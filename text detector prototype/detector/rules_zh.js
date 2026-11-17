@@ -84,6 +84,9 @@ const RULES_ZH = {
   sad_story: { reason: "讲一个被困的故事，让您同情", patterns: [
     /(?:机场|海关|医院|边境|国外)[^。！？，；\n]{0,4}(?:被扣|扣留|被困|困住|出事)/
   ] },
+  new_number: { reason: "说是您认识的人换了新号码。请打他们原来的号码确认", patterns: [
+    /(?:这是我的新号码|我换号码了|我换了号码|手机(?:丢了|坏了|掉了))/
+  ] },
   notice_bait: { reason: "含糊的通知，引您回复", patterns: [
     /您有(?:一|1|\d+)(?:个|条|件)(?:新|未读|待处理)?(?:语音|留言|消息|包裹|快递)/
   ] },
@@ -93,7 +96,9 @@ const RULES_ZH = {
   ] },
   // Links: reason only (links are found the same way in every language)
   has_link: { reason: "含有链接，点击前请先确认它真正通往哪里" },
-  suspicious_link: { reason: "这个链接看起来不像官方网站" }
+  suspicious_link: { reason: "这个链接看起来不像官方网站" },
+  // wording from KakiGuard (a teammate's project), reused with permission
+  lookalike_link: { reason: "这个链接模仿真品牌，但不是官方网站" }
 };
 
 // Works in the browser (as a global) and in Node (with require)

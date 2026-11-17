@@ -3,13 +3,15 @@
 // The message checker: looks for red flags in a message and returns a result for the
 // "Check a message" screen.  Owner: Aydan.
 //
-//   checkMessage(text, { lang }) -> { risk, type, confidence, summary, flags, lang, score }
-//     (lang is optional: the language to write the summary and reasons in)
+//   checkMessage(text, { lang }) -> { risk, type, confidence, summary, flags, steps, lang, score }
+//     (lang is optional: the language to write the summary, reasons and steps in, for example
+//      the language the customer picked on the website; without it, the message's own language)
 //     risk        "low" | "medium" | "high"
 //     type        "impersonation" | "phishing" | "parcel" | "job" | "investment" | "love" | "none"
 //     confidence  "low" | "medium" | "high"   (how sure we are)
-//     summary     one or two plain sentences, in the message's language
+//     summary     one or two plain sentences
 //     flags       [{ phrase, reason }]: each phrase is copied exactly from the message
+//     steps       "what to do now", matched to the flags (from KakiGuard)
 //     lang        "en" | "zh" | "ms": the language we think the message is in (extra, for the screen)
 //     score       the risk points added up (extra, for testing and the evaluation)
 //
@@ -85,13 +87,22 @@
   // Bare addresses only count with endings that are rarely words, so "home.me" in a chat isn't a link.
   const LINK_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"']+|\b(?:[a-z0-9-]+\.)+(?:com|net|org|info|biz|xyz|top|club|online|site|live|shop|vip|icu|click|buzz|link|io|sg|cn|uk|app|page|example|ly|gl|gd)\b(?:\/[^\s<>"']*)?/gi;
 
-  function isSuspiciousLink(link) {
-    const host = link.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].toLowerCase();
+  // Sorts a link into one of four kinds (the official list and brand check come from KakiGuard):
+  //   "official"   on a real organisation's website (ocbc.com, anything.gov.sg): not flagged
+  //   "lookalike"  uses a brand's name but isn't its website (dbs-sg-secure.com): a strong sign
+  //   "suspicious" shortened, a bare number address, a cheap ending, digits or words like "verify"
+  //   "plain"      any other link: a small sign
+  function linkKind(link) {
+    const host = link.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].toLowerCase().replace(/^www\./, "");
     const ending = host.split(".").pop();
-    if (LINK_RULES.shorteners.some(s => host === s || host.endsWith("." + s))) return true;   // hides where it goes
-    if (/^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(host)) return true;                        // a bare number address
-    if (LINK_RULES.riskyEndings.includes(ending)) return true;                                // a cheap ending
-    return LINK_RULES.riskyWords.test(host);                                                  // "verify", "secure" ...
+    if (LINK_RULES.official.some(d => host === d || host.endsWith("." + d))) return "official";
+    if (LINK_RULES.shorteners.some(s => host === s || host.endsWith("." + s))) return "suspicious";   // hides where it goes
+    if (/^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(host)) return "suspicious";                         // a bare number address
+    const parts = host.split(/[.-]/);
+    if (LINK_RULES.brands.some(b => parts.includes(b))) return "lookalike";                         // a copied brand name
+    if (LINK_RULES.riskyEndings.includes(ending)) return "suspicious";                                 // a cheap ending
+    if (/\d{3,}/.test(host)) return "suspicious";                                                     // like www.0778148.com
+    return LINK_RULES.riskyWords.test(host) ? "suspicious" : "plain";                                 // "verify", "secure" ...
   }
 
   function findLinks(text) {
@@ -99,7 +110,9 @@
     for (const m of text.matchAll(LINK_PATTERN)) {
       if (m.index > 0 && text[m.index - 1] === "@") continue;      // part of an email address
       const phrase = m[0].replace(/[.,!?;:)\]'"]+$/, "");          // drop a full stop after the link
-      const rule = isSuspiciousLink(phrase) ? LINK_RULES.suspicious : LINK_RULES.plain;
+      const kind = linkKind(phrase);
+      if (kind === "official") continue;                           // a real organisation's website
+      const rule = LINK_RULES[kind];
       found.push({ rule, start: m.index, end: m.index + phrase.length, phrase });
     }
     return found;
@@ -131,10 +144,31 @@
     return kept.sort((a, b) => a.start - b.start);   // back into reading order
   }
 
+  // ---------- "What to do now": steps that match the red flags found ----------
+  // Idea and wording from KakiGuard (a teammate's project, reused with permission). The steps
+  // are in words.js; this list says which red flags bring each one. At most 3 of these, then
+  // "ask your family" and "call 1799" for any medium or high result.
+  const STEPS_FOR = {
+    noClick: ["has_link", "suspicious_link", "lookalike_link", "tap_link"],
+    noCode: ["asks_code", "asks_details"],
+    noPay: ["send_money", "pay_fee", "safe_account", "gift_card"],
+    noInstall: ["install_app"],
+    checkOldNumber: ["new_number"],
+    verifyOfficial: ["claims_bank", "claims_government", "claims_courier", "account_problem"],
+    stopReplying: ["secrecy", "threat"]
+  };
+  function pickSteps(rules, risk, stepWords) {
+    if (risk === "low") return [stepWords.stillCareful];   // stay calm: one gentle reminder
+    const found = new Set(rules.map(rule => rule.id));
+    const steps = Object.keys(STEPS_FOR).filter(step => STEPS_FOR[step].some(id => found.has(id))).slice(0, 3);
+    steps.push("askFamily", "call1799");
+    return steps.map(step => stepWords[step]);
+  }
+
   // ---------- Steps 3 and 4: points, risk, kind of scam, how sure ----------
-  // options.lang ("en" | "zh" | "ms"): the language to write the summary and reasons in, for
-  // example the language the customer picked on the website. Without it, they are written in the
-  // message's own language. It never changes what is detected, only the words.
+  // options.lang ("en" | "zh" | "ms"): the language to write the summary, reasons and steps in,
+  // for example the language the customer picked on the website. Without it, they are written in
+  // the message's own language. It never changes what is detected, only the words.
   function checkMessage(input, options = {}) {
     const text = typeof input === "string" ? input : String(input == null ? "" : input);
     const lang = detectLanguage(text);
@@ -143,7 +177,7 @@
     const say = key => (words[key] !== undefined ? words[key] : WORDS.en[key]);
 
     if (!text.trim()) {
-      return { risk: "low", type: "none", confidence: "low", summary: say("empty"), flags: [], lang, score: 0 };
+      return { risk: "low", type: "none", confidence: "low", summary: say("empty"), flags: [], steps: [], lang, score: 0 };
     }
 
     const kept = pickFlags(findMatches(text));
@@ -199,7 +233,9 @@
       rule: k.rule.id
     }));
 
-    return { risk, type, confidence, summary, flags, lang, score };
+    const steps = pickSteps(rules, risk, { ...WORDS.en.steps, ...say("steps") });
+
+    return { risk, type, confidence, summary, flags, steps, lang, score };
   }
 
   const api = {
