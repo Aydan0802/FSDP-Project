@@ -85,6 +85,9 @@ const RULES_MS = {
   sad_story: { reason: "Cerita tersekat, supaya anda berasa kasihan", patterns: [
     /\b(?:tersekat|terkandas|ditahan)\s+(?:di|dalam)\s+(?:lapangan terbang|kastam|hospital|sempadan|luar negara)\b/i
   ] },
+  new_number: { reason: "Mengaku orang yang anda kenal dengan nombor baru. Telefon nombor lama mereka untuk semak", patterns: [
+    /\b(?:ini nombor baru saya|saya (?:dah |sudah )?tukar nombor|telefon saya (?:hilang|rosak|jatuh))\b/i
+  ] },
   notice_bait: { reason: "Notis yang samar supaya anda ingin tahu dan membalas", patterns: [
     /\banda (?:ada|mempunyai) (?:satu|1|\d+) (?:mesej|pesanan suara|bungkusan|notifikasi)\b/i
   ] },
@@ -93,7 +96,9 @@ const RULES_MS = {
     /\bpenghantaran semula\b/i
   ] },
   has_link: { reason: "Ada pautan. Semak ke mana ia sebenarnya pergi sebelum anda tekan" },
-  suspicious_link: { reason: "Pautan yang tidak kelihatan seperti laman web rasmi" }
+  suspicious_link: { reason: "Pautan yang tidak kelihatan seperti laman web rasmi" },
+  // wording from KakiGuard (a teammate's project), reused with permission
+  lookalike_link: { reason: "Pautan ini meniru nama jenama tetapi bukan laman rasmi" }
 };
 
 // Works in the browser (as a global) and in Node (with require)

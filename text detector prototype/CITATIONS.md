@@ -10,6 +10,21 @@ Everything the message checker uses or was tested with. No model, no paid API an
 | NUS SMS Corpus (inside UCI, not downloaded separately) | Normal SMS from volunteers at the National University of Singapore | (as part of UCI) | Chen, T. & Kan, M.-Y. (2013). *Creating a Live, Public Short Message Service Corpus: The NUS SMS Corpus.* Language Resources and Evaluation 47(2), 299–335. |
 | SMS Phishing Dataset for Machine Learning and Pattern Recognition | 5,971 English SMS: 4,844 ham, 489 spam, 638 smishing. We found 5,025 of them are copies of UCI messages. | CC BY 4.0 | Mishra, S. & Soni, D. (2022). Mendeley Data, V1. https://doi.org/10.17632/f45bkkt8pr.1 |
 
+## Reused from a teammate's project (with her permission)
+
+**KakiGuard**: a community scam-protection app built by a teammate for NCS Hackathon 2026 (Problem Statement 2). She gave permission to reuse it in this project (16 Nov 2026). Credit her by name in the pitch and the submission. What we took, and where it now lives:
+
+| From KakiGuard | Now in |
+|---|---|
+| Official-website list and fake-brand ("lookalike") link check (`shared/scamEngine.js`) | `LINK_RULES.official`, `brands`, `lookalike` in `detector/rules.js`; `linkKind()` in `detector/checker.js` |
+| Singapore phrases: PayNow, "this is my new number", "update your particulars", "stay on the line", "confidential investigation", "money laundering", "lucky draw", "deposit … to unlock", "screen sharing", "high returns", "investment group" | rules in `detector/rules.js` (marked "from KakiGuard") |
+| "What to do now" step wording in English, Chinese and Malay (`client/src/i18n/en.js`, `zh.js`, `ms.js`) | `steps` in `detector/words.js` |
+| Matching steps to red flags (`recommendedActions()`) | `pickSteps()` in `detector/checker.js` |
+| Lookalike-link reason in Chinese and Malay | `rules_zh.js`, `rules_ms.js` |
+| 20 demo messages (`server/seed.js`) | `eval/teammate_messages.json` |
+
+Not taken: the Ollama AI explanation (needs a server and a large model download), community reports, family block list and moderation (need a database), and the Tamil text.
+
 ## Looked at, not used
 
 | Source | Why not |

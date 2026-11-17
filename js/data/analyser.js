@@ -282,7 +282,7 @@ const ANALYSER_DATA = {
 
       "an.honesty": "This is a warning, not proof. If you're not sure, call the bank on the number on your card.",
 
-      "an.type.impersonation": "someone pretending to be the bank or government",
+      "an.type.impersonation": "someone pretending to be someone you trust, like the bank, the government or family",
       "an.type.phishing": "a fake link to steal your bank details",
       "an.type.parcel": "a fake delivery message",
       "an.type.job": "a fake job offer",
@@ -500,7 +500,7 @@ const ANALYSER_DATA = {
 
       "an.honesty": "这只是提醒，不是证据。如果不确定，请拨打银行卡背面的电话联系银行。",
 
-      "an.type.impersonation": "冒充银行或政府的人",
+      "an.type.impersonation": "冒充您信任的人（例如银行、政府或家人）",
       "an.type.phishing": "骗取您银行资料的假链接",
       "an.type.parcel": "假冒的快递通知",
       "an.type.job": "假的工作机会",
@@ -718,7 +718,7 @@ const ANALYSER_DATA = {
 
       "an.honesty": "Ini amaran, bukan bukti. Jika tidak pasti, hubungi bank melalui nombor pada kad anda.",
 
-      "an.type.impersonation": "orang yang menyamar sebagai bank atau kerajaan",
+      "an.type.impersonation": "orang yang menyamar sebagai seseorang yang anda percaya, seperti bank, kerajaan atau keluarga",
       "an.type.phishing": "pautan palsu untuk mencuri butiran bank anda",
       "an.type.parcel": "mesej penghantaran palsu",
       "an.type.job": "tawaran kerja palsu",

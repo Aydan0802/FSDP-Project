@@ -46,6 +46,7 @@ const RULES = [
     patterns: {
       en: [
         /\b(?:IRAS|CPF|ICA|MOM|MOH|MAS|SPF|HMRC|IRS)\b/,
+        /\bSingpass\b/i,
         /\b(?:police|government|ministry of \w+|customs (?:officer|department|office)|immigration (?:officer|department)|court (?:order|summons|case|hearing)|interpol|tax (?:office|department|authority))\b/i
       ]
     }
@@ -97,7 +98,7 @@ const RULES = [
         /\b(?:account|a\/c|card|kyc|access|service|number|line|profile|wallet|sim)s?\s+(?:will be|will|has been|have been|is being|is|was|may be)\s+(?:temporarily\s+|permanently\s+)?(?:frozen|freezed?|suspend(?:ed)?|block(?:ed)?|lock(?:ed)?|de-?activated?|terminated?|closed|restricted|disabled|cancell?ed|barred)\b/i,
         // a threat to YOU ("you will be arrested"), not a story ("I got arrested")
         /\b(?:will be|may be|could be|to be|face being)\s+(?:arrested|prosecuted|jailed|fined|charged in court)\b/i,
-        /\b(?:legal action|arrest warrant|warrant (?:of|for) (?:your )?arrest)\b/i,
+        /\b(?:legal action|arrest warrant|warrant (?:of|for) (?:your )?arrest|money laundering)\b/i,
         /\bwill (?:hold|freeze|block|seize)\s+your\s+(?:\w+\s+)?(?:amount|money|funds|account|balance|savings)\b/i
       ]
     }
@@ -121,8 +122,10 @@ const RULES = [
     reason: { en: "Asks you to keep it a secret" },
     patterns: {
       en: [
-        /\b(?:please don'?t|pls don'?t|don'?t|do not|never)\s+(?:tell|inform|let)\s+(?:anyone|anybody|others|your (?:family|friends|wife|husband|children|kids|bank)|the (?:bank|police))\b/i,
-        /\b(?:keep\s+(?:this|it)\s+(?:a\s+)?(?:secret|confidential|private|between us)|between you and me)\b/i
+        /\b(?:please don'?t|pls don'?t|don'?t|do not|never)\s+(?:tell|inform|let)\s+(?:anyone|anybody|others|dad|mum|mom|your (?:family|friends|wife|husband|children|kids|parents|dad|mum|mom|bank)|the (?:bank|police))\b/i,
+        /\b(?:keep\s+(?:this|it)\s+(?:a\s+)?(?:secret|confidential|private|between us)|between you and me)\b/i,
+        // Phone-call scripts (from KakiGuard): keep you on the call so nobody can warn you
+        /\b(?:stay on the line|don'?t (?:hang up|end the call)|do not (?:hang up|end the call)|confidential investigation)\b/i
       ]
     }
   },
@@ -144,8 +147,9 @@ const RULES = [
     reason: { en: "Asks you to type in your personal or bank details" },
     patterns: {
       en: [
-        /\b(?:verify|confirm|update|validate|re-?activate|unlock|restore|review)\s+(?:your\s+)?(?:account|identity|details|information|info|personal (?:data|details|information)|bank (?:details|account)|card(?: details)?|log-?in(?: details)?|payment (?:details|information|method)|billing)\b/i,
-        /\b(?:card number|bank details|NRIC|passport (?:number|details)|Singpass|login details|credentials)\b/i,
+        // "particulars" is the usual Singapore word for personal details (from KakiGuard)
+        /\b(?:verify|confirm|update|validate|re-?activate|unlock|restore|review)\s+(?:your\s+)?(?:account|identity|details|particulars|information|info|personal (?:data|details|information)|bank (?:details|account)|card(?: details)?|log-?in(?: details)?|payment (?:details|information|method)|billing)\b/i,
+        /\b(?:card number|bank details|NRIC|passport (?:number|details)|login details|credentials|date of birth)\b/i,
         /\bcomplete\s+(?:your\s+)?(?:\w+\s+)?(?:e-?kyc|kyc|verification|account update)\b/i
       ]
     }
@@ -169,7 +173,9 @@ const RULES = [
         // (?:[^.!?\n]|\.\d) = any character in the same sentence; a dot only counts inside a
         // number like $1.99, so "Pay a $1.99 redelivery fee" is caught as one phrase
         /\b(?:pay|settle|make (?:a )?payment(?: of)?)\b(?:[^.!?\n]|\.\d){0,25}?\b(?:fees?|charges?|deposit|duty|duties|tax(?:es)?)\b/i,
-        /\b(?:re-?delivery|delivery|shipping|customs|clearance|registration|processing|admin(?:istration)?|release|handling|activation|unlock(?:ing)?|membership|joining)\s+(?:fee|charge|cost|payment)s?\b/i
+        /\b(?:re-?delivery|delivery|shipping|customs|clearance|registration|processing|admin(?:istration)?|release|handling|activation|unlock(?:ing)?|membership|joining)\s+(?:fee|charge|cost|payment)s?\b/i,
+        // Job scams (from KakiGuard): "Small deposit required to unlock tasks", "pay upfront"
+        /\b(?:deposit|pay|top[- ]?up)\b(?:[^.!?\n]|\.\d){0,30}?\bto unlock\b|\b(?:pay|payment|deposit)\b[^.!?\n]{0,15}?\bupfront\b/i
       ]
     }
   },
@@ -180,7 +186,10 @@ const RULES = [
     reason: { en: "Asks you to send money" },
     patterns: {
       en: [
-        /\b(?:transfer|send|wire|remit|lend)\b[^.!?\n]{0,20}?(?:money|funds|cash|S?\$\s?\d|£\s?\d|USD|SGD|bitcoin|crypto|USDT)/i,
+        // (?!\s+of\b): "a transfer of $25 was successful" describes a payment already made (a receipt)
+        /\b(?:transfer|send|wire|remit|lend)\b(?!\s+of\b)[^.!?\n]{0,20}?(?:money|funds|cash|S?\$\s?\d|£\s?\d|USD|SGD|bitcoin|crypto|USDT)/i,
+        // PayNow is Singapore's instant transfer (from KakiGuard): "PayNow me $600"
+        /\bPayNow\b(?:\s+(?:me|us))?(?:\s+S?\$\s?\d[\d,]*)?/i,
         /\btransfer\s+(?:today|now|immediately)\b/i,
         /\bneed\s+(?:S?\$|£|USD|SGD)\s?\d[\d,]*/i
       ]
@@ -214,7 +223,8 @@ const RULES = [
       en: [
         /\b[\w-]+\.apk\b|\b(?:download|install)\b[^.!?\n]{0,30}?\bapk\b/i,
         /\b(?:download|install)\b[^.!?\n]{0,30}?\b(?:app|application)\b[^.!?\n]{0,15}?\b(?:from|via|using|at)\s+(?:this|the|our)?\s*(?:link|url|website|site)\b/i,
-        /\b(?:AnyDesk|TeamViewer|QuickSupport)\b/i
+        /\b(?:AnyDesk|TeamViewer|QuickSupport)\b/i,
+        /\bscreen ?shar(?:e|ing)\b/i
       ]
     }
   },
@@ -261,6 +271,7 @@ const RULES = [
         /\b(?:congratulations|congrats)\b[^.!?\n]{0,30}?\b(?:w[o0]n|winner|selected|prize|reward)\b(?!['’])/i,
         /\b(?:claim|collect|redeem)\s+(?:your\s+|this\s+|the\s+)?(?:free\s+)?(?:prize|reward|cash|gift|bonus|voucher|award|money|winnings)\b/i,
         /\bguaranteed\s+(?:cash\s+)?(?:prize|award|reward|gift)\b/i,
+        /\blucky draw\b/i,
         /\b(?:await(?:s|ing)?|waiting for)\s+(?:your\s+)?collection\b/i,
         /\b(?:randomly|specially)\s+(?:picked|selected|chosen)\b/i,
         /\b(?:reward|prize|gift|cash|bonus|voucher)s?\s+(?:is|are)\s+waiting\b/i,
@@ -325,6 +336,7 @@ const RULES = [
         /\b(?:crypto|bitcoin|btc|forex|fx|usdt|stock|trading)\s+(?:group|signals?|platform|investment|opportunit(?:y|ies)|mentor|expert|tips)\b/i,
         /\b(?:double|triple)\s+your\s+(?:money|investment|income|savings)\b/i,
         /\brisk[- ]free\b/i,
+        /\bhigh returns?\b|\binvestment (?:group|opportunit(?:y|ies))\b/i,
         /\bVIP\s+(?:group|club|member(?:ship)?|channel)\b/i
       ]
     }
@@ -345,6 +357,17 @@ const RULES = [
     reason: { en: "A story about being stuck, to make you feel sorry" },
     patterns: {
       en: [/\b(?:stuck|stranded|detained|trapped|held)\s+(?:at|in)\s+(?:the\s+)?(?:airport|customs|hospital|border|abroad|overseas)\b/i]
+    }
+  },
+  {
+    // The "Hi Mum, this is my new number" scam (from KakiGuard's examples): pretends to be family.
+    // Only a small sign on its own (friends really do change numbers); it matters with a money ask.
+    id: "new_number",
+    points: 1, ask: false,
+    votes: { impersonation: 2 },
+    reason: { en: "Says it's someone you know on a new number. Call their old number to check" },
+    patterns: {
+      en: [/\b(?:this is my new (?:number|phone|no\.?)|(?:changed|changing) my (?:number|phone number)|(?:lost|dropped|broke|spoilt) my phone)\b/i]
     }
   },
   {
@@ -383,6 +406,21 @@ const LINK_RULES = {
     id: "suspicious_link", points: 2, ask: true, votes: { phishing: 2 },
     reason: { en: "A link that doesn't look like an official website" }
   },
+  // A link that uses a real brand's name but is not that brand's website, like dbs-sg-secure.com
+  // (idea and lists from KakiGuard, a teammate's project, reused with permission)
+  lookalike: {
+    id: "lookalike_link", points: 3, ask: true, votes: { phishing: 2, impersonation: 1 },
+    reason: { en: "This link copies a real brand name but is not the official website" }
+  },
+  // Official websites: a link to one of these (or a sub-address like www.ocbc.com) is not flagged.
+  // Keep this list short and check every entry: a wrong entry would hide a scam link.
+  official: ["gov.sg", "dbs.com.sg", "dbs.com", "posb.com.sg", "ocbc.com", "uob.com.sg", "singpost.com",
+    "shopee.sg", "lazada.sg", "carousell.sg", "carousell.com", "grab.com", "fairprice.com.sg"],
+  // Brand names scammers copy. Matched as a whole part of the address (split at dots and dashes),
+  // so "dbs-sg-secure.com" matches "dbs" but "unicasa.com" does not match "ica".
+  brands: ["dbs", "posb", "ocbc", "uob", "singpost", "singpass", "cpf", "iras", "ica", "gov", "police", "spf",
+    "mom", "moh", "hdb", "shopee", "lazada", "carousell", "grab", "paynow", "paylah", "ntuc", "fairprice",
+    "ninjavan", "maybank", "citibank", "hsbc"],
   // Link shorteners hide where a link really goes
   shorteners: ["bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "cutt.ly", "ow.ly", "rb.gy", "shorturl.at", "tiny.cc", "rebrand.ly", "s.id"],
   // Web address endings that are cheap and often used for scam sites
@@ -399,7 +437,7 @@ const inNode = typeof module === "object" && module.exports;
 const LANGUAGE_FILES = inNode
   ? { zh: require("./rules_zh.js"), ms: require("./rules_ms.js") }
   : { zh: globalThis.TEXT_DETECTOR_RULES_ZH, ms: globalThis.TEXT_DETECTOR_RULES_MS };
-const ALL_RULES = [...RULES, LINK_RULES.plain, LINK_RULES.suspicious];
+const ALL_RULES = [...RULES, LINK_RULES.plain, LINK_RULES.suspicious, LINK_RULES.lookalike];
 for (const [lang, extra] of Object.entries(LANGUAGE_FILES)) {
   if (!extra) throw new Error(`rules_${lang}.js is not loaded`);
   for (const [id, add] of Object.entries(extra)) {

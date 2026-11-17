@@ -421,7 +421,11 @@
   // A low-risk message isn't called "safe": rules can't prove a message is safe.
   function messageResultHtml(outcome) {
     const r = detectMessage(outcome.text);
-    const steps = (data.nextSteps[r.type] || data.nextSteps.none).map(key => t(key));
+    // "What to do now": the detector's steps, matched to the red flags it found (from KakiGuard),
+    // already in the customer's language. The general steps for the kind of scam are a fallback.
+    const steps = r.steps && r.steps.length
+      ? r.steps
+      : (data.nextSteps[r.type] || data.nextSteps.none).map(key => t(key));
     return `
       <section data-read>
         ${detectedHtml()}

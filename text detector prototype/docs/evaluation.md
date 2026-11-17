@@ -1,6 +1,49 @@
 # Message checker: evaluation results
 
-Run on 13 Nov 2026. Checker: 28 hand-written rules plus a link check, in English, Chinese and Malay (`detector/`). Settings: medium risk at 2 points, high risk at 4 points **and** the message must ask you to do something (tap, pay, call, reply, share a code).
+## Update, 16 Nov 2026: parts reused from KakiGuard
+
+A teammate's hackathon project, KakiGuard (NCS Hackathon 2026), has a similar rule-based checker. We reused, with her permission:
+- her **official-website list and fake-brand link check** (`dbs-sg-secure.com` is now a "lookalike" link, and real links like `ocbc.com` are not flagged);
+- a rule for the **"Hi Mum, this is my new number" scam**, plus **PayNow**;
+- her Singapore phrases ("update your particulars", "stay on the line", "money laundering", "lucky draw", "deposit to unlock tasks", "screen sharing");
+- her **"what to do now" steps** in English, Chinese and Malay (results now include `steps`);
+- her 20 demo messages, as a test set written by someone other than the rule writer.
+
+We also fixed a false alarm her lines exposed: a payment receipt ("transfer of $25.00 … was successful") was read as a money request.
+
+**Side by side first (dev half and hand-written lines, before any change):**
+
+| Set | Our checker | Her KakiGuard engine |
+|---|---:|---:|
+| Mendeley-not-in-UCI smishing, dev (caught) | 73.9% | 14.5% |
+| UCI spam, dev (caught) | 36.9% | 9.3% |
+| Her 20 Singapore lines: scams caught / normal flagged | 15/17, 1/3 | 17/17, 0/3 |
+| Real-bank OTP notices like "Never share your OTP" (our lines, 3 languages) | 0/3 flagged | 3/3 flagged |
+
+Her engine is tuned to Singapore wording and misses most of the older public scams, so we kept ours and added her ideas to it.
+
+**Our checker before and after the update:**
+
+| Set | Before (13 Nov) | After (16 Nov) |
+|---|---:|---:|
+| **Test half**, Mendeley-not-in-UCI smishing caught | 62.6% (54.3–70.2%) | **65.5%** (57.2–72.9%) |
+| Test half, all Mendeley smishing caught | 56.2% | 57.4% |
+| Test half, UCI spam caught | 36.5% | 36.7% |
+| Test half, normal messages wrongly flagged | 0.0–0.2% | 0.0–0.2% |
+| Dev half, Mendeley-not-in-UCI smishing caught | 73.9% | 74.6% |
+| Her 20 lines: scams caught / normal flagged | 15/17, 1/3 | 17/17, 0/3 (right kind for 9/10 she labelled) |
+| Our English lines: right kind of scam | 6/8 | 7/8 |
+
+Please read these numbers with three cautions:
+- **The test half has now been looked at twice.** The new changes came from KakiGuard and her lines, not from test messages, so the test half still wasn't used for tuning. It is no longer a first look, though. Any further change needs a fresh, unseen check.
+- **Her 20 lines were an independent check only before the update** (15/17 caught, 1 false alarm). We then used them to add rules, so the 17/17 afterwards is no longer independent.
+- **On public data the update hardly moved the numbers** (+3 points, inside the 95% range). Her additions are about Singapore scams, which the public data barely contains. The real gain is for Singapore-style messages, and the steps now come in all three languages.
+
+One more thing for whoever wires this into the screen: "impersonation" now also covers someone pretending to be family ("Hi Mum"), but the screen's label for it still says "pretending to be the bank or government".
+
+---
+
+The rest of this file is the first evaluation, run on 13 Nov 2026. Checker: 28 hand-written rules plus a link check, in English, Chinese and Malay (`detector/`). Settings: medium risk at 2 points, high risk at 4 points **and** the message must ask you to do something (tap, pay, call, reply, share a code).
 
 **Short version for the pitch:** on public scam texts it had never seen, the checker warned about roughly **6 in 10** (95% range 54–70%) and almost never warned about everyday chats between friends. It still **misses about 4 in 10**, most scams get "medium" rather than "high", and real messages from banks or couriers can set it off. It is one warning sign next to the pause-and-verify step, not a verdict.
 

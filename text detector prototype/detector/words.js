@@ -10,7 +10,7 @@ const WORDS = {
   en: {
     // How the summary names each kind of scam (matches labels.en.types on the analyser screen)
     typeNames: {
-      impersonation: "a scam pretending to be the bank or government",
+      impersonation: "a scam pretending to be someone you trust, like the bank, the government or family",
       phishing: "a message made to steal your details",
       parcel: "a fake delivery message",
       job: "a job scam",
@@ -31,13 +31,28 @@ const WORDS = {
     lowWithFlags: "We found only small warning signs. It's probably fine, but check before you tap a link or reply.",
     lowNoFlags: "We found no warning signs in this message. That doesn't prove it's safe: if anything feels wrong, contact the person on a number you already know.",
     notSupported: "We can't check messages in this language well yet, so this result is a rough guess.",
-    empty: "There's no message to check yet. Paste or type the message first."
+    empty: "There's no message to check yet. Paste or type the message first.",
+    // "What to do now" steps, picked to match the red flags found (checker.js).
+    // Wording from KakiGuard, a teammate's hackathon project, reused with permission;
+    // checkOldNumber is ours.
+    steps: {
+      noClick: "Do not click the link.",
+      noCode: "Never share your OTP, password or card details.",
+      noPay: "Do not pay or transfer any money.",
+      noInstall: "Do not install any app they send you.",
+      checkOldNumber: "Call the person on the number you already have for them before you do anything.",
+      verifyOfficial: "Contact the organisation yourself using its official website or the number on your card.",
+      stopReplying: "Hang up or stop replying. Real officials will not mind.",
+      askFamily: "Ask a family member before you do anything.",
+      call1799: "Unsure? Call the ScamShield Helpline at 1799.",
+      stillCareful: "Looks okay, but never share codes or send money to people you have not met."
+    }
   },
 
   // Chinese (Simplified). Needs a teammate who reads Chinese to check it.
   zh: {
     typeNames: {
-      impersonation: "冒充银行或政府的诈骗",
+      impersonation: "冒充您信任的人（例如银行、政府或家人）的诈骗",
       phishing: "骗取您个人资料的信息",
       parcel: "假冒的快递通知",
       job: "求职诈骗",
@@ -56,13 +71,26 @@ const WORDS = {
     medium: "这条信息有一些{type}的危险信号。{tip}",
     lowWithFlags: "我们只发现了一些小的危险信号。应该没问题，但在点击链接或回复之前请先确认。",
     lowNoFlags: "这条信息没有发现危险信号。但这不能证明它一定安全：如有疑问，请用您已知的号码联系对方。",
-    empty: "还没有可检查的信息。请先粘贴或输入信息。"
+    empty: "还没有可检查的信息。请先粘贴或输入信息。",
+    // Wording from KakiGuard (teammate's project, reused with permission); checkOldNumber is ours
+    steps: {
+      noClick: "不要点击链接。",
+      noCode: "绝不透露 OTP、密码或卡号。",
+      noPay: "不要付款或转账。",
+      noInstall: "不要安装对方发来的应用。",
+      checkOldNumber: "先用您原本存的号码打给对方确认，再做任何事。",
+      verifyOfficial: "自己用官方网站或卡上的号码联系该机构。",
+      stopReplying: "挂断或停止回复。真正的官员不会介意。",
+      askFamily: "先问问家人再行动。",
+      call1799: "不确定？拨打 ScamShield 热线 1799。",
+      stillCareful: "看起来没问题，但绝不要把验证码或钱给不认识的人。"
+    }
   },
 
   // Malay. Needs a teammate who reads Malay to check it.
   ms: {
     typeNames: {
-      impersonation: "penipuan yang menyamar sebagai bank atau kerajaan",
+      impersonation: "penipuan yang menyamar sebagai orang yang anda percaya, seperti bank, kerajaan atau keluarga",
       phishing: "mesej untuk mencuri butiran anda",
       parcel: "mesej penghantaran palsu",
       job: "penipuan kerja",
@@ -81,7 +109,20 @@ const WORDS = {
     medium: "Mesej ini ada beberapa tanda amaran {type}. {tip}",
     lowWithFlags: "Kami hanya menemui tanda amaran kecil. Mungkin tiada masalah, tetapi semak dahulu sebelum anda tekan pautan atau membalas.",
     lowNoFlags: "Kami tidak menemui tanda amaran dalam mesej ini. Itu tidak membuktikan ia selamat: jika ada yang terasa tidak kena, hubungi orang itu melalui nombor yang anda sudah tahu.",
-    empty: "Belum ada mesej untuk disemak. Tampal atau taip mesej dahulu."
+    empty: "Belum ada mesej untuk disemak. Tampal atau taip mesej dahulu.",
+    // Wording from KakiGuard (teammate's project, reused with permission); checkOldNumber is ours
+    steps: {
+      noClick: "Jangan klik pautan itu.",
+      noCode: "Jangan sesekali kongsi OTP, kata laluan atau butiran kad.",
+      noPay: "Jangan bayar atau pindahkan wang.",
+      noInstall: "Jangan pasang aplikasi yang mereka hantar.",
+      checkOldNumber: "Telefon orang itu melalui nombor lama yang anda simpan sebelum berbuat apa-apa.",
+      verifyOfficial: "Hubungi organisasi itu sendiri melalui laman rasmi atau nombor di kad anda.",
+      stopReplying: "Letak telefon atau berhenti membalas. Pegawai sebenar tidak kisah.",
+      askFamily: "Tanya ahli keluarga sebelum bertindak.",
+      call1799: "Tidak pasti? Hubungi Talian ScamShield 1799.",
+      stillCareful: "Nampak okay, tetapi jangan beri kod atau wang kepada orang yang anda tidak kenal."
+    }
   }
 };
 

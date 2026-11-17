@@ -166,8 +166,41 @@ test("no more than 8 flags are listed", () => {
   assert.ok(checkMessage(text).flags.length <= 8);
 });
 
+// ---------- Added with the parts reused from KakiGuard (a teammate's project) ----------
+
+test('the "Hi Mum, this is my new number" scam is caught, but a friend\'s new number alone is not', () => {
+  const scam = checkMessage("Hi Mum, I lost my phone. This is my new number. Can you PayNow me $600 urgently? Don't tell Dad.");
+  assert.equal(scam.risk, "high");
+  assert.equal(scam.type, "impersonation");
+  assert.equal(checkMessage("Not tonight mate. This is my new number by the way.").risk, "low");
+});
+
+test("a payment receipt is not read as a request for money", () => {
+  assert.equal(checkMessage("Your DBS PayLah! transfer of $25.00 to ETHAN TAN was successful on 01 Oct.").risk, "low");
+});
+
+test("links: official websites are not flagged, brand lookalikes are", () => {
+  assert.deepEqual(findLinks("See www.ocbc.com or go.gov.sg/scams"), []);
+  assert.equal(findLinks("Verify at dbs-sg-secure.com/verify")[0].rule.id, "lookalike_link");
+  assert.equal(findLinks("Claim at shopee-luckydraw.vip")[0].rule.id, "lookalike_link");
+  assert.equal(findLinks("Menu at unicasa.com")[0].rule.id, "has_link");   // "ica" inside a word is not the brand ICA
+  assert.equal(findLinks("visit www.07781482378.com")[0].rule.id, "suspicious_link");
+});
+
+test("steps: matched to the flags, in the message's language, calm for low risk", () => {
+  const high = checkMessage(SCREEN_EXAMPLES[0].text);
+  assert.ok(high.steps.includes(WORDS.en.steps.noCode));
+  assert.equal(high.steps[high.steps.length - 1], WORDS.en.steps.call1799);
+  assert.ok(high.steps.length <= 5);
+  assert.deepEqual(checkMessage("Hi Auntie, dinner is at 7pm on Saturday. See you!").steps, [WORDS.en.steps.stillCareful]);
+  const zh = checkMessage(SCREEN_EXAMPLES[6].text);
+  assert.ok(zh.steps.every(s => /[一-鿿]/.test(s)));
+  const ms = checkMessage(SCREEN_EXAMPLES[7].text);
+  assert.ok(ms.steps.includes(WORDS.ms.steps.noPay));
+});
+
 test("every rule has a reason in English, Chinese and Malay", () => {
-  for (const rule of [...RULES, LINK_RULES.plain, LINK_RULES.suspicious]) {
+  for (const rule of [...RULES, LINK_RULES.plain, LINK_RULES.suspicious, LINK_RULES.lookalike]) {
     for (const lang of ["en", "zh", "ms"]) {
       assert.ok(rule.reason[lang], `${rule.id} has no ${lang} reason`);
     }
@@ -182,6 +215,9 @@ test("every language has all the summary words", () => {
     for (const type of TYPES.filter(t => t !== "none")) {
       assert.ok(WORDS[lang].typeNames[type], `${lang} has no name for ${type}`);
       assert.ok(WORDS[lang].tips[type], `${lang} has no tip for ${type}`);
+    }
+    for (const step of Object.keys(WORDS.en.steps)) {
+      assert.ok(WORDS[lang].steps[step], `${lang} has no "${step}" step`);
     }
   }
 });
@@ -209,8 +245,10 @@ test("options.lang writes the words in the customer's language, without changing
     assert.equal(r.score, plain.score);
     assert.equal(r.lang, "en");
     assert.deepEqual(r.flags.map(f => f.phrase), plain.flags.map(f => f.phrase));
-    // Different words: the summary is in the chosen language
+    assert.equal(r.steps.length, plain.steps.length);
+    // Different words: the summary and the steps are in the chosen language
     assert.notEqual(r.summary, plain.summary);
+    assert.notEqual(r.steps[0], plain.steps[0]);
   }
   // A language we don't have falls back to the message's own language
   assert.equal(checkMessage(text, { lang: "fr" }).summary, plain.summary);

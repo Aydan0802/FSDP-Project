@@ -1,0 +1,25 @@
+{
+  "about": "20 short made-up Singapore-style lines from KakiGuard (a teammate's NCS Hackathon 2026 project, server/seed.js), reused with her permission. 10 are community reports (all scams), 10 are quiz cards (7 scams, 3 normal). A different person wrote them, so they were an independent check of our rules, until we used them to add rules (13 to 16 Nov 2026). type is her category mapped to ours (bank and gov -> impersonation, delivery -> parcel, ecommerce -> phishing, other 'Hi Mum' -> impersonation); null for quiz cards, which have no category.",
+  "messages": [
+    { "label": "scam", "type": "impersonation", "text": "DBS: Your account has been suspended due to unusual activity. Verify immediately at dbs-sg-secure.com/verify to avoid permanent closure." },
+    { "label": "scam", "type": "parcel", "text": "SingPost: Your parcel is held at our warehouse due to incomplete address. Pay $1.99 redelivery fee within 24 hours: singpost-redeliver.top/sg" },
+    { "label": "scam", "type": "job", "text": "Hi! We are hiring part-time staff. Earn $300 per day just like videos on YouTube. No experience needed. Add me on Telegram t.me/hr_sg_jobs to start. Small deposit required to unlock tasks." },
+    { "label": "scam", "type": "impersonation", "text": "Caller said he is from ICA, my passport was used in a money laundering case. Transferred me to a \"police officer\" who said I will be arrested unless I transfer my savings to a safe account. Told me don't tell anyone, it is a confidential investigation." },
+    { "label": "scam", "type": "phishing", "text": "Buyer on Carousell said he already paid and I must click this link to receive the money: carousell-sg-pay.xyz/receive . It asked for my card number and OTP." },
+    { "label": "scam", "type": "investment", "text": "You have been added to VIP Stock Tips SG. Our analyst guarantees high returns of 30% weekly. Deposit USDT to start investing today only!" },
+    { "label": "scam", "type": "phishing", "text": "Your Singpass account will be suspended within 24 hours. Click bit.ly/singpass-renew to update your particulars and enter your Singpass password." },
+    { "label": "scam", "type": "impersonation", "text": "Hi Mum, I dropped my phone, this is my new number. Can you help me PayNow $800 urgently? I will return tomorrow. Don't tell Dad first ok" },
+    { "label": "scam", "type": "impersonation", "text": "IRAS: You are eligible for a tax refund of $520.40. Claim now at iras-refund-sg.click before it expires." },
+    { "label": "scam", "type": "phishing", "text": "Congratulations! You have won a $200 Shopee voucher in our lucky draw. Claim your prize at shopee-luckydraw.vip" },
+    { "label": "scam", "type": null, "text": "Congratulations! You have won a $500 NTUC voucher. Claim now at ntuc-rewards.vip before midnight!" },
+    { "label": "normal", "type": "none", "text": "Your DBS PayLah! transfer of $25.00 to ETHAN TAN was successful on 01 Oct." },
+    { "label": "scam", "type": null, "text": "Hi Mum, I lost my phone. This is my new number. Can you PayNow me $600 urgently? Don't tell Dad." },
+    { "label": "scam", "type": null, "text": "Part-time job! Earn $250/day by liking hotel reviews. No experience. Pay $50 to unlock premium tasks." },
+    { "label": "scam", "type": null, "text": "Your parcel is waiting. Pay $2.10 customs fee within 24hrs: bit.ly/sgpost-fee" },
+    { "label": "normal", "type": "none", "text": "Reminder: Your appointment is on 3 Oct, 9:30am at Woodlands Polyclinic. Reply Y to confirm." },
+    { "label": "scam", "type": null, "text": "This is Inspector Lim from SPF. Your bank account is linked to money laundering. Transfer your savings to a safe account now. Stay on the line and do not tell anyone." },
+    { "label": "normal", "type": "none", "text": "Here is your receipt for your GrabFood order of $18.40. Thanks for ordering!" },
+    { "label": "scam", "type": null, "text": "Your computer has a virus. Please install AnyDesk so I can fix it remotely and verify your bank login." },
+    { "label": "scam", "type": null, "text": "I already paid. Click carousell-pay.xyz/receive and enter your card number and OTP to receive the money." }
+  ]
+}
