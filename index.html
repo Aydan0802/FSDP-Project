@@ -114,6 +114,15 @@
   <script src="js/features/call-match-logic.js"></script>
   <!-- Yan Lin -->
   <script src="js/features/call-match.js"></script>
+    <!-- Client-side OCR & PDF libraries (no server uploads) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    }
+  </script>
   <script src="js/features/evidence-checker.js"></script>
   <script src="js/features/customer-home.js"></script>
   <script src="js/features/caller-check.js"></script>

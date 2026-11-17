@@ -57,10 +57,61 @@ const EVIDENCE_CHECKER_DATA = {
     }
   },
 
-  // Sample files for the "Try a sample" buttons. Only the name is used.
+  // NEW (1): Dynamic outcomes mapped from TextDetector risk ("high" | "medium" | "low") & OCR errors
+  outcomes: {
+    high: {
+      result: "likely",
+      title: "ev.ocr.scam.title",
+      reasons: ["ev.ocr.scam.reason1"],
+      steps: ["ev.ocr.scam.step1", "ev.ocr.scam.step2"]
+    },
+    medium: {
+      result: "uncertain",
+      title: "ev.ocr.suspicious.title",
+      reasons: ["ev.ocr.suspicious.reason1"],
+      steps: ["ev.ocr.suspicious.step1", "ev.ocr.suspicious.step2"]
+    },
+    low: {
+      result: "real",
+      title: "ev.ocr.clean.title",
+      reasons: ["ev.ocr.clean.reason1"],
+      steps: ["ev.ocr.clean.step1"]
+    },
+    noFile: {
+      result: "uncertain",
+      title: "ev.err.noFile.title",
+      reasons: ["ev.err.noFile.reason1"],
+      steps: ["ev.err.noFile.step1"]
+    },
+    ocrUnavailable: {
+      result: "uncertain",
+      title: "ev.err.ocrUnavailable.title",
+      reasons: ["ev.err.ocrUnavailable.reason1"],
+      steps: ["ev.err.ocrUnavailable.step1"]
+    },
+    emptyText: {
+      result: "uncertain",
+      title: "ev.err.emptyText.title",
+      reasons: ["ev.err.emptyText.reason1"],
+      steps: ["ev.err.emptyText.step1"]
+    }
+  },
+
+  // Sample files for the "Try a sample" buttons.
+  // NEW (2): Added sampleText so clicking a sample feeds real text into TextDetector
   samples: [
-    { kind: "screenshot", label: "ev.sample.screenshot", name: "transfer_receipt.png" },
-    { kind: "document", label: "ev.sample.document", name: "OCBC_letter.pdf" }
+    {
+      kind: "screenshot",
+      label: "ev.sample.screenshot",
+      name: "transfer_receipt.png",
+      sampleText: "OCBC Alert: Unusual login detected. Verify your account immediately at http://ocbc-secure-sg.example or $2,400 will be deducted."
+    },
+    {
+      kind: "document",
+      label: "ev.sample.document",
+      name: "OCBC_letter.pdf",
+      sampleText: "OCBC Bank Notice: Please reply to our officer via WhatsApp at +65 8123 4567 immediately to avoid account suspension."
+    }
   ],
 
   text: {
@@ -90,7 +141,29 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.sample.screenshot": "Sample screenshot",
       "ev.sample.document": "Sample letter",
       "ev.redirect.title": "Check anything you are not sure about",
-      "ev.redirect.text": "Opening the checker…"
+      "ev.redirect.text": "Opening the checker…",
+
+      // NEW (3): Translations for extracted-text outcomes & errors
+      "ev.ocr.scam.title": "Strong scam warning signs found in the words",
+      "ev.ocr.scam.reason1": "The text in this file uses urgent threats, suspicious links, or asks you to contact an unofficial number.",
+      "ev.ocr.scam.step1": "Do not tap any link, call any number, or send money.",
+      "ev.ocr.scam.step2": "Call OCBC yourself on 1800 363 3333 to check.",
+      "ev.ocr.suspicious.title": "Some suspicious wording found in this file",
+      "ev.ocr.suspicious.reason1": "Parts of the text look unusual or try to rush you.",
+      "ev.ocr.suspicious.step1": "Do not reply or pay yet.",
+      "ev.ocr.suspicious.step2": "Check directly with the official app or hotline first.",
+      "ev.ocr.clean.title": "No obvious scam signs found in the text",
+      "ev.ocr.clean.reason1": "The words extracted from this file did not match common scam patterns.",
+      "ev.ocr.clean.step1": "Still stay careful and never share your OTP or Singpass details.",
+      "ev.err.noFile.title": "Could not read the uploaded file",
+      "ev.err.noFile.reason1": "The file data was not passed to the checker yet.",
+      "ev.err.noFile.step1": "Please choose the file again or paste the text directly.",
+      "ev.err.ocrUnavailable.title": "Cannot read text from this file type yet",
+      "ev.err.ocrUnavailable.reason1": "The on-device picture or PDF reader is not loaded yet.",
+      "ev.err.ocrUnavailable.step1": "Paste the words from the message into the text checker instead.",
+      "ev.err.emptyText.title": "No readable words found",
+      "ev.err.emptyText.reason1": "We could not find clear text inside this picture or document.",
+      "ev.err.emptyText.step1": "Try a clearer screenshot or paste the text directly."
     },
     zh: {
       "ev.kind.screenshot": "截图或照片",
@@ -118,7 +191,29 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.sample.screenshot": "示范截图",
       "ev.sample.document": "示范信件",
       "ev.redirect.title": "检查任何你不确定的东西",
-      "ev.redirect.text": "正在打开检查工具…"
+      "ev.redirect.text": "正在打开检查工具…",
+
+      // NEW (3): Chinese translations
+      "ev.ocr.scam.title": "文字里发现明显的诈骗警告信号",
+      "ev.ocr.scam.reason1": "文件里的文字包含紧急威胁、可疑链接，或要求你联系非官方号码。",
+      "ev.ocr.scam.step1": "不要点击任何链接、拨打电话或转账。",
+      "ev.ocr.scam.step2": "自己拨打 OCBC 热线 1800 363 3333 核实。",
+      "ev.ocr.suspicious.title": "文件里发现一些可疑字眼",
+      "ev.ocr.suspicious.reason1": "部分文字看起来不寻常或催促你马上行动。",
+      "ev.ocr.suspicious.step1": "先不要回复或付款。",
+      "ev.ocr.suspicious.step2": "先通过官方应用程序或热线确认。",
+      "ev.ocr.clean.title": "文字里没有发现明显的诈骗信号",
+      "ev.ocr.clean.reason1": "提取出的文字没有触发常见的诈骗警告。",
+      "ev.ocr.clean.step1": "仍请保持警惕，切勿透露 OTP 或 Singpass 资料。",
+      "ev.err.noFile.title": "无法读取上传的文件",
+      "ev.err.noFile.reason1": "文件数据尚未传给检查工具。",
+      "ev.err.noFile.step1": "请重新选择文件，或直接粘贴文字检查。",
+      "ev.err.ocrUnavailable.title": "暂无法读取此类文件的文字",
+      "ev.err.ocrUnavailable.reason1": "本地图片或 PDF 阅读工具尚未加载。",
+      "ev.err.ocrUnavailable.step1": "请改为把消息文字复制粘贴到文字检查器中。",
+      "ev.err.emptyText.title": "未找到可读取的文字",
+      "ev.err.emptyText.reason1": "我们无法在这张图片或文件中识别出清晰文字。",
+      "ev.err.emptyText.step1": "请换一张更清晰的截图，或直接粘贴文字。"
     },
     ms: {
       "ev.kind.screenshot": "Tangkapan skrin atau foto",
@@ -146,7 +241,29 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.sample.screenshot": "Contoh tangkapan skrin",
       "ev.sample.document": "Contoh surat",
       "ev.redirect.title": "Semak apa sahaja yang anda tidak pasti",
-      "ev.redirect.text": "Sedang membuka penyemak…"
+      "ev.redirect.text": "Sedang membuka penyemak…",
+
+      // NEW (3): Malay translations
+      "ev.ocr.scam.title": "Tanda amaran penipuan ditemui dalam teks",
+      "ev.ocr.scam.reason1": "Teks dalam fail ini mengandungi ugutan segera, pautan mencurigakan, atau meminta anda hubungi nombor tidak rasmi.",
+      "ev.ocr.scam.step1": "Jangan tekan mana-mana pautan, telefon mana-mana nombor, atau hantar wang.",
+      "ev.ocr.scam.step2": "Telefon OCBC sendiri di 1800 363 3333 untuk semak.",
+      "ev.ocr.suspicious.title": "Beberapa ayat mencurigakan ditemui",
+      "ev.ocr.suspicious.reason1": "Sebahagian teks kelihatan luar biasa atau cuba menggesa anda.",
+      "ev.ocr.suspicious.step1": "Jangan balas atau bayar lagi.",
+      "ev.ocr.suspicious.step2": "Semak terus melalui aplikasi rasmi atau talian hotline dahulu.",
+      "ev.ocr.clean.title": "Tiada tanda penipuan ketara dalam teks",
+      "ev.ocr.clean.reason1": "Perkataan yang dibaca daripada fail ini tidak sepadan dengan corak penipuan biasa.",
+      "ev.ocr.clean.step1": "Tetap berhati-hati dan jangan sekali-kali kongsi OTP atau maklumat Singpass anda.",
+      "ev.err.noFile.title": "Fail yang dimuat naik tidak dapat dibaca",
+      "ev.err.noFile.reason1": "Data fail belum dihantar kepada penyemak.",
+      "ev.err.noFile.step1": "Sila pilih fail semula atau tampal teks secara terus.",
+      "ev.err.ocrUnavailable.title": "Belum dapat membaca teks daripada jenis fail ini",
+      "ev.err.ocrUnavailable.reason1": "Pembaca gambar atau PDF pada peranti belum dimuatkan.",
+      "ev.err.ocrUnavailable.step1": "Tampal perkataan daripada mesej ke dalam penyemak teks.",
+      "ev.err.emptyText.title": "Tiada perkataan yang boleh dibaca ditemui",
+      "ev.err.emptyText.reason1": "Kami tidak menemui teks yang jelas dalam gambar atau dokumen ini.",
+      "ev.err.emptyText.step1": "Cuba tangkapan skrin yang lebih jelas atau tampal teks secara terus."
     }
   }
 };
