@@ -224,13 +224,16 @@
     return "$" + Number(n).toLocaleString("en-SG");
   }
 
-  // Hides a name: first letter of each word, then stars ("Jun Wei" becomes "J** W**").
+  // Hides a name: each word keeps its first character, and every letter or digit after it
+  // becomes one star ("Jun Wei" becomes "J** W**", "Lawyer Ong & Co" becomes "L***** O** & C*").
+  // Symbols such as "&" are not part of the name, so they stay as they are. Extra spaces are
+  // squashed to one. \p{L} means "any letter" and \p{N} "any digit", in any language.
   // Anything that already has stars in it is left alone. Used for names sent by a live server.
   function maskName(name) {
     const text = String(name || "").trim();
     if (!text) return "Hidden";
     if (text.indexOf("*") !== -1) return text;
-    return text.split(/\s+/).map(w => w.charAt(0) + "*".repeat(Math.max(2, w.length - 1))).join(" ");
+    return text.split(/\s+/).map(w => w.charAt(0) + w.slice(1).replace(/[\p{L}\p{N}]/gu, "*")).join(" ");
   }
 
   function amountOf(c) {
@@ -291,12 +294,21 @@
       ref: s.ref, received: when, ageMin: age, source: "auto", live: true,
       level: LEVELS[s.band] ? s.band : "high", score: Number(s.score) || 0, outcome: "Paused", moneySent: false,
       what: `${money(s.amount)} transfer to ${payee} was paused automatically`,
-      why: (s.reasons || []).map(r => ({ label: "Risk signal", detail: r })),
+      why: (s.reasons || []).map(r => ({ label: "Risk signal", detail: staffReason(r) })),
       receiver: { name: payee, acct: "Hidden", reports: 0 },
       transfer: { amount: s.amount, state: "Paused. The customer is finishing the check." },
       answers: [], voice: null, evidence: [],
       timeline: [{ time: when, text: "Transfer paused by the risk scorer. Flagged." }]
     };
+  }
+
+  // The risk scorer's reasons are written to the customer ("...than you usually send"). Staff
+  // should read about the customer instead, so we find which signal the reason belongs to in
+  // Jose's scorer settings (RISK_SCORER_DATA) and show that signal's staff wording.
+  // A reason we don't recognise is shown as it is.
+  function staffReason(reason) {
+    const signal = RISK_SCORER_DATA.config.signals.find(s => s.reason === reason);
+    return signal ? t(`rs.signal.${signal.id}.staff`) : reason;
   }
 
   // Resolves to true if the server answered, false if not. Never throws.

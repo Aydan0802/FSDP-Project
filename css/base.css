@@ -383,10 +383,23 @@ h1:focus, main:focus { outline: none; }
 
 /* ---------- Read aloud: the word being spoken is highlighted (see a11y.js) ---------- */
 
+/* The wrappers a11y.js puts around the words while reading. They must stay plain inline text,
+   so they never change how the page is laid out. (The old dashed boxes around each read area
+   were removed: the yellow word highlight is enough to show where it is reading.) */
+read-run, read-word { display: inline; margin: 0; padding: 0; border: 0; }
 .w { border-radius: 4px; transition: background-color .08s; }
-/* The one colour that isn't a Clarity variable: a soft yellow highlighter, with dark text on it (14:1) */
+/* The one colour that isn't a Clarity variable: a soft yellow highlighter, with dark text on it (14:1).
+   box-shadow (not padding) makes the highlight a little bigger without moving any words. */
 .w.now { background: #FFE066; color: var(--charcoal); box-shadow: 0 0 0 2px #FFE066; }
-.is-reading [data-read] { outline: 2px dashed var(--border); outline-offset: 6px; border-radius: 10px; }
+
+/* The "Stop reading" button, fixed to the bottom corner while Read aloud is on, so it can always
+   be reached. Big enough to tap easily (56px tall, from .btn). On screens with the "Call OCBC"
+   bar at the bottom, it sits just above the bar instead of covering it. */
+.read-stop {
+  position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  width: auto; min-width: 48px; box-shadow: var(--shadow);
+}
+body:has(.call-bar) .read-stop { bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
 
 /* Respect people who turn off animation in their device settings */
 @media (prefers-reduced-motion: reduce) {
