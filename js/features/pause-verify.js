@@ -215,7 +215,14 @@
     const reasons = last.signals.slice(0, last.reasons.length).map(s => t(`rs.signal.${s.id}.reason`));
     return { amount: `S$${amount}`, reasons };
   }
-
+  // High risk: Jose's risk scorer also sent this transfer to the bank's fraud team.
+  // Shows the case number, in the customer's language (the words are Jose's "rs.caseSent").
+  function caseLineHtml() {
+    const last = appState.riskScorer && appState.riskScorer.lastResult;
+    if (!last || !last.caseRef) return "";
+    const ref = `<strong>${escapeHtml(last.caseRef)}</strong>`;
+    return `<p class="pv-case">${icon("briefcase")}<span>${t("rs.caseSent", { ref })}</span></p>`;
+  }
   // Step 0: why the transfer was stopped
   function whyHtml() {
     const transfer = stoppedTransfer();
@@ -225,6 +232,7 @@
         <ul class="pv-reasons">
           ${transfer.reasons.map(reason => `<li>${icon("warning")}<span>${escapeHtml(reason)}</span></li>`).join("")}
         </ul>
+        ${caseLineHtml()}
         <p>${t("pv.askCount", { count: DATA.questions.length })}</p>
         <div class="pv-actions">
           <button type="button" class="btn btn-primary" data-pv="start">${t("pv.okayAsk")} ${icon("arrow")}</button>

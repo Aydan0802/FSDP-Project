@@ -135,3 +135,11 @@
 }
 .pv-verdict { margin: 1rem 0 0; font-weight: 700; }
 .pv-done h1 { font-size: 1.875rem; }
+
+/* "We sent this to the bank's fraud team as case TR-0001" (High risk only) */
+.pv-case {
+  display: flex; align-items: flex-start; gap: .625rem; margin: 0 0 1rem; padding: .75rem 1rem;
+  border-radius: var(--radius); background: var(--surface-2); font-weight: 600;
+}
+.pv-case .icon { flex: none; margin-top: .1rem; }
+.pv-case strong { white-space: nowrap; }   /* keep "TR-0001" on one line */
