@@ -124,8 +124,10 @@
   function stepDone(id) {
     if (id === "signIn") return isSignedIn();
     if (id === "passphrase") {
-      const saved = typeof PASSPHRASE_DATA !== "undefined" ? PASSPHRASE_DATA.saved.length : 0;
-      return Boolean(appState.passphrase && appState.passphrase.list.length > saved);
+      // The family list now comes from the server (passphrase.js): done once it has someone on it.
+      // list is null until the Family passphrase screen has loaded it.
+      const family = appState.passphrase && appState.passphrase.list;
+      return Array.isArray(family) && family.length > 0;
     }
     if (id === "learn") return Boolean(appState.learnSigns && appState.learnSigns.picked);
     if (id === "check") return Boolean(appState.analyser && appState.analyser.history.length);
