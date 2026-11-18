@@ -53,15 +53,16 @@ The result looks like this (same idea as the voice detector):
 
 Reasons come as short codes (like the voice API), so the website can word them in English, Chinese or Malay. The English wording is in `REASON_TEXT` in `detector/checker.js`.
 
-## Use it from the website
+## On the website
 
-The site's image check is `EVIDENCE_CHECKER.check()` (Yan Lin's, in `js/features/evidence-checker.js`), so agree it with Yan Lin first. To plug it in:
+It is connected. `index.html` loads `detector/metadata.js`, `detector/checker.js` and `detector/c2pa.js` (in that order), and Yan Lin's `EVIDENCE_CHECKER.check()` (`js/features/evidence-checker.js`) runs `ImageDetector.checkFile(file)` on every picture, at the same time as reading its words.
+- Risky words lead the result, and any AI label shows under the headline ("About the picture itself").
+- Harmless or unreadable words plus an AI label: the label leads.
+- No label found changes nothing.
 
-1. Copy `detector/metadata.js`, `detector/checker.js` and `detector/c2pa.js` into the site.
-2. Load them in that order with `<script>` tags. No build step is needed.
-3. Call `await ImageDetector.checkFile(file)` with the uploaded file.
+The reasons are translated in `js/data/evidence-checker.js` (`ev.img.*` keys).
 
-Pinned CDN alternative: host the two `@contentauth/c2pa-web@0.17.1` files yourself and change the two web addresses at the top of `c2pa.js`.
+To avoid the CDN, host the two `@contentauth/c2pa-web@0.17.1` files yourself and change the two web addresses at the top of `c2pa.js`.
 
 ## Tests and evaluation
 

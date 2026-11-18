@@ -25,6 +25,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | `css/features/analyser.css` | Styles |
 | `text detector prototype/` | The red-flag message checker the analyser loads |
 | `voice detector prototype/` | The deepfake voice checker (Python API) for voice recordings |
+| `image detector prototype/` | The AI label check for pictures (content credentials, IPTC "made by AI"); Yan Lin's evidence checker runs it |
 | `android-call-preview/` | Android call warning preview (standalone page, see its README) |
 
 ## Jose
@@ -49,7 +50,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | `js/features/customer-home.js` | Customer home and landing page: `#customer` |
 | `js/features/call-match.js` | Is the bank really calling?: `#call-match`. Uses Jose's `matchCall()`. |
 | `js/features/caller-check.js` | Is the caller a real person? (invite code and picture check): `#caller-check` |
-| `js/features/evidence-checker.js` | Screenshots and documents, shown on the analyser screen (no screen of its own) |
+| `js/features/evidence-checker.js` | Screenshots and documents, shown on the analyser screen (no screen of its own): reads the words (Tesseract.js, PDF.js) for the text detector, and runs Aydan's AI label check on pictures |
 | `js/data/customer-home.js`, `js/data/call-match.js`, `js/data/caller-check.js`, `js/data/evidence-checker.js` | Made-up data and words |
 | `css/features/customer-home.css`, `css/features/call-match.css`, `css/features/caller-check.css` | Styles |
 
@@ -58,6 +59,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | File | What it is |
 |---|---|
 | `js/features/triage-console.js` | Staff overview `#staff`, flagged activity `#staff-queue`, case detail `#staff-case/<ref>` |
+| `js/features/triage-overview.js`, `js/data/triage-overview.js`, `css/features/triage-overview.css` | The staff Overview's panels (daily report, usage, monthly flags, cancelled-after-pause rate) |
 | `js/core/access.js` | Who may open which screen |
 | `server/auth.js`, `server/db/`, `server/scripts/hash-password.js` | Sign-in and sign-up API (`/api/auth`), Supabase or built-in demo accounts |
 | `server/test/auth.test.js` | Tests |
