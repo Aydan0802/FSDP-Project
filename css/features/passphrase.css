@@ -1,31 +1,50 @@
-/* Feature: Family passphrase (how it works, saved list with show / hide / call, add form).
+/* Feature: Family passphrase (promise, family list with "check a caller's word", add form).
    Owner: Jiliana
    Uses the Clarity variables only. */
 
 .pp-screen .panel { margin-bottom: 1rem; }
-.pp-how-title { margin: .25rem 0 0; font-size: 1.125rem; }
+.pp-screen h2:focus, #pp-success:focus { outline: none; }
 
-.pp-saved {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
-  padding: .875rem .5rem; margin: 0 -.5rem; border-top: 1px solid var(--border); border-radius: var(--radius);
+/* The promise at the top */
+.pp-promise {
+  display: flex; align-items: flex-start; gap: .75rem; margin-top: 1rem; padding: 1rem 1.125rem;
+  border: 2px solid var(--accent); border-radius: var(--radius); background: var(--red-tint);
 }
-.pp-saved:first-child { border-top: 0; }
-.pp-who { display: grid; gap: .125rem; min-width: 0; }
-.pp-word { font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
-.pp-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-.pp-actions .chip { text-decoration: none; }
+.pp-promise p { margin: 0; }
+.pp-promise .icon { flex: none; width: 1.75rem; height: 1.75rem; color: var(--accent-text); }
+
+/* The family list */
+.pp-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+.pp-person { min-width: 0; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.pp-person--new { border: 2px solid var(--accent); background: var(--red-tint); }
+.pp-person p { margin: 0; }
+.pp-name { font-weight: 800; font-size: 1.125rem; }
+.pp-rel { color: var(--muted); }
+.pp-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: .75rem; }
+.pp-tag {
+  display: inline-block; margin-left: .25rem; padding: .05rem .5rem; border-radius: 999px;
+  background: var(--accent); color: var(--white); font-size: .875rem; font-weight: 700; vertical-align: middle;
+}
 .pp-empty { color: var(--muted); }
 
-/* website-refresh: the entry just saved glows softly for a moment, so it is easy to spot */
-.pp-saved--new { animation: pp-new 2.4s ease-out both; }
-@keyframes pp-new { 0%, 40% { background: var(--red-tint); } 100% { background: transparent; } }
-
-/* "Saved for Jun Hao" with a tick, above the list */
-.pp-success {
-  display: flex; align-items: center; gap: .875rem; margin: .25rem 0 1rem; padding: .875rem 1rem;
-  background: var(--red-tint); border-radius: var(--radius);
+/* "Check a caller's word" box inside a card */
+.pp-check { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.pp-check label { display: block; font-weight: 700; margin-bottom: .375rem; }
+.pp-check-result { margin-top: .75rem; }
+.pp-result {
+  display: flex; align-items: flex-start; gap: .625rem; padding: .875rem 1rem;
+  border: 2px solid var(--charcoal); border-radius: var(--radius); background: var(--surface-2);
 }
-.pp-success .done-mark { flex: none; width: 3rem; height: 3rem; margin: 0; background: var(--white); }
-.pp-success .done-mark .icon { width: 1.5rem; height: 1.5rem; }
-.pp-success strong { display: block; color: var(--red-dark); font-size: 1.1875rem; }
-.pp-success p { margin: .125rem 0 0; }
+.pp-result--no { border-color: var(--accent); background: var(--red-tint); }
+.pp-result .icon { flex: none; width: 1.5rem; height: 1.5rem; }
+
+/* The form */
+.pp-screen .field .meta { margin: .125rem 0 .375rem; }
+
+/* The "Saved" box */
+.pp-success {
+  margin-bottom: 1rem; padding: 1rem 1.25rem;
+  border: 2px solid var(--charcoal); border-radius: var(--radius); background: var(--surface-2);
+}
+.pp-success p { margin: .25rem 0 0; }
+.pp-success-title { display: flex; align-items: center; gap: .5rem; margin: 0 !important; font-weight: 800; font-size: 1.125rem; }
