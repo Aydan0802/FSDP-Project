@@ -122,6 +122,11 @@
         "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
     }
   </script>
+  <!-- The AI label check: looks inside a picture for labels AI tools leave (content credentials,
+       IPTC "made by AI"), on this device. Load in this order, before evidence-checker.js -->
+  <script src="image%20detector%20prototype/detector/metadata.js"></script>
+  <script src="image%20detector%20prototype/detector/checker.js"></script>
+  <script src="image%20detector%20prototype/detector/c2pa.js"></script>
   <script src="js/features/evidence-checker.js"></script>
   <script src="js/features/customer-home.js"></script>
   <script src="js/features/caller-check.js"></script>

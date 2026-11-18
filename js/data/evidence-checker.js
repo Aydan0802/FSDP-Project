@@ -97,6 +97,9 @@ const EVIDENCE_CHECKER_DATA = {
     }
   },
 
+  // What to do when a picture is labelled as made or changed with AI (the AI label check leads)
+  imageSteps: ["ev.img.step1", "ev.img.step2"],
+
   // Sample files for the "Try a sample" buttons.
   // NEW (2): Added sampleText so clicking a sample feeds real text into TextDetector
   samples: [
@@ -118,7 +121,7 @@ const EVIDENCE_CHECKER_DATA = {
     en: {
       "ev.kind.screenshot": "Screenshot or photo",
       "ev.kind.screenshot.step1": "Reading the words in the picture",
-      "ev.kind.screenshot.step2": "Looking for signs it was edited",
+      "ev.kind.screenshot.step2": "Looking for AI labels inside the file",
       "ev.kind.screenshot.step3": "Checking links and logos",
       "ev.kind.document": "Letter or document",
       "ev.kind.document.step1": "Reading the document",
@@ -163,12 +166,31 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.err.ocrUnavailable.step1": "Paste the words from the message into the text checker instead.",
       "ev.err.emptyText.title": "No readable words found",
       "ev.err.emptyText.reason1": "We could not find clear text inside this picture or document.",
-      "ev.err.emptyText.step1": "Try a clearer screenshot or paste the text directly."
+      "ev.err.emptyText.step1": "Try a clearer screenshot or paste the text directly.",
+
+      // The AI label check (labels inside the picture file)
+      "ev.img.panelTitle": "About the picture itself",
+      "ev.img.title.likely": "This picture was made with AI",
+      "ev.img.title.partial": "Part of this picture was made or changed with AI",
+      "ev.img.title.uncertain": "This picture's content credentials don't match it",
+      "ev.img.c2paAi": "Its content credentials (a signed record from the app that made it) say it was made with AI.",
+      "ev.img.c2paAiEdit": "Its content credentials say part of it was made or changed with AI.",
+      "ev.img.c2paSigned": "The record's signature checks out, so the picture hasn't been changed since it was signed.",
+      "ev.img.c2paUnchecked": "We couldn't check the record's signature, so it counts like an ordinary label.",
+      "ev.img.c2paBroken": "Its content credentials don't match the picture: it was changed after they were added.",
+      "ev.img.labelAi": "The file is labelled \"made by AI\" in its hidden details.",
+      "ev.img.labelAiEdit": "The file is labelled \"changed with AI\" in its hidden details.",
+      "ev.img.generator": "The file holds the settings of an AI image generator.",
+      "ev.img.toolName": "The file's hidden details name an AI image tool.",
+      "ev.img.unsigned": "Labels like this can be added or removed by anyone, so they only count when they're there.",
+      "ev.img.notProof": "This shows how the picture was made, not whether the message is a scam.",
+      "ev.img.step1": "Don't trust what this picture shows until you've checked it another way.",
+      "ev.img.step2": "If it's about your money, call OCBC yourself on 1800 363 3333."
     },
     zh: {
       "ev.kind.screenshot": "截图或照片",
       "ev.kind.screenshot.step1": "正在读图片里的文字",
-      "ev.kind.screenshot.step2": "正在找被修改过的痕迹",
+      "ev.kind.screenshot.step2": "正在查看文件里的 AI 标签",
       "ev.kind.screenshot.step3": "正在检查链接和标志",
       "ev.kind.document": "信件或文件",
       "ev.kind.document.step1": "正在读这份文件",
@@ -213,12 +235,31 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.err.ocrUnavailable.step1": "请改为把消息文字复制粘贴到文字检查器中。",
       "ev.err.emptyText.title": "未找到可读取的文字",
       "ev.err.emptyText.reason1": "我们无法在这张图片或文件中识别出清晰文字。",
-      "ev.err.emptyText.step1": "请换一张更清晰的截图，或直接粘贴文字。"
+      "ev.err.emptyText.step1": "请换一张更清晰的截图，或直接粘贴文字。",
+
+      // AI 标签检查（图片文件里的标签）
+      "ev.img.panelTitle": "关于这张图片本身",
+      "ev.img.title.likely": "这张图片是用 AI 制作的",
+      "ev.img.title.partial": "这张图片有一部分是用 AI 制作或修改的",
+      "ev.img.title.uncertain": "这张图片的内容凭证和图片不符",
+      "ev.img.c2paAi": "图片的内容凭证（制作它的应用程序留下的签名记录）显示它是用 AI 制作的。",
+      "ev.img.c2paAiEdit": "图片的内容凭证显示它有一部分是用 AI 制作或修改的。",
+      "ev.img.c2paSigned": "这份记录的签名核对无误，表示图片在签名后没有被改过。",
+      "ev.img.c2paUnchecked": "我们无法核对这份记录的签名，所以只能把它当作普通标签。",
+      "ev.img.c2paBroken": "图片的内容凭证和图片不符：图片在加上凭证后被改过。",
+      "ev.img.labelAi": "文件的隐藏资料里标明“由 AI 制作”。",
+      "ev.img.labelAiEdit": "文件的隐藏资料里标明“用 AI 修改过”。",
+      "ev.img.generator": "文件里保存着 AI 图片生成工具的设置。",
+      "ev.img.toolName": "文件的隐藏资料里提到一个 AI 图片工具。",
+      "ev.img.unsigned": "这类标签任何人都可以加上或删除，所以只有在出现时才算数。",
+      "ev.img.notProof": "这只说明图片是怎样制作的，不能说明这条信息是不是诈骗。",
+      "ev.img.step1": "在用其他方法核实之前，不要相信这张图片的内容。",
+      "ev.img.step2": "如果和你的钱有关，请自己拨打 OCBC 热线 1800 363 3333。"
     },
     ms: {
       "ev.kind.screenshot": "Tangkapan skrin atau foto",
       "ev.kind.screenshot.step1": "Membaca perkataan dalam gambar",
-      "ev.kind.screenshot.step2": "Mencari tanda gambar ini telah diubah",
+      "ev.kind.screenshot.step2": "Mencari label AI di dalam fail",
       "ev.kind.screenshot.step3": "Menyemak pautan dan logo",
       "ev.kind.document": "Surat atau dokumen",
       "ev.kind.document.step1": "Membaca dokumen",
@@ -263,7 +304,26 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.err.ocrUnavailable.step1": "Tampal perkataan daripada mesej ke dalam penyemak teks.",
       "ev.err.emptyText.title": "Tiada perkataan yang boleh dibaca ditemui",
       "ev.err.emptyText.reason1": "Kami tidak menemui teks yang jelas dalam gambar atau dokumen ini.",
-      "ev.err.emptyText.step1": "Cuba tangkapan skrin yang lebih jelas atau tampal teks secara terus."
+      "ev.err.emptyText.step1": "Cuba tangkapan skrin yang lebih jelas atau tampal teks secara terus.",
+
+      // Semakan label AI (label di dalam fail gambar)
+      "ev.img.panelTitle": "Tentang gambar ini sendiri",
+      "ev.img.title.likely": "Gambar ini dibuat dengan AI",
+      "ev.img.title.partial": "Sebahagian gambar ini dibuat atau diubah dengan AI",
+      "ev.img.title.uncertain": "Kelayakan kandungan gambar ini tidak sepadan dengannya",
+      "ev.img.c2paAi": "Kelayakan kandungannya (rekod bertandatangan daripada aplikasi yang membuatnya) menyatakan ia dibuat dengan AI.",
+      "ev.img.c2paAiEdit": "Kelayakan kandungannya menyatakan sebahagian daripadanya dibuat atau diubah dengan AI.",
+      "ev.img.c2paSigned": "Tandatangan rekod itu sah, jadi gambar ini tidak diubah sejak ditandatangani.",
+      "ev.img.c2paUnchecked": "Kami tidak dapat menyemak tandatangan rekod itu, jadi ia dikira seperti label biasa.",
+      "ev.img.c2paBroken": "Kelayakan kandungannya tidak sepadan dengan gambar: gambar ini diubah selepas kelayakan itu ditambah.",
+      "ev.img.labelAi": "Fail ini dilabel \"dibuat oleh AI\" dalam butiran tersembunyinya.",
+      "ev.img.labelAiEdit": "Fail ini dilabel \"diubah dengan AI\" dalam butiran tersembunyinya.",
+      "ev.img.generator": "Fail ini menyimpan tetapan penjana gambar AI.",
+      "ev.img.toolName": "Butiran tersembunyi fail ini menyebut alat gambar AI.",
+      "ev.img.unsigned": "Label seperti ini boleh ditambah atau dibuang oleh sesiapa sahaja, jadi ia hanya dikira apabila ada.",
+      "ev.img.notProof": "Ini menunjukkan cara gambar dibuat, bukan sama ada mesej itu penipuan.",
+      "ev.img.step1": "Jangan percaya apa yang ditunjukkan gambar ini sehingga anda menyemaknya dengan cara lain.",
+      "ev.img.step2": "Jika ia berkaitan wang anda, telefon OCBC sendiri di 1800 363 3333."
     }
   }
 };

@@ -18,8 +18,12 @@
 //               site is opened on the laptop, or the laptop's public tunnel link anywhere else
 //               (see voiceApiUrl()). If it can't be reached, the demo picker's made-up result
 //               shows, marked "Demo result".
-//   screenshot  (image file)            EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
-//   document    (pdf, doc, anything else) EVIDENCE_CHECKER.check() (Yan Lin): PLACEHOLDER
+//   screenshot  (image file)            EVIDENCE_CHECKER.check() (Yan Lin): the words in the picture
+//               go through the text detector, and at the same time the AI label check
+//               ("image detector prototype/detector/") looks inside the file for labels AI tools
+//               leave. Both run on this device.
+//   document    (pdf, doc, anything else) EVIDENCE_CHECKER.check() (Yan Lin): the words in it go
+//               through the text detector
 // Text, screenshots and documents are read on this device. A voice recording is sent to our
 // voice checker, which deletes it straight after checking.
 //
@@ -421,7 +425,8 @@
   // For older customers: a plain headline first ("This message is likely a scam"), then what kind
   // of scam it looks like, then what to do, and only then why we think so.
   // A low-risk message isn't called "safe": rules can't prove a message is safe.
-  function messageResultHtml(outcome) {
+  // afterVerdict: extra sections shown right under the headline (a picture's AI labels)
+  function messageResultHtml(outcome, afterVerdict = "") {
     const r = outcome.detectorResult || detectMessage(outcome.text);
     // "What to do now": the detector's steps, matched to the red flags it found (from KakiGuard),
     // already in the customer's language. The general steps for the kind of scam are a fallback.
@@ -440,6 +445,7 @@
           </div>
         </div>
       </section>
+      ${afterVerdict}
       <section class="panel" aria-labelledby="an-todo-title">
         <div data-read>
           <h2 id="an-todo-title">${t("an.stepsTitle")}</h2>
@@ -546,13 +552,30 @@
       </section>`;
   }
 
-  // A screenshot or document: Yan Lin's evidence checker result (its words are translation keys)
+  // What the AI label check found inside a picture, as its own panel (nothing if it found nothing)
+  function pictureFindingsHtml(image) {
+    if (!image) return "";
+    return `
+      <section class="panel" aria-labelledby="an-img-title">
+        <div data-read>
+          <h2 id="an-img-title">${t("ev.img.panelTitle")}</h2>
+          <p>${badge(image.result)} <strong>${esc(t(image.title))}</strong></p>
+          <ul class="reasons">${image.reasons.map(x => `<li>${icon("flag")}<span>${esc(t(x))}</span></li>`).join("")}</ul>
+        </div>
+      </section>`;
+  }
+
+  // A screenshot or document: Yan Lin's evidence checker result (its words are translation keys).
+  // When the words in a picture lead, it is shown like a message, with the picture's AI labels
+  // (if any) under the headline. When an AI label leads (r.imageLed), the label is the headline.
   function evidenceResultHtml(r) {
-    if (r.detectorResult && r.extractedText) {
+    if (r.detectorResult && r.extractedText && !r.imageLed) {
       return messageResultHtml({
         text: r.extractedText
-      });
+      }, pictureFindingsHtml(r.image));
     }
+    // "Demo result" only for hand-written results, never for a real AI label finding
+    const demoTag = r.imageLed ? "" : `<span class="an-demo-tag">${t("an.demoTag")}</span>`;
     return `
       <section data-read>
         ${detectedHtml()}
@@ -561,7 +584,7 @@
         </div>
       </section>
       <section class="panel" aria-labelledby="an-why-title">
-        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2><span class="an-demo-tag">${t("an.demoTag")}</span></div>
+        <div class="an-result-top"><h2 id="an-why-title">${t("an.why")}</h2>${demoTag}</div>
         <ul class="reasons" data-read>${r.reasons.map(x => `<li>${icon("flag")}<span>${esc(t(x))}</span></li>`).join("")}</ul>
       </section>
       <section class="panel" aria-labelledby="an-todo-title">

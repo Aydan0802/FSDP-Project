@@ -1,0 +1,10 @@
+# Never commit images, downloads or generated results (regenerate them with the scripts)
+data/
+downloads/
+models/
+results/
+
+# Python and Node leftovers
+__pycache__/
+*.pyc
+node_modules/

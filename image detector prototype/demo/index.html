@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Image check demo</title>
+<!-- Image check demo (upload only). Owner: Aydan.
+     Everything runs in this browser: the picture is read here and never uploaded. The only
+     download is Adobe's C2PA library (from jsDelivr), and only when a picture has content
+     credentials. Serve this folder's parent locally (see README), because browsers block the
+     C2PA library on pages opened straight from a file. -->
+<style>
+  :root { --ink: #1d2433; --muted: #5b6472; --line: #d9dde3; --bg: #f6f7f9; --card: #fff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 20px; }
+  .drop { display: block; position: relative; border: 2px dashed var(--line); border-radius: 12px; background: var(--card);
+          padding: 28px 16px; text-align: center; cursor: pointer; }
+  .drop:focus-within, .drop.over { border-color: #3b6fd8; }
+  .drop strong { display: block; font-size: 1.1rem; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .result { margin-top: 20px; background: var(--card); border-radius: 12px; border-left: 8px solid var(--band, #6c757d);
+            padding: 16px 20px; }
+  .result h2 { font-size: 1.2rem; margin: 0 0 6px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+  .tags li { background: var(--bg); border-radius: 999px; padding: 2px 10px; font-size: .9rem; }
+  .preview { max-width: 100%; max-height: 240px; border-radius: 8px; display: block; margin: 0 0 12px; }
+  details { margin-top: 12px; color: var(--muted); font-size: .9rem; }
+  pre { white-space: pre-wrap; word-break: break-word; }
+  .advice { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); }
+  .busy { color: var(--muted); margin-top: 16px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Is this picture labelled as AI?</h1>
+  <p class="lead">Looks for the labels AI tools leave inside a picture: content credentials (C2PA),
+    the IPTC "made by AI" label, and image-generator settings. The picture stays on this device.</p>
+
+  <label class="drop" id="drop">
+    <strong>Choose a picture</strong>
+    <span>or drop it here (JPEG, PNG or WebP)</span>
+    <input type="file" id="file" accept="image/*">
+  </label>
+
+  <p class="busy" id="busy" hidden role="status">Checking…</p>
+  <section id="out" aria-live="polite"></section>
+</main>
+
+<script src="../detector/metadata.js"></script>
+<script src="../detector/checker.js"></script>
+<script src="../detector/c2pa.js"></script>
+<script>
+  "use strict";
+  // Colours match the voice detector demo; the band is also written in words, never colour alone
+  const BAND_COLOURS = { HIGH: "#d1495b", MEDIUM: "#e9a23b", LOW: "#2a9d8f", INCONCLUSIVE: "#6c757d" };
+  const SURE = { high: "Fairly sure", medium: "Somewhat sure", low: "Not sure" };
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const out = document.getElementById("out");
+  const busy = document.getElementById("busy");
+  let previewUrl = null;
+
+  async function show(file) {
+    if (!file) return;
+    busy.hidden = false;
+    out.innerHTML = "";
+    const result = await ImageDetector.checkFile(file);
+    busy.hidden = true;
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(file);
+    const d = result.details;
+    out.innerHTML = `
+      <div class="result" style="--band:${BAND_COLOURS[result.band]}">
+        <img class="preview" src="${previewUrl}" alt="The picture you chose">
+        <h2>${esc(result.verdict)}</h2>
+        <ul class="tags">
+          <li>Result: ${esc(result.band)}</li>
+          <li>${esc(SURE[result.confidence])} (${esc(result.confidence)} confidence)</li>
+          <li>${esc(file.name)}</li>
+        </ul>
+        <ul>${result.text.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+        <p class="advice">This is one warning sign, not proof of a scam. Whatever a picture shows,
+          check the request another way: call the bank on the number on your card.</p>
+        <details><summary>What was found in the file</summary>
+          <pre>${esc(JSON.stringify({ format: d.format, detailsBlocks: d.blocks, contentCredentials: d.c2pa,
+            labels: d.labels, generator: d.generator, toolNames: d.toolNames, websiteResult: result.result }, null, 2))}</pre>
+        </details>
+      </div>`;
+  }
+
+  const input = document.getElementById("file");
+  input.addEventListener("change", () => show(input.files[0]));
+  const drop = document.getElementById("drop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+  drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); show(e.dataTransfer.files[0]); });
+</script>
+</body>
+</html>
