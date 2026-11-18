@@ -57,7 +57,10 @@ const ICONS = {
   caret: '<path d="M7 10l5 5 5-5"/>',
   // For the bottom bar: three lines for "Menu", a magnifying glass for "Check"
   menu: '<path d="M4 6.5h16M4 12h16M4 17.5h16"/>',
-  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20.5 20.5"/>'
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20.5 20.5"/>',
+  // For "Is the caller a real person?": a hidden code (make one) and a phone keypad (type one in)
+  code: '<rect x="2.5" y="6.5" width="19" height="11" rx="3"/><circle cx="7.5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16.5" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+  keypad: '<circle cx="6.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19.5" r="1.8" fill="currentColor" stroke="none"/>'
 };
 
 // Returns one icon as an SVG drawing. aria-hidden hides it from screen readers, because the

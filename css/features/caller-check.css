@@ -62,6 +62,11 @@
   flex: none;
 }
 
+.role-icon .icon {
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
 .role-card.primary-role .role-icon {
   background: var(--red);
   color: #FFFFFF;
