@@ -166,7 +166,7 @@ const ANALYSER_DATA = {
     en: {
       "an.title": "Check anything you are not sure about",
 
-      "an.lead": "Add a message, a call recording, a screenshot or a letter. You do not need to pick what it is. We will work it out.",
+      "an.lead": "Add a message, call recording, screenshot or letter. We'll work out what it is.",
 
       "an.drop.title": "Tap here to add a file",
       "an.drop.sub": "or drag it into this box",
@@ -179,7 +179,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "Check this message",
 
-      "an.privacy": "Messages, screenshots and documents are checked on this device and are not uploaded. Voice recordings are sent to our voice checker, checked and deleted straight away. Please only use the sample or a recording of your own voice.",
+      "an.privacy": "Messages and pictures stay on this device. Voice recordings are checked, then deleted. Only use the sample or your own voice.",
 
       "an.samplesTitle": "No file? Try a sample",
 
@@ -280,7 +280,7 @@ const ANALYSER_DATA = {
 
       "an.stepsTitle": "What to do now",
 
-      "an.honesty": "This is a warning, not proof. If you're not sure, call the bank on the number on your card.",
+      "an.honesty": "This is a warning, not proof. Not sure? Call the bank on the number on your card.",
 
       "an.type.impersonation": "someone pretending to be someone you trust, like the bank, the government or family",
       "an.type.phishing": "a fake link to steal your bank details",
@@ -384,7 +384,7 @@ const ANALYSER_DATA = {
     zh: {
       "an.title": "检查任何你不确定的东西",
 
-      "an.lead": "放进一条信息、电话录音、截图或信件。你不用选它是什么，我们会看出来。",
+      "an.lead": "放进信息、电话录音、截图或信件，我们会看出它是什么。",
 
       "an.drop.title": "按这里加入文件",
       "an.drop.sub": "或者把文件拖进这个框",
@@ -397,7 +397,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "检查这条信息",
 
-      "an.privacy": "信息、截图和文件都在这部设备上检查，不会上传。语音录音会发送到我们的语音检查程序，检查后马上删除。请只使用示例录音或您自己声音的录音。",
+      "an.privacy": "信息和图片只留在这部设备上。语音录音检查完就删除。请只用示范录音或您自己的声音。",
 
       "an.samplesTitle": "没有文件？试试示范",
 
@@ -498,7 +498,7 @@ const ANALYSER_DATA = {
 
       "an.stepsTitle": "现在该怎么做",
 
-      "an.honesty": "这只是提醒，不是证据。如果不确定，请拨打银行卡背面的电话联系银行。",
+      "an.honesty": "这只是警告，不是证明。不确定？用卡上的号码打给银行。",
 
       "an.type.impersonation": "冒充您信任的人（例如银行、政府或家人）",
       "an.type.phishing": "骗取您银行资料的假链接",
@@ -602,7 +602,7 @@ const ANALYSER_DATA = {
     ms: {
       "an.title": "Semak apa sahaja yang anda tidak pasti",
 
-      "an.lead": "Masukkan mesej, rakaman panggilan, tangkapan skrin atau surat. Anda tidak perlu pilih jenisnya. Kami akan tahu sendiri.",
+      "an.lead": "Masukkan mesej, rakaman panggilan, tangkapan skrin atau surat. Kami akan tahu apa itu.",
 
       "an.drop.title": "Tekan di sini untuk tambah fail",
       "an.drop.sub": "atau seret fail ke dalam kotak ini",
@@ -615,7 +615,7 @@ const ANALYSER_DATA = {
 
       "an.checkMessage": "Semak mesej ini",
 
-      "an.privacy": "Mesej, tangkapan skrin dan dokumen disemak pada peranti ini dan tidak dimuat naik. Rakaman suara dihantar ke penyemak suara kami, disemak dan terus dipadam. Sila guna sampel atau rakaman suara anda sendiri sahaja.",
+      "an.privacy": "Mesej dan gambar kekal dalam peranti ini. Rakaman suara disemak, kemudian dipadam. Gunakan sampel atau suara anda sendiri sahaja.",
 
       "an.samplesTitle": "Tiada fail? Cuba contoh",
 
@@ -716,7 +716,7 @@ const ANALYSER_DATA = {
 
       "an.stepsTitle": "Apa yang perlu dilakukan sekarang",
 
-      "an.honesty": "Ini amaran, bukan bukti. Jika tidak pasti, hubungi bank melalui nombor pada kad anda.",
+      "an.honesty": "Ini amaran, bukan bukti. Tidak pasti? Telefon bank melalui nombor di kad anda.",
 
       "an.type.impersonation": "orang yang menyamar sebagai seseorang yang anda percaya, seperti bank, kerajaan atau keluarga",
       "an.type.phishing": "pautan palsu untuk mencuri butiran bank anda",

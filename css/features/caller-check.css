@@ -43,7 +43,7 @@
 
 .cc-caller .cc-tag {
   display: inline-block;
-  font-size: .8rem;
+  font-size: .875rem;
   font-weight: 700;
   background: #FFFFFF;
   color: var(--ink, #363B40);
@@ -220,7 +220,7 @@
 .rp-mj-blue { color: #1B4F9C; }
 
 .rp-mj-sub {
-  font-size: .72rem;
+  font-size: .8125rem;   /* was .72rem: too small for older eyes (website-refresh) */
   font-weight: 800;
   letter-spacing: .04em;
   margin-top: .2rem;
@@ -241,7 +241,7 @@
 }
 
 .rp-cap-hint {
-  font-size: .85rem;
+  font-size: .9375rem;   /* was .85rem (website-refresh) */
   font-weight: 600;
   color: var(--muted, #3D525D);
   text-align: center;
@@ -266,7 +266,7 @@
 /* Live Caller Telemetry Badges */
 .rp-tel-badge {
   display: inline-block;
-  font-size: .78rem;
+  font-size: .8125rem;
   font-weight: 700;
   padding: .15rem .55rem;
   border-radius: 6px;
@@ -282,3 +282,7 @@
   background: rgba(237, 28, 36, .35);
   color: #FFB3B8;
 }
+/* website-refresh: the simulated caller's screen, folded away under "Demo: see the caller's screen" */
+.cc-caller-fold { margin-top: 1rem; }
+.cc-caller-fold summary { display: flex; align-items: center; min-height: 48px; cursor: pointer; color: var(--muted, #3D525D); font-weight: 700; }
+.cc-caller-fold .cc-caller { margin-top: .5rem; }

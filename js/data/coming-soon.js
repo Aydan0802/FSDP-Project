@@ -13,7 +13,7 @@
 const COMING_SOON_DATA = {
   pages: [
     { route: "my-reports", role: "customer", title: "soon.myReports.title", text: "soon.myReports.text" },
-    { route: "help", role: "customer", title: "soon.help.title", text: "soon.help.text" },
+    { route: "help", role: "public", title: "soon.help.title", text: "soon.help.text" },
     { route: "staff-trends", role: "staff", title: "soon.trends.title", text: "soon.trends.text" },
     { route: "staff-scam-types", role: "staff", title: "soon.scamTypes.title", text: "soon.scamTypes.text" },
     { route: "staff-settings", role: "staff", title: "soon.settings.title", text: "soon.settings.text" }

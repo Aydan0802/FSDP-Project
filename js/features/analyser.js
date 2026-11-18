@@ -347,9 +347,11 @@
   // ---------- Phase 3: the result ----------
 
   // Three dots for low / medium / high. The words next to them say the same thing.
-  function dotsHtml(level) {
-    const filled = { low: 1, medium: 2, high: 3 }[level];
-    return `<span class="an-dots" aria-hidden="true">${[1, 2, 3].map(n => `<span${n <= filled ? ' class="on"' : ""}></span>`).join("")}</span>`;
+  // box is the result's colour class (v-bad, v-careful, v-good), so the dots are red, orange or
+  // green like the result above them (website-refresh): "very sure it's a scam" is never green.
+  function dotsHtml(level, box = "") {
+    const filled = { low: 1, medium: 2, high: 3 }[level] || 2;
+    return `<span class="an-dots${box ? ` an-dots--${box}` : ""}" aria-hidden="true">${[1, 2, 3].map(n => `<span${n <= filled ? ' class="on"' : ""}></span>`).join("")}</span>`;
   }
 
   // The message with each warning phrase marked. A mark shows its reason when hovered, focused
@@ -449,7 +451,7 @@
         <h2 id="an-why-title">${t("an.why")}</h2>
         <div data-read>
           <p class="an-summary">${esc(r.summary)}</p>
-          <p class="an-sure">${t("an.howSure")}: <strong>${t(`an.sure.${r.confidence}`)}</strong>${dotsHtml(r.confidence)}</p>
+          <p class="an-sure">${t("an.howSure")}: <strong>${t(`an.sure.${r.confidence}`)}</strong>${dotsHtml(r.confidence, RISK_BOX[r.risk])}</p>
         </div>
         ${r.flags.length
           ? `<p class="meta an-tap-hint">${t("an.tapHint")}</p>${highlightedHtml(outcome.text, r.flags)}`
@@ -530,7 +532,7 @@
             ? `<p class="an-chance-none">${t(live && live.watermark ? "an.chanceWatermark" : "an.chanceNone")}</p>`
             : `<p class="an-chance"><span class="an-chance-num">${chance}%</span><span>${t("an.chance")}</span></p>
                <div class="an-meter" aria-hidden="true"><span style="--w: ${chance}%"></span></div>`}
-          <p class="an-sure">${t("an.howSure")}: <strong>${t(sure)}</strong></p>
+          <p class="an-sure">${t("an.howSure")}: <strong>${t(sure)}</strong>${dotsHtml(String(sure).split(".").pop().toLowerCase(), RESULT_BOX[key])}</p>
           <ul class="reasons">${reasons.map(reason => `<li>${icon(key === "real" ? "check" : "flag")}<span>${esc(reason)}</span></li>`).join("")}</ul>
         </div>
         ${key === "partial" ? timeline : ""}
@@ -805,7 +807,7 @@
 
   registerRoute({
     name: "analyser",
-    role: "customer",
+    role: "public",   // open to everyone: no sign-in needed (website-refresh)
     render: screenHtml,
     afterRender: () => {
       const phase = myState().phase;

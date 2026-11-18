@@ -454,7 +454,7 @@
 
   registerRoute({
     name: "pause-verify",
-    role: "customer",
+    role: "public",   // open to everyone: no sign-in needed (website-refresh)
     render: pauseVerifyHtml,
     afterRender: afterPauseVerify
   });

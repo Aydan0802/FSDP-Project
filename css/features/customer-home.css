@@ -6,6 +6,34 @@
 .hello h1 { margin-bottom: .25rem; font-size: 2.25rem; }
 .hello-sub { margin: 0; color: var(--muted); font-size: 1.25rem; }
 
+/* ---------- The welcome with its drawing (website-refresh) ---------- */
+.hello--hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; }
+.hello--hero h1 { font-size: 1.875rem; }
+@media (min-width: 40rem) { .hello--hero h1 { font-size: 2.375rem; } }
+.hero-art { width: 5.75rem; height: auto; overflow: visible; }
+@media (min-width: 40rem) { .hero-art { width: 12.5rem; } }
+
+/* The drawing's parts, in Clarity colours */
+.ha-blob { fill: var(--red-tint); }
+.ha-dot { fill: var(--slate-tint); }
+.ha-phone { fill: var(--white); stroke: var(--charcoal); stroke-width: 3; }
+.ha-screen { fill: var(--slate-tint); }
+.ha-slot, .ha-line--soft, .ha-accept { fill: var(--divider); }
+.ha-avatar { fill: var(--white); }
+.ha-head { fill: var(--slate); }
+.ha-body { fill: none; stroke: var(--slate); stroke-width: 3; stroke-linecap: round; }
+.ha-line { fill: var(--charcoal); }
+.ha-decline { fill: var(--red); }
+.ha-ring { fill: none; stroke: var(--red); stroke-width: 4; stroke-linecap: round; opacity: .35; animation: ha-ring 1.4s ease-out 3 both; }
+.ha-ring--2 { animation-delay: .18s; }
+@keyframes ha-ring { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: .35; } }
+.ha-pause { transform-box: fill-box; transform-origin: center; filter: drop-shadow(0 8px 12px rgba(158, 27, 50, .3)); animation: ha-breathe 5s ease-in-out infinite; }
+.ha-pause-box { fill: var(--red); }
+.ha-bar { fill: var(--white); }
+.ha-check circle { fill: var(--white); stroke: var(--red-dark); stroke-width: 3; }
+.ha-check path { fill: none; stroke: var(--red-dark); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes ha-breathe { 50% { transform: scale(1.05); } }
+
 /* ---------- "Need help right now?": the dark red card, the one loud thing on the page ----------
    White text is 5.7:1 or more everywhere on it. */
 
@@ -38,7 +66,18 @@
 .big-choice-icon .icon { width: 1.625rem; height: 1.625rem; }
 .big-choice-text strong { display: block; font-size: 1.25rem; line-height: 1.25; }
 .big-choice-text span { display: block; margin-top: .125rem; color: var(--muted); font-size: 1rem; }
-.big-choice-arrow { margin-left: auto; color: var(--red-dark); }
+.big-choice-arrow { margin-left: auto; color: var(--red-dark); transition: transform .15s; }
+.big-choice:hover .big-choice-arrow { transform: translateX(3px); }
+.big-choice:active { transform: scale(.98); }
+
+/* "Someone is calling me now" is the one thing that should stand out most (website-refresh):
+   its round icon sends out a soft ring three times when the page opens, like a phone ringing. */
+.big-choice--first .big-choice-icon { position: relative; }
+.big-choice--first .big-choice-icon::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(237, 28, 36, .45); animation: home-ring 1.6s .4s ease-out 3;
+}
+@keyframes home-ring { to { box-shadow: 0 0 0 .875rem rgba(237, 28, 36, 0); } }
 
 .call-line { margin: 1.125rem 0 0; font-weight: 600; }
 .call-line a { color: var(--white); font-weight: 800; white-space: nowrap; }
@@ -51,7 +90,7 @@
 .tools-section h2 + .tools { margin-top: .75rem; }
 .tools { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
 .tools li { display: flex; }
-.tools .tool-wide { grid-column: 1 / -1; }
+.tools .tool-wide, .tools .tool-span { grid-column: 1 / -1; }
 .tool {
   display: flex; align-items: center; gap: 1rem; width: 100%; min-height: 88px; padding: 1.125rem;
   background: var(--surface); color: var(--text); text-align: left; text-decoration: none;
@@ -68,7 +107,55 @@
 .tool-text { flex: 1; min-width: 0; }
 .tool-text strong { display: block; font-size: 1.1875rem; line-height: 1.3; }
 .tool-text span { display: block; margin-top: .2rem; color: var(--muted); font-size: 1rem; line-height: 1.4; }
-.tool-arrow { color: var(--text); }
+.tool-arrow { color: var(--text); transition: transform .15s; }
+.tool:hover .tool-arrow { transform: translateX(3px); }
+.tool:active { transform: scale(.98); }
+.tool-text .lock-tag { display: inline-flex; }
+
+/* ---------- "Your safety checklist" (signed-in customers, website-refresh) ----------
+   A progress bar that fills when the screen opens, ticks for the steps done, and one button for
+   the next step. */
+.checklist {
+  margin-top: 2rem; padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+}
+.checklist-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
+.checklist-head h2 { margin: 0; font-size: 1.25rem; }
+.checklist-count { margin: 0; color: var(--red-dark); font-weight: 800; }
+.checklist-bar { height: .75rem; margin: .75rem 0 1rem; overflow: hidden; border-radius: 999px; background: var(--slate-tint); }
+.checklist-bar span {
+  display: block; height: 100%; border-radius: inherit; background: var(--red);
+  transform: scaleX(var(--p)); transform-origin: left; animation: home-fill .8s .15s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes home-fill { from { transform: scaleX(0); } }
+.checklist-steps { display: grid; gap: .5rem; }
+.checklist-steps li { display: flex; align-items: center; gap: .625rem; color: var(--muted); font-weight: 600; }
+.checklist-steps li.is-done { color: var(--text); }
+.checklist-mark {
+  display: grid; place-items: center; flex: none; width: 1.75rem; height: 1.75rem;
+  border: 2px solid var(--divider); border-radius: 50%;
+}
+.is-done .checklist-mark { border-color: var(--red-dark); background: var(--red-dark); color: var(--white); }
+.checklist-mark .icon { width: 1.25rem; height: 1.25rem; }
+.checklist-mark .icon circle { display: none; }   /* just the tick inside the filled circle */
+.checklist-next { margin-top: 1rem; }
+.checklist-all { display: flex; align-items: center; gap: .75rem; margin: 1rem 0 0; font-weight: 700; }
+.checklist-all .done-mark { flex: none; margin: 0; width: 3rem; height: 3rem; }
+.checklist-all .done-mark .icon { width: 1.5rem; height: 1.5rem; }
+
+/* Touch screens have no real hover: a tapped tile should not stay lifted (website-refresh) */
+@media (hover: none) {
+  .tool:hover, .big-choice:hover { transform: none; box-shadow: var(--shadow); }
+  .tool:hover .tool-arrow, .big-choice:hover .big-choice-arrow { transform: none; }
+  .tool-wide .tool:hover { box-shadow: var(--shadow); }
+}
+
+/* On a phone, a little less padding in the red card, so the big choices' words have room */
+@media (max-width: 30rem) {
+  .urgent { padding: 1.25rem 1rem; }
+  .big-choice { gap: .75rem; padding: .875rem; }
+  .big-choice-icon { width: 2.75rem; height: 2.75rem; }
+}
 
 /* ---------- My recent checks: folded away until opened ---------- */
 

@@ -74,7 +74,7 @@
 
   registerRoute({
     name: "learn-signs",
-    role: "customer",
+    role: "public",   // open to everyone: no sign-in needed (website-refresh)
     render: screenHtml,
     afterRender
   });

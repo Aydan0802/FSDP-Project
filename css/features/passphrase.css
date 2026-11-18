@@ -1,11 +1,31 @@
-/* Feature: Family passphrase (saved list with show / hide, add form).
+/* Feature: Family passphrase (how it works, saved list with show / hide / call, add form).
    Owner: Jiliana
    Uses the Clarity variables only. */
 
 .pp-screen .panel { margin-bottom: 1rem; }
+.pp-how-title { margin: .25rem 0 0; font-size: 1.125rem; }
+
 .pp-saved {
-  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
-  padding: .875rem 0; border-top: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
+  padding: .875rem .5rem; margin: 0 -.5rem; border-top: 1px solid var(--border); border-radius: var(--radius);
 }
-.pp-saved:first-child { border-top: 0; padding-top: 0; }
+.pp-saved:first-child { border-top: 0; }
+.pp-who { display: grid; gap: .125rem; min-width: 0; }
 .pp-word { font-weight: 800; letter-spacing: .08em; overflow-wrap: anywhere; }
+.pp-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.pp-actions .chip { text-decoration: none; }
+.pp-empty { color: var(--muted); }
+
+/* website-refresh: the entry just saved glows softly for a moment, so it is easy to spot */
+.pp-saved--new { animation: pp-new 2.4s ease-out both; }
+@keyframes pp-new { 0%, 40% { background: var(--red-tint); } 100% { background: transparent; } }
+
+/* "Saved for Jun Hao" with a tick, above the list */
+.pp-success {
+  display: flex; align-items: center; gap: .875rem; margin: .25rem 0 1rem; padding: .875rem 1rem;
+  background: var(--red-tint); border-radius: var(--radius);
+}
+.pp-success .done-mark { flex: none; width: 3rem; height: 3rem; margin: 0; background: var(--white); }
+.pp-success .done-mark .icon { width: 1.5rem; height: 1.5rem; }
+.pp-success strong { display: block; color: var(--red-dark); font-size: 1.1875rem; }
+.pp-success p { margin: .125rem 0 0; }

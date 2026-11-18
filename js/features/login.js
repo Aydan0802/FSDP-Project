@@ -1,80 +1,179 @@
 "use strict";
 
-// Feature: Sign in.
-// Owner: Jiliana
-// Moved out of the theme samples (shared/samples.js). Choose "A customer" or "Bank staff", type an
-// ID and password, and the server checks them against the accounts in the database
-// (POST /api/auth/login, see server/auth.js). Only a right ID and password for the chosen side gets
-// in. Customers go to #customer, staff go to #staff.
-// New customers can make an account at #login/signup (POST /api/auth/signup). Staff accounts are
-// made by the bank, so there is no staff sign-up.
+// Feature: Sign in (customers, #login), Sign up (#login/signup) and Staff sign-in (#staff-login).
+// Owner: Jiliana. Server sign-in and sign-up by Wei Ye (server/auth.js); merged into the
+// website-refresh layout.
+//   - Customers don't have to sign in for urgent help: the home screen and urgent tools are
+//     open to everyone (access.js). Signing in is only for their own things.
+//   - One box for the ID (the user ID they signed up with; a mobile number can be used as the ID)
+//     and one for the password or PIN. The server checks them: POST /api/auth/login, against
+//     Supabase, or against its built-in demo accounts when Supabase isn't set up.
+//   - New customers make an account at #login/signup (POST /api/auth/signup). Staff accounts are
+//     made by the bank, so staff have their own sign-in screen with no sign-up.
+//   - Demo mode: if no sign-in server answers at all (the page is served by a plain file server or
+//     the voice checker, e.g. the shared ngrok link), the screen says so and lets any details in,
+//     so the prototype can still be shown. A server that answers "wrong password" is never skipped.
 // The password is only sent to the server to be checked. It is never kept in the page.
-// This needs the server running (npm start in /server, then open http://localhost:3000): a plain file
-// server such as Live Server or python -m http.server has nothing to check the password with.
+// After signing in, a customer goes back to the screen they were trying to open (if any).
 // Everything is inside (function () { ... })(); so the names you create in this file stay
 // private to it and can't clash with a teammate's file.
 
 (function () {
-  addTranslations(LOGIN_DATA.text);   // this screen's English, Chinese and Malay words
+  const data = LOGIN_DATA;
+  addTranslations(data.text);   // the customer screens' English, Chinese and Malay words
 
-  // The sign-in screen's HTML. At #login/signup the card is the sign-up form instead.
+  // ---------- Talking to the sign-in server ----------
+
+  // Sends one request to the auth server. Gives back { reachable: false } when there is no
+  // sign-in server here (no answer, no such route, or not JSON), otherwise { reachable, status, body }.
+  async function askServer(path, payload) {
+    let response;
+    try {
+      response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    } catch (error) {
+      return { reachable: false };
+    }
+    if ([404, 405, 501].includes(response.status)) return { reachable: false };
+    let body = null;
+    try { body = await response.json(); } catch (error) { return { reachable: false }; }
+    return { reachable: true, status: response.status, body };
+  }
+
+  // Asks the server whether this ID and password are right for this side.
+  // { ok: true, userId, demo } or { ok: false, key, values } (key: the words to show)
+  async function checkCredentials(role, userId, password) {
+    const answer = await askServer("/api/auth/login", { role, userId, password });
+    if (!answer.reachable) return { ok: true, userId, demo: true };
+    const { status, body } = answer;
+    if (status >= 200 && status < 300 && body.ok) return { ok: true, userId: body.userId };
+    if (status === 400 || status === 401) return { ok: false, key: "login.err.wrong" };
+    if (status === 423) return { ok: false, key: "login.err.locked", values: { minutes: body.minutes || 5 } };
+    if (status === 503) return { ok: false, key: "login.err.database" };
+    return { ok: false, key: "login.err.server" };
+  }
+
+  // Asks the server to make a customer account. { ok: true, userId, demo } or { ok: false, key }.
+  async function createAccount(userId, password) {
+    const answer = await askServer("/api/auth/signup", { userId, password });
+    if (!answer.reachable) return { ok: true, userId, demo: true };
+    const { status, body } = answer;
+    if (status >= 200 && status < 300 && body.ok) return { ok: true, userId: body.userId };
+    if (status === 409) return { ok: false, key: "signup.err.taken" };
+    if (status === 429) return { ok: false, key: "signup.err.tooMany" };
+    if (status === 400) {
+      const keys = { id: "signup.err.id", short: "signup.err.short", "same-as-id": "signup.err.sameAsId", common: "signup.err.common" };
+      return { ok: false, key: keys[body.problem] || "signup.err.id" };
+    }
+    if (status === 503) return { ok: false, key: "login.err.database" };
+    return { ok: false, key: "login.err.server" };
+  }
+
+  // Tell the server to forget this sign-in too. Best effort: the page signs out either way.
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="signout"]')) fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+  });
+
+  // Switches a submit button off while the server is asked, so a second tap can't send it twice
+  function busy(button, on) {
+    button.disabled = on;
+    if (on) button.setAttribute("aria-busy", "true");
+    else button.removeAttribute("aria-busy");
+  }
+
+  // Shows or hides what is typed in password boxes, and changes the button's words to match.
+  // words: { show, hide, hidden } in the screen's language.
+  function togglePassword(button, inputs, words) {
+    const show = inputs[0].type === "password";
+    inputs.forEach(input => { input.type = show ? "text" : "password"; });
+    button.innerHTML = `${show ? words.hide : words.show}<span class="visually-hidden">${words.hidden}</span>`;
+  }
+
+  // Shows a message left by access.js (e.g. "Please sign in to use this") once. It is filled a
+  // moment later so screen readers notice the change. Messages are translation keys.
+  function showLoginMessage(elementId, lookUp) {
+    if (!appState.loginMessage) return;
+    const message = lookUp(appState.loginMessage);
+    appState.loginMessage = "";
+    setTimeout(() => {
+      const box = document.getElementById(elementId);
+      if (box) box.textContent = message;
+    }, 50);
+  }
+
+  // "Mdm Lim" is a name (only letters and spaces), so the home screen can greet by it;
+  // "91234567" and "customer01" are a number or an ID
+  function looksLikeName(text) {
+    return /^[\p{L}][\p{L} .'-]*$/u.test(text) && !text.includes(".");
+  }
+
+  // Goes to the screen the customer was trying to open, or home, and says hello
+  function finishCustomerSignIn(id, demo) {
+    const name = looksLikeName(id) ? id : "";
+    signIn("customer", id, name);
+    const next = appState.afterSignIn || "#customer";
+    appState.afterSignIn = "";
+    location.hash = next;
+    showToast(demo ? t("login.demoMode") : name ? t("login.welcome", { name: escapeHtml(name) }) : t("login.welcomeNoName"));
+  }
+
+  // ---------- Customer sign-in (#login) and sign-up (#login/signup) ----------
+
   function loginHtml(param) {
     const signingUp = param === "signup";
     return `
+    <div class="login-top">
+      ${backButtonHtml("login-home")}
+      <div class="login-tools">${languageSwitchHtml()}${textSizeHtml()}</div>
+    </div>
     <section class="login-brand" aria-label="${t("login.about")}">
-      ${brandHtml("#login")}
+      ${brandHtml("#customer")}
       <p class="login-kicker">${t("login.kicker")}</p>
       <p class="login-tagline">${t("login.tagline")} <span>${t("login.taglineEnd")}</span></p>
-      <ul class="login-points">
-        <li>${icon("wave")}${t("login.point.voice")}</li>
-        <li>${icon("shield")}${t("login.point.bank")}</li>
-        <li>${icon("flag")}${t("login.point.report")}</li>
-      </ul>
-      <div class="login-art" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
     </section>
 
     <main class="login-main" tabindex="-1">
-      <div class="login-tools">${languageSwitchHtml()}${textSizeHtml()}</div>
       ${signingUp ? signupCardHtml() : loginCardHtml()}
+
+      <section class="login-hurry" aria-labelledby="hurry-title">
+        <h2 id="hurry-title">${t("login.hurry.title")}</h2>
+        <p>${t("login.hurry.text")}</p>
+        <a class="hurry-link" href="#calling-now">${icon("phone")}<span>${t("login.hurry.calling")}</span>${icon("chevron", "hurry-arrow")}</a>
+        <a class="hurry-link" href="#call-match">${icon("shield")}<span>${t("login.hurry.bank")}</span>${icon("chevron", "hurry-arrow")}</a>
+      </section>
+
+      <p class="staff-entry">${t("login.staffQ")} <a href="#staff-login">${t("login.staffLink")}</a></p>
     </main>`;
   }
 
-  // The sign-in card
   function loginCardHtml() {
     return `
       <form class="login-card" id="login-form" novalidate>
         <h1 tabindex="-1">${t("login.title")}</h1>
         <p class="login-sub">${t("login.sub")}</p>
-        <p class="field-error" id="login-message" role="alert"></p>
-        <fieldset class="role-pick">
-          <legend>${t("login.iAm")}</legend>
-          <div class="role-options">
-            <label class="role"><input type="radio" name="role" value="customer" checked>${icon("user")}
-              <span class="role-text"><strong>${t("login.customer")}</strong><span>${t("login.customerSub")}</span></span></label>
-            <label class="role"><input type="radio" name="role" value="staff">${icon("briefcase")}
-              <span class="role-text"><strong>${t("login.staff")}</strong><span>${t("login.staffSub")}</span></span></label>
-          </div>
-        </fieldset>
+        <p class="login-message" id="login-message" role="status"></p>
         <div class="field">
-          <label for="login-id" id="login-id-label">${t("login.userId")}</label>
-          <input id="login-id" name="userid" autocomplete="off" spellcheck="false" aria-describedby="login-error">
+          <label for="login-id">${t("login.id")}</label>
+          <input id="login-id" name="userid" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40"
+            aria-describedby="login-id-hint login-error">
+          <p class="field-hint" id="login-id-hint">${t("login.idHint")}</p>
         </div>
         <div class="field">
-          <label for="login-pw">${t("login.password")}</label>
+          <label for="login-pw">${t("login.secret")}</label>
           <div class="pw-row">
-            <input id="login-pw" name="password" type="password" autocomplete="off" aria-describedby="login-error">
-            <button type="button" class="pw-toggle" aria-controls="login-pw">${t("login.show")}<span class="visually-hidden">${t("login.passwordHidden")}</span></button>
+            <input id="login-pw" name="secret" type="password" autocomplete="off" maxlength="64"
+              aria-describedby="login-pw-hint login-error">
+            <button type="button" class="pw-toggle" aria-controls="login-pw">${t("login.show")}<span class="visually-hidden">${t("login.secretHidden")}</span></button>
           </div>
+          <p class="field-hint" id="login-pw-hint">${t("login.secretHint")}</p>
         </div>
         <p class="field-error" id="login-error" role="alert"></p>
         <button type="submit" class="btn btn-primary">${t("login.submit")} ${icon("arrow")}</button>
         <button type="button" class="btn btn-link" id="demo-fill">${t("login.demoFill")}</button>
         <p class="login-note">${icon("lock")}<span>${t("login.note")}</span></p>
-        <p class="login-switch" id="signup-switch">${t("login.newHere")} <a href="#login/signup">${t("login.createLink")}</a></p>
+        <p class="login-switch">${t("login.newHere")} <a href="#login/signup">${t("login.createLink")}</a></p>
       </form>`;
   }
 
-  // The sign-up card (customers only)
   function signupCardHtml() {
     return `
       <form class="login-card" id="signup-form" novalidate>
@@ -82,14 +181,14 @@
         <p class="login-sub">${t("signup.sub")}</p>
         <div class="field">
           <label for="signup-id">${t("signup.userId")}</label>
-          <input id="signup-id" name="userid" autocomplete="off" spellcheck="false" maxlength="30" aria-describedby="signup-id-hint signup-error">
+          <input id="signup-id" name="userid" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="30" aria-describedby="signup-id-hint signup-error">
           <p class="field-hint" id="signup-id-hint">${t("signup.idHint")}</p>
         </div>
         <div class="field">
           <label for="signup-pw">${t("signup.password")}</label>
           <div class="pw-row">
             <input id="signup-pw" name="password" type="password" autocomplete="new-password" aria-describedby="signup-pw-hint signup-error">
-            <button type="button" class="pw-toggle" aria-controls="signup-pw signup-pw2">${t("login.show")}<span class="visually-hidden">${t("login.passwordHidden")}</span></button>
+            <button type="button" class="pw-toggle" aria-controls="signup-pw signup-pw2">${t("login.show")}<span class="visually-hidden">${t("login.secretHidden")}</span></button>
           </div>
           <p class="field-hint" id="signup-pw-hint">${t("signup.pwHint")}</p>
         </div>
@@ -104,114 +203,33 @@
       </form>`;
   }
 
-  // Which radio button is picked: "customer" or "staff"
-  function chosenRole(form) {
-    return form.elements.role.value;
-  }
-
-  // Types the demo ID and password for the chosen role, and clears any error
-  function fillDemo(form) {
-    const { userid, password } = form.elements;
-    userid.value = LOGIN_DATA.demoIds[chosenRole(form)];
-    password.value = LOGIN_DATA.demoPasswords[chosenRole(form)];
-    userid.removeAttribute("aria-invalid");
-    password.removeAttribute("aria-invalid");
-    document.getElementById("login-error").textContent = "";
-  }
-
-  // Shows or hides the password box(es) next to the button, and changes the button's words to match
-  function togglePassword(button) {
-    const inputs = button.getAttribute("aria-controls").split(" ").map(id => document.getElementById(id));
-    const show = inputs[0].type === "password";
-    inputs.forEach(input => { input.type = show ? "text" : "password"; });
-    button.innerHTML = `${show ? t("login.hide") : t("login.show")}<span class="visually-hidden">${t("login.passwordHidden")}</span>`;
-  }
-
-  // Asks the server whether this ID and password are right for this side.
-  // Gives back { ok: true, userId } or { ok: false, key, values } where key is the words to show.
-  async function checkCredentials(role, userId, password) {
-    let response;
-    try {
-      response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, userId, password })
-      });
-    } catch (error) {
-      console.warn("Sign in needs the server: run npm start in the /server folder, then open http://localhost:3000");
-      return { ok: false, key: "login.err.server" };
+  // Shows an error under the boxes and marks the box that needs fixing
+  function showError(form, key, field, values) {
+    document.getElementById("login-error").textContent = t(key, values);
+    ["userid", "secret"].forEach(name => form.elements[name].removeAttribute("aria-invalid"));
+    if (field) {
+      field.setAttribute("aria-invalid", "true");
+      field.focus();
     }
-    let data = {};
-    try { data = await response.json(); } catch (error) { /* not JSON: probably a plain file server with no sign-in */ }
-
-    if (response.ok && data.ok) return { ok: true, userId: data.userId };
-    if (response.status === 400 || response.status === 401) return { ok: false, key: "login.err.wrong" };
-    if (response.status === 423) return { ok: false, key: "login.err.locked", values: { minutes: data.minutes || 5 } };
-    if (response.status === 503) return { ok: false, key: "login.err.database" };
-    console.warn("Sign in needs the server: run npm start in the /server folder, then open http://localhost:3000");
-    return { ok: false, key: "login.err.server" };
   }
 
-  // Checks both boxes are filled in, asks the server, then signs in and goes to that person's home screen
+  // Needs both boxes; then the server checks them
   async function submitLogin(event) {
     event.preventDefault();   // stop the browser reloading the page, which is what a form does by default
     const form = event.currentTarget;
-    const { userid, password } = form.elements;
-    const error = document.getElementById("login-error");
-    userid.setAttribute("aria-invalid", String(!userid.value.trim()));
-    password.setAttribute("aria-invalid", String(!password.value));
-    if (!userid.value.trim() || !password.value) {
-      error.textContent = t("login.err.empty");
-      (userid.value.trim() ? password : userid).focus();
-      return;
-    }
-    error.textContent = "";
+    const { userid, secret } = form.elements;
+    const id = userid.value.trim();
+    if (!id && !secret.value) return showError(form, "login.err.empty", userid);
+    if (!id) return showError(form, "login.err.id", userid);
+    if (!secret.value) return showError(form, "login.err.secret", secret);
 
-    // Ask the server. The button is switched off meanwhile so a second click can't send it twice.
     const button = form.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.setAttribute("aria-busy", "true");
-    const role = chosenRole(form);
-    const result = await checkCredentials(role, userid.value.trim(), password.value);
-    button.disabled = false;
-    button.removeAttribute("aria-busy");
-    password.value = "";   // never keep a password, whatever the answer
-
-    if (!result.ok) {
-      error.textContent = t(result.key, result.values);
-      password.setAttribute("aria-invalid", "true");
-      password.focus();
-      return;
-    }
-    signIn(role, result.userId);
-    location.hash = role === "staff" ? "#staff" : "#customer";
-  }
-
-  // Asks the server to make a customer account. Gives back { ok: true, userId } or { ok: false, key }.
-  async function createAccount(userId, password) {
-    let response;
-    try {
-      response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, password })
-      });
-    } catch (error) {
-      console.warn("Sign up needs the server: run npm start in the /server folder, then open http://localhost:3000");
-      return { ok: false, key: "login.err.server" };
-    }
-    let data = {};
-    try { data = await response.json(); } catch (error) { /* not JSON: probably a plain file server */ }
-
-    if (response.ok && data.ok) return { ok: true, userId: data.userId };
-    if (response.status === 409) return { ok: false, key: "signup.err.taken" };
-    if (response.status === 429) return { ok: false, key: "signup.err.tooMany" };
-    if (response.status === 400) {
-      const keys = { id: "signup.err.id", short: "signup.err.short", "same-as-id": "signup.err.sameAsId", common: "signup.err.common" };
-      return { ok: false, key: keys[data.problem] || "signup.err.id" };
-    }
-    if (response.status === 503) return { ok: false, key: "login.err.database" };
-    return { ok: false, key: "login.err.server" };
+    busy(button, true);
+    const result = await checkCredentials("customer", id.replace(/\s/g, ""), secret.value);
+    busy(button, false);
+    secret.value = "";   // never keep a password or PIN, whatever the answer
+    if (!result.ok) return showError(form, result.key, secret, result.values);
+    finishCustomerSignIn(looksLikeName(id) ? id : result.userId, result.demo);
   }
 
   // Checks the sign-up boxes, asks the server, then signs the new customer in
@@ -220,7 +238,7 @@
     const form = event.currentTarget;
     const { userid, password, password2 } = form.elements;
     const error = document.getElementById("signup-error");
-    const id = userid.value.trim();
+    const id = userid.value.trim().replace(/\s/g, "");
     let problem = "";
     if (!id || !password.value || !password2.value) problem = "signup.err.empty";
     else if (!/^[A-Za-z0-9][A-Za-z0-9._-]{3,29}$/.test(id)) problem = "signup.err.id";
@@ -237,65 +255,126 @@
     [userid, password, password2].forEach(input => input.removeAttribute("aria-invalid"));
 
     const button = form.querySelector('button[type="submit"]');
-    button.disabled = true;
-    button.setAttribute("aria-busy", "true");
+    busy(button, true);
     const result = await createAccount(id, password.value);
-    button.disabled = false;
-    button.removeAttribute("aria-busy");
+    busy(button, false);
     password.value = "";   // never keep a password, whatever the answer
     password2.value = "";
-
     if (!result.ok) {
       error.textContent = t(result.key);
       (result.key === "signup.err.taken" || result.key === "signup.err.id" ? userid : password).focus();
       return;
     }
-    signIn("customer", result.userId);   // a new account is signed in straight away
-    location.hash = "#customer";
+    finishCustomerSignIn(result.userId, result.demo);   // a new account is signed in straight away
   }
 
-  // Tell the server to forget this sign-in too. Best effort: the page signs out either way.
-  document.addEventListener("click", event => {
-    if (event.target.closest('[data-action="signout"]')) fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-  });
-
-  // Runs once the screen is on the page: connects the form's buttons, and shows any message
-  // left by access.js (e.g. "That page is for bank staff only").
   function afterLogin(param) {
+    const words = { show: t("login.show"), hide: t("login.hide"), hidden: t("login.secretHidden") };
     if (param === "signup") {
-      const signupForm = document.getElementById("signup-form");
-      signupForm.addEventListener("submit", submitSignup);
-      signupForm.querySelector(".pw-toggle").addEventListener("click", event => togglePassword(event.currentTarget));
+      const form = document.getElementById("signup-form");
+      form.addEventListener("submit", submitSignup);
+      form.querySelector(".pw-toggle").addEventListener("click", event =>
+        togglePassword(event.currentTarget, [form.elements.password, form.elements.password2], words));
       return;
     }
     const form = document.getElementById("login-form");
-
-    // Staff sign in with a "Staff ID", customers with a "User ID"
-    form.addEventListener("change", event => {
-      if (event.target.name === "role") {
-        const isStaff = chosenRole(form) === "staff";
-        document.getElementById("login-id-label").textContent = isStaff ? t("login.staffId") : t("login.userId");
-        document.getElementById("signup-switch").hidden = isStaff;   // only customers can sign up
-      }
-    });
     form.addEventListener("submit", submitLogin);
-    document.getElementById("demo-fill").addEventListener("click", () => fillDemo(form));
-    form.querySelector(".pw-toggle").addEventListener("click", event => togglePassword(event.currentTarget));
-
-    if (appState.loginMessage) {
-      const message = appState.loginMessage;
-      appState.loginMessage = "";   // show it once only
-      // Fill it a moment later so screen readers notice the change
-      setTimeout(() => {
-        document.getElementById("login-message").textContent = message;
-      }, 50);
-    }
+    form.querySelector(".pw-toggle").addEventListener("click", event =>
+      togglePassword(event.currentTarget, [form.elements.secret], words));
+    document.getElementById("demo-fill").addEventListener("click", () => {
+      form.elements.userid.value = data.demoCustomer.id;
+      form.elements.secret.value = data.demoCustomer.secret;
+      ["userid", "secret"].forEach(name => form.elements[name].removeAttribute("aria-invalid"));
+      document.getElementById("login-error").textContent = "";
+    });
+    showLoginMessage("login-message", key => t(key));
   }
 
-  registerRoute({
-    name: "login",
-    role: "public",
-    render: loginHtml,
-    afterRender: afterLogin
-  });
+  // ---------- Staff sign-in (#staff-login): English only, like the staff console ----------
+
+  function staffLoginHtml() {
+    const s = data.staff;
+    return `
+    <div class="login-top" lang="en">
+      <a class="login-home" href="#login">${icon("back")}${s.back}</a>
+      <div class="login-tools">${textSizeHtml()}</div>
+    </div>
+    <section class="login-brand" aria-label="${s.about}" lang="en">
+      ${brandHtml("#staff-login", "Staff")}
+      <p class="login-kicker">${s.kicker}</p>
+      <p class="login-tagline">${s.tagline}</p>
+    </section>
+
+    <main class="login-main" tabindex="-1" lang="en">
+      <form class="login-card" id="staff-form" novalidate>
+        <h1 tabindex="-1">${s.title}</h1>
+        <p class="login-sub">${s.sub}</p>
+        <p class="login-message" id="staff-message" role="status"></p>
+        <div class="field">
+          <label for="staff-id">${s.id}</label>
+          <input id="staff-id" name="userid" autocomplete="off" spellcheck="false" aria-describedby="staff-error">
+        </div>
+        <div class="field">
+          <label for="staff-pw">${s.password}</label>
+          <div class="pw-row">
+            <input id="staff-pw" name="password" type="password" autocomplete="off" aria-describedby="staff-error">
+            <button type="button" class="pw-toggle" aria-controls="staff-pw">${s.show}<span class="visually-hidden">${s.passwordHidden}</span></button>
+          </div>
+        </div>
+        <p class="field-error" id="staff-error" role="alert"></p>
+        <button type="submit" class="btn btn-primary">${s.submit} ${icon("arrow")}</button>
+        <button type="button" class="btn btn-link" id="staff-demo-fill">${s.demoFill}</button>
+        <p class="login-note">${icon("lock")}<span>${s.note}</span></p>
+      </form>
+    </main>`;
+  }
+
+  async function submitStaff(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const { userid, password } = form.elements;
+    const error = document.getElementById("staff-error");
+    userid.setAttribute("aria-invalid", String(!userid.value.trim()));
+    password.setAttribute("aria-invalid", String(!password.value));
+    if (!userid.value.trim() || !password.value) {
+      error.textContent = data.staff.errEmpty;
+      (userid.value.trim() ? password : userid).focus();
+      return;
+    }
+    error.textContent = "";
+    const button = form.querySelector('button[type="submit"]');
+    busy(button, true);
+    const result = await checkCredentials("staff", userid.value.trim(), password.value);
+    busy(button, false);
+    password.value = "";   // never keep a password, even in a demo
+    if (!result.ok) {
+      error.textContent = data.text.en[result.key] ? data.text.en[result.key].replace("{minutes}", (result.values || {}).minutes || 5) : result.key;
+      password.setAttribute("aria-invalid", "true");
+      password.focus();
+      return;
+    }
+    signIn("staff", result.userId);
+    location.hash = "#staff";
+    if (result.demo) showToast(data.text.en["login.demoMode"]);
+  }
+
+  function afterStaffLogin() {
+    const form = document.getElementById("staff-form");
+    const s = data.staff;
+    form.addEventListener("submit", submitStaff);
+    form.querySelector(".pw-toggle").addEventListener("click", event =>
+      togglePassword(event.currentTarget, [form.elements.password], { show: s.show, hide: s.hide, hidden: s.passwordHidden }));
+    document.getElementById("staff-demo-fill").addEventListener("click", () => {
+      form.elements.userid.value = data.demoStaff.id;
+      form.elements.password.value = data.demoStaff.password;
+      form.elements.userid.removeAttribute("aria-invalid");
+      form.elements.password.removeAttribute("aria-invalid");
+      document.getElementById("staff-error").textContent = "";
+    });
+    // Staff messages are always shown in English
+    showLoginMessage("staff-message", key => data.text.en[key] || key);
+  }
+
+  registerRoute({ name: "login", role: "public", render: loginHtml, afterRender: afterLogin });
+  registerRoute({ name: "staff-login", role: "public", render: staffLoginHtml, afterRender: afterStaffLogin });
 })();
