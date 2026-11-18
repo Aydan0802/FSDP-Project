@@ -271,6 +271,18 @@ h1:focus, main:focus { outline: none; }
 .back-btn .icon { width: 1.375rem; height: 1.375rem; }
 .back-btn:active { transform: scale(.97); }
 @media (hover: hover) { .back-btn:hover { border-color: var(--text); background: var(--surface-2); } }
+
+/* The Menu button: top-left on phones only, so the menu (with language, text size and read aloud
+   at the top of it) is easy to find. Tablets have Menu in the rail; desktops keep the menu open. */
+.topbar-menu {
+  display: none; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; cursor: pointer;
+  background: var(--surface); color: var(--text);
+  border: 2px solid var(--field-border); border-radius: 14px;
+  transition: border-color .15s, background-color .15s, transform .12s;
+}
+.topbar-menu .icon { width: 1.5rem; height: 1.5rem; }
+.topbar-menu:active { transform: scale(.97); }
+@media (hover: hover) { .topbar-menu:hover { border-color: var(--text); background: var(--surface-2); } }
 .topbar .tool-btn { white-space: nowrap; }
 .topbar .tool-btn--signin { padding: .5rem 1rem; }
 
@@ -352,9 +364,13 @@ body.menu-open .scrim { opacity: 1; visibility: visible; transition: opacity .25
 .side-urgent .icon { width: 1.5rem; height: 1.5rem; }
 .side-urgent:hover, .side-urgent[aria-current="page"] { background: var(--red-dark); }
 .side-urgent:active { transform: scale(.98); }
-/* Language and text size: inside the menu on phones only (tablets and desktops have them in the top bar) */
-.side-display { display: grid; gap: .5rem; justify-items: start; padding: 0 .5rem; }
-.side-display .side-group { margin-left: .25rem; }
+/* Language, text size and read aloud: a grey card at the top of the menu on phones and small
+   tablets, so they are easy to spot (bigger screens have them in the top bar) */
+.side-display {
+  display: grid; gap: .5rem; justify-items: start; margin: .25rem 0 .25rem; padding: .25rem .75rem .875rem;
+  background: var(--surface-2); border-radius: 16px;
+}
+.side-display .side-group { margin: .625rem 0 .125rem; color: var(--text); }
 .side-display .lang-pick { width: 100%; }
 .side-display .lang-pick select { width: 100%; }
 .side-display .text-size-label { display: inline; }
@@ -377,6 +393,7 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
 @media (max-width: 37.49rem) {
   .shell-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }   /* room for the bottom bar */
   .topbar { padding-left: .75rem; padding-right: .75rem; }
+  .topbar-menu { display: grid; }
   .topbar .brand { gap: .5rem; min-width: 0; }
   .topbar .brand-mark { width: 2.5rem; height: 2.5rem; }
   .topbar .brand-name { font-size: 1.125rem; white-space: nowrap; }
@@ -401,6 +418,10 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   body:has(.call-bar) .tabbar { display: none; }
   body:has(.call-bar) .shell-main { padding-bottom: 0; }
   .read-stop { bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px)); }
+}
+/* Guests have the wider "Sign in" button, so on most phones the logo stands alone next to Menu */
+@media (max-width: 26.99rem) {
+  .topbar:has(.tool-btn--signin) .brand-name { display: none; }
 }
 
 /* ----- Tablet and iPad upright (600px to 1023px): the rail ----- */

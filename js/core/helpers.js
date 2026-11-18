@@ -186,9 +186,12 @@ function tabBarHtml(here) {
     </nav>`;
 }
 
-// The sidebar: brand, "Need help now?" with the red "Someone is calling me now" button, every
-// tool in groups, the display settings (phone only) and the account. Open all the time on wide screens; on phones
-// and tablets it slides in over the page when "Menu" is tapped (see openMenu() below).
+// The sidebar: brand, the display settings (language, text size, read aloud), "Need help now?"
+// with the red "Someone is calling me now" button, every tool in groups, and the account.
+// The display settings come first so they are the first thing seen when the menu opens on a
+// phone (on tablets and desktops they are in the top bar instead, so CSS hides them here).
+// Open all the time on wide screens; on phones and tablets it slides in over the page when
+// "Menu" is tapped (see openMenu() below).
 function sidebarHtml(here) {
   const name = appState.userName ? escapeHtml(appState.userName) : "";
   const account = isSignedIn()
@@ -202,6 +205,12 @@ function sidebarHtml(here) {
         ${brandHtml("#customer")}
         <button type="button" class="side-close" data-action="close-menu" aria-label="${t("side.close")}">${icon("cross")}</button>
       </div>
+      <div class="side-display">
+        <p class="side-group">${t("side.display")}</p>
+        ${languageSwitchHtml("side")}
+        ${textSizeHtml()}
+        ${readAloudButtonHtml().replace('class="tool-btn"', 'class="tool-btn side-read" data-close-menu')}
+      </div>
       <nav aria-label="${t("nav.main")}">
         ${SIDE_MENU.map((group, i) => `<p class="side-group">${t(group.groupKey)}</p>
           ${i === 0 ? `<a class="side-urgent" href="#calling-now"${hereAttr("calling-now", here)}>${icon("phone")}<span>${t("side.urgent")}</span></a>` : ""}
@@ -211,19 +220,13 @@ function sidebarHtml(here) {
               </a></li>`).join("")}
           </ul>`).join("")}
       </nav>
-      <div class="side-display">
-        <p class="side-group">${t("side.display")}</p>
-        ${languageSwitchHtml("side")}
-        ${textSizeHtml()}
-        ${readAloudButtonHtml().replace('class="tool-btn"', 'class="tool-btn side-read" data-close-menu')}
-      </div>
       <div class="side-account">${account}</div>
     </aside>
     <div class="scrim" data-action="close-menu" aria-hidden="true"></div>`;
 }
 
-// A customer screen: the sidebar, a slim bar along the top (language, read aloud, text size,
-// sign in), the content, and the bottom bar / rail. Guests (not signed in) see "Sign in" where
+// A customer screen: the sidebar, a slim bar along the top (Menu button on phones, language,
+// read aloud, text size, sign in), the content, and the bottom bar / rail. Guests (not signed in) see "Sign in" where
 // signed-in customers see "Sign out". current is kept for the screens that pass it, but the
 // menus now work out the screen themselves (currentRoute()).
 // textSizeHtml() and readAloudButtonHtml() live in a11y.js; languageSwitchHtml() in i18n.js.
@@ -236,6 +239,7 @@ function customerPageHtml(current, content) {
       ${sidebarHtml(here)}
       <div class="shell-main">
         <header class="topbar">
+          <button type="button" class="topbar-menu" data-action="open-menu" aria-controls="sidebar" aria-expanded="false">${icon("menu")}<span class="visually-hidden">${t("tab.menu")}</span></button>
           ${here === "customer" ? "" : backButtonHtml("topbar-back")}
           ${brandHtml("#customer")}
           <div class="topbar-tools">
