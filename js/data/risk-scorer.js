@@ -85,6 +85,9 @@ const RISK_SCORER_DATA = {
         actionText: "Pause the transfer. A bank officer will review it before any money leaves." }
     ],
 
+        // From this score up, the customer goes straight to the kopi break (#pause-verify).
+    // 40 = Medium and High. Change to 70 for High only.
+    autoKopiFrom: 40,
     maxScore: 100,  // the score is capped here
     topReasons: 3   // how many reasons to show (R-3)
   },

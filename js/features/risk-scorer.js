@@ -324,7 +324,16 @@
     const [{ result, source }] = await Promise.all([score(sample.transfer), wait(MIN_CHECK_MS)]);
     const caseRef = result.action === "pause-and-case" ? openCase(result, sample.transfer) : "";
     state.lastResult = { sampleId: sample.id, ...result, caseRef, source };
-    if (state.phase !== "scoring" || !document.querySelector(".rs-screen")) return;   // the customer left
+        if (state.phase !== "scoring" || !document.querySelector(".rs-screen")) return;   // the customer left
+
+    // Risky enough? Go straight to the kopi break (Jiliana's #pause-verify), no button to skip it
+    if (result.score >= data.config.autoKopiFrom) {
+      appState.pauseVerify = null;        // start a new kopi break for this transfer
+      state.phase = "result";             // the result screen is still there if they come back
+      location.hash = "#pause-verify";
+      return;
+    }
+
     state.phase = "result";
     redrawScreen();
   }
