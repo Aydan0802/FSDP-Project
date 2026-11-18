@@ -387,9 +387,11 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   .topbar-tools { flex: none; }
   /* With bigger text there is no room for the name next to the logo, so the logo stands alone */
   html[data-size="large"] .topbar .brand-name, html[data-size="larger"] .topbar .brand-name { display: none; }
-  /* Read aloud, text size and Sign out live in the menu on a phone, to keep the top bar short.
-     The language stays in the top bar as a globe button, for anyone who can't read English. */
-  .topbar [data-action="read"], .topbar .text-size, .topbar button.topbar-account { display: none; }
+  /* Read aloud and text size live in the menu on a phone, to keep the top bar short.
+     The language stays in the top bar as a globe button, for anyone who can't read English.
+     Sign out stays in the top bar too, as the exit icon only, like the staff screens (the word is
+     still there for screen readers); it is in the menu as well. */
+  .topbar [data-action="read"], .topbar .text-size { display: none; }
   .topbar .lang-pick { width: 48px; min-height: 48px; }
   .topbar .lang-pick select { width: 100%; min-height: 44px; padding: 0; color: transparent; }
   .topbar .lang-pick select option { color: var(--text); }
@@ -431,8 +433,7 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   .scrim, .side-close, .side-display, .tabbar { display: none; }
   .topbar { justify-content: flex-end; }
   .topbar .brand { display: none; }   /* it is at the top of the sidebar */
-  /* Sign out is at the bottom of the sidebar; "Sign in" also stays in the top bar, where guests look for it */
-  .topbar button.topbar-account { display: none; }
+  /* Sign out is at the bottom of the sidebar and also in the top bar, where "Sign in" is for guests */
 }
 @media (min-width: 64rem) and (max-width: 79.99rem) {
   .topbar .text-size-label { display: none; }
