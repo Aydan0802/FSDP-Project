@@ -195,6 +195,7 @@ function sidebarHtml(here) {
     ? `<p class="side-who">${icon("user")}<span>${name ? t("side.signedInAs", { name }) : t("side.signedIn")}</span></p>
        <button type="button" class="btn btn-secondary btn-small" data-action="signout">${icon("logout")}${t("header.signOut")}</button>`
     : `<a class="btn btn-primary btn-small side-signin" href="#login">${icon("user")}${t("header.signIn")}</a>
+       <a class="btn btn-secondary btn-small side-signup" href="#login/signup">${icon("user")}${t("header.signUp")}</a>
        <p class="side-hint">${t("side.signInHint")}</p>`;
   return `<aside class="sidebar" id="sidebar" aria-label="${t("tab.menu")}">
       <div class="side-top">
