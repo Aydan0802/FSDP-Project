@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Call warning preview | Pause &amp; Prove</title>
+<!-- Android call warning preview.
+     Owner: Aydan
+     Preview only: what a customer would see on an Android phone when a reported number calls.
+     Pause & Prove (set as the phone's "Caller ID & spam app") sees the incoming number, not the
+     conversation, and posts a notification. Tapping it opens the warning. Some buttons open our
+     real website (https://fsdp-project.vercel.app) inside the phone, like an in-app browser.
+     Everything else is made up and nothing is sent. The number is from the UK range kept for
+     films and TV (020 7946 0xxx), so it is nobody's.
+     Add ?autoplay to the address to loop the whole story for the booth. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Same values as our website (css/base.css and css/clarity.css) */
+    --red: #ED1C24;        /* buttons, icons, borders only (4.4:1 on white) */
+    --red-dark: #9E1B32;   /* red text and the dark red card (7.9:1 on white) */
+    --charcoal: #363B40;   /* main text */
+    --slate: #3D525D;      /* secondary text */
+    --white: #FFFFFF;
+    --red-tint: #FDEDEE;
+    --slate-tint: #EEF2F4;
+    --divider: #C9D2D7;
+    --amber: #A35200;
+    --amber-dark: #8A4500;
+    --amber-tint: #FFF1E0;
+    --bg: #F3F5F7;
+    --border: #E1E6EA;
+    --field-border: #6B7A84;
+    --radius: 14px;
+    --radius-lg: 22px;
+    --shadow: 0 1px 2px rgba(54, 59, 64, .06), 0 8px 24px rgba(54, 59, 64, .08);
+    --font-app: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+    /* Android's own screens (the phone's system, not our app) */
+    --font-android: Roboto, "Segoe UI", Arial, sans-serif;
+    --android-green: #188038;   /* white text 5.0:1 */
+    --android-red: #C5221F;     /* white text 5.6:1 */
+    --android-muted: #5F6A70;   /* grey text on white 5.6:1 */
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--charcoal); font: 18px/1.55 var(--font-app); }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--charcoal); outline-offset: 3px; }
+  [data-focus]:focus { outline: none; }   /* headings only get focus so screen readers start there */
+  .icon { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
+          stroke-linecap: round; stroke-linejoin: round; }
+  .visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+                     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---------- Page layout: phone, then captions (side by side on wide screens) ---------- */
+  .stage { max-width: 440px; margin: 0 auto; padding: 24px 16px 40px; display: grid; gap: 20px;
+           grid-template-areas: "head" "phone" "side"; }
+  .head { grid-area: head; }
+  .phone-col { grid-area: phone; min-width: 0; }
+  .side { grid-area: side; min-width: 0; }
+  @media (min-width: 900px) {
+    .stage { max-width: 1040px; padding-top: 32px; grid-template-columns: 400px minmax(0, 1fr);
+             grid-template-rows: auto 1fr; grid-template-areas: "phone head" "phone side";
+             column-gap: 56px; row-gap: 16px; align-items: start; }
+    .phone-col { position: sticky; top: 16px; }
+  }
+  .eyebrow { margin: 0 0 4px; color: var(--red-dark); font-weight: 700; font-size: 16px; }
+  .head h1 { margin: 0 0 8px; font-size: 32px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; }
+  .intro { margin: 0; color: var(--slate); }
+
+  /* ---------- The phone ---------- */
+  .phone-wrap { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
+  /* Power and volume keys on the right edge */
+  .phone-wrap::before, .phone-wrap::after { content: ""; position: absolute; right: -3px; width: 4px;
+                                             background: #2A2F33; border-radius: 0 3px 3px 0; }
+  .phone-wrap::before { top: 150px; height: 60px; }
+  .phone-wrap::after { top: 240px; height: 104px; }
+  .phone { position: relative; height: 780px; max-height: calc(100vh - 32px); min-height: 640px;
+           border: 10px solid #15191C; border-radius: 46px; overflow: hidden; background: #000;
+           box-shadow: 0 0 0 2px #3A4146, var(--shadow); }
+  .punch { position: absolute; z-index: 6; top: 10px; left: 50%; width: 14px; height: 14px; margin-left: -7px;
+           border-radius: 50%; background: #050607; box-shadow: inset 0 0 0 2px #1E2428; }
+  .gesture { position: absolute; z-index: 6; bottom: 8px; left: 50%; width: 108px; height: 5px; margin-left: -54px;
+             border-radius: 3px; background: rgba(255, 255, 255, .85); pointer-events: none; }
+  .phone[data-tone="light"] .gesture { background: rgba(54, 59, 64, .75); }
+  /* The phone shakes while it rings (only on the call screen) */
+  .phone-wrap.buzzing { animation: buzz 2.4s linear infinite; }
+  @keyframes buzz {
+    0%, 18%, 100% { transform: none; }
+    2%, 6%, 10%, 14% { transform: translateX(-2px) rotate(-.4deg); }
+    4%, 8%, 12%, 16% { transform: translateX(2px) rotate(.4deg); }
+  }
+
+  /* Status bar: white text on dark screens, solid white on app screens so content scrolls under it */
+  .status-bar { position: absolute; z-index: 4; top: 0; left: 0; right: 0; height: 36px; padding: 0 18px 0 24px;
+                display: flex; align-items: center; justify-content: space-between;
+                font: 500 14px var(--font-android); color: var(--white); }
+  .phone[data-tone="light"] .status-bar { background: var(--white); color: var(--charcoal); }
+  .sb-left, .sb-right { display: flex; align-items: center; gap: 6px; }
+  .sb-icon { width: 15px; height: 15px; fill: currentColor; stroke: none; }
+  .sb-icon.line { fill: none; stroke: currentColor; stroke-width: 2.2; }
+  .sb-batt { width: 24px; height: 13px; }
+  /* Android's green "on a call" chip, with a bigger invisible tap area (48 px) */
+  .call-chip { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px;
+               border: 0; border-radius: 999px; background: var(--android-green); color: var(--white);
+               font: 500 13px var(--font-android); font-variant-numeric: tabular-nums; }
+  .call-chip::after { content: ""; position: absolute; inset: -12px -6px; }
+  .call-chip .icon { width: 14px; height: 14px; }
+
+  /* Every phone screen fills the phone; only one shows at a time */
+  .screen { position: absolute; inset: 0; padding: 36px 0 22px; overflow-y: auto; overscroll-behavior: contain;
+            scrollbar-width: thin; }
+  /* While the call rings, Android keeps it at the top of other apps; leave room for it */
+  .has-hun .screen[data-tone="light"] { padding-top: 180px; }
+  .screen[data-tone="dark"] :focus-visible { outline-color: var(--white); }
+
+  /* ---------- Android's incoming call and in-call screens (Google's Phone app style) ---------- */
+  .call, .incall { display: flex; flex-direction: column; color: var(--white); font-family: var(--font-android);
+                   background: radial-gradient(120% 60% at 15% 0%, #3A5663 0%, transparent 60%),
+                               radial-gradient(90% 55% at 100% 100%, #2A3F4A 0%, transparent 60%), #141B1F; }
+  /* Caller details sit below where our notification appears, so it never covers the number */
+  .call-info { margin-top: 196px; padding: 0 24px; text-align: center; }
+  .incall .call-info { margin-top: 214px; }
+  .call-label { margin: 0 0 6px; font-size: 15px; color: #CFD8DC; letter-spacing: .02em; }
+  .call-number { margin: 0; font: 400 32px/1.2 var(--font-android); letter-spacing: .01em; }
+  .call-where { margin: 6px 0 0; font-size: 16px; color: #CFD8DC; }
+  .call-timer { margin: 8px 0 0; font-size: 18px; color: #E3E9EC; font-variant-numeric: tabular-nums; }
+  .call-mid { flex: 1; display: grid; place-items: center; min-height: 150px; }
+  .call-avatar { width: 112px; height: 112px; border-radius: 50%; background: rgba(255, 255, 255, .14);
+                 display: grid; place-items: center; }
+  .call-avatar .icon { width: 56px; height: 56px; stroke-width: 1.6; }
+  .ringing .call-avatar { animation: pulse 1.6s ease-out infinite; }
+  @keyframes pulse { from { box-shadow: 0 0 0 0 rgba(255, 255, 255, .3); } to { box-shadow: 0 0 0 30px rgba(255, 255, 255, 0); } }
+  .call-btns { display: flex; justify-content: space-around; padding: 0 24px 34px; }
+  .call-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 88px; padding: 0;
+              background: none; border: 0; color: #E3E9EC; font: 500 15px var(--font-android); }
+  .disc { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; color: var(--white); }
+  .disc .icon { width: 30px; height: 30px; }
+  .disc.decline { background: var(--android-red); }
+  .disc.answer { background: var(--android-green); }
+  .hang .icon, .icon.hang, .disc.decline .icon { transform: rotate(135deg); }
+  .incall-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 4px; margin-top: auto; padding: 0 20px; }
+  .incall-grid button { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 48px;
+                        background: none; border: 0; color: #E3E9EC; font: 400 14px var(--font-android); }
+  .incall-grid .disc { width: 60px; height: 60px; background: rgba(255, 255, 255, .14); }
+  .incall-grid .disc .icon { width: 26px; height: 26px; }
+  .incall-grid [aria-pressed="true"] .disc { background: #E3E9EC; color: #141B1F; }
+  .end-btn { align-self: center; display: grid; place-items: center; width: 100px; height: 60px; margin: 24px 0 30px;
+             border: 0; border-radius: 30px; background: var(--android-red); color: var(--white); }
+  .end-btn .icon { width: 30px; height: 30px; }
+
+  /* ---------- Notifications: Android draws the top line; the content below uses our look ---------- */
+  .notif { background: var(--white); color: var(--charcoal); border-radius: 24px; text-align: left;
+           box-shadow: 0 10px 30px rgba(0, 0, 0, .3); }
+  .headsup { position: absolute; z-index: 5; top: 42px; left: 8px; right: 8px; animation: drop .35s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes drop { from { transform: translateY(-120%); opacity: .3; } to { transform: none; opacity: 1; } }
+  .notif-main { display: block; width: 100%; margin: 0; padding: 14px 16px 6px; background: none; border: 0;
+                border-radius: 24px 24px 0 0; color: inherit; text-align: left; }
+  .notif-pad { padding: 14px 16px 10px; }
+  .notif-head { display: flex; align-items: center; gap: 8px; font: 400 13px var(--font-android); color: var(--android-muted); }
+  .app-icon { width: 20px; height: 20px; flex: none; }
+  .notif-head .chev { width: 18px; height: 18px; margin-left: auto; }
+  .notif-pill { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 6px; padding: 4px 12px;
+                border-radius: 999px; background: var(--red-tint); color: var(--red-dark); font: 700 16px var(--font-app); }
+  .notif-pill .icon { width: 18px; height: 18px; }
+  .notif-title { display: block; margin: 8px 0 2px; font: 700 17px/1.3 var(--font-app); }
+  .notif-sys-title { display: block; margin: 8px 0 0; font: 500 16px var(--font-android); }
+  .notif-text { display: block; font: 400 16px/1.4 var(--font-app); }
+  .notif.sys .notif-text { font-family: var(--font-android); color: var(--android-muted); }
+  .notif-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 10px 10px; }
+  .notif-actions button { min-height: 48px; padding: 0 16px; border: 0; border-radius: 999px; background: none;
+                          color: var(--red-dark); font: 700 16px var(--font-app); }
+  .notif-actions button:first-child { background: var(--red-tint); }
+  .sys-icon { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+              background: var(--android-green); color: var(--white); }
+  .sys-icon .icon { width: 12px; height: 12px; }
+
+  /* Android's card for a call that is still ringing, shown over other apps */
+  .ring-hun { position: absolute; z-index: 5; top: 42px; left: 8px; right: 8px; padding: 10px; border-radius: 24px;
+              background: #2B3337; color: var(--white); font-family: var(--font-android);
+              box-shadow: 0 10px 30px rgba(0, 0, 0, .3); animation: drop .35s cubic-bezier(.2, .8, .2, 1); }
+  .ring-main { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 2px 4px;
+               background: none; border: 0; border-radius: 16px; color: inherit; text-align: left; }
+  .ring-av { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+             background: rgba(255, 255, 255, .16); }
+  .ring-av .icon { width: 22px; height: 22px; }
+  .ring-main b { display: block; font: 500 17px var(--font-android); }
+  .ring-main small { display: block; font-size: 14px; color: #CFD8DC; }
+  .ring-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .ring-btns button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+                      border: 0; border-radius: 999px; color: var(--white); font: 500 16px var(--font-android); }
+  .ring-btns .icon { width: 20px; height: 20px; }
+  .r-decline { background: var(--android-red); }
+  .r-answer { background: var(--android-green); }
+  .ring-hun :focus-visible { outline-color: var(--white); }
+
+  /* ---------- Pause & Prove screens: the same look as our website ---------- */
+  .app { background: var(--bg); color: var(--charcoal); font: 18px/1.55 var(--font-app); }
+  .app-bar { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 16px; background: var(--white);
+             box-shadow: 0 1px 0 var(--border), 0 4px 16px rgba(54, 59, 64, .05); }
+  .app-bar .mark { width: 38px; height: 38px; flex: none; }
+  .app-bar b { font-size: 19px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+  .back { display: grid; place-items: center; flex: none; width: 48px; height: 48px; margin-left: -10px; padding: 0;
+          border: 0; border-radius: 50%; background: none; color: var(--charcoal); }
+  .back:hover { background: var(--slate-tint); }
+  .app-body { padding: 16px 16px 24px; }
+  .app h2 { margin: 0 0 8px; font-size: 24px; line-height: 1.2; font-weight: 800; letter-spacing: -.02em; }
+  .app h3 { margin: 0 0 6px; font-size: 20px; font-weight: 800; }
+  .app p { margin: 0 0 12px; }
+  /* The dark red card, like "Need help right now?" on our home page */
+  .urgent { position: relative; overflow: hidden; padding: 20px 18px; background: var(--red-dark); color: var(--white);
+            border-radius: var(--radius-lg); box-shadow: 0 16px 40px rgba(158, 27, 50, .25); }
+  .urgent::before, .urgent::after { content: ""; position: absolute; z-index: 0; border-radius: 50%; pointer-events: none; }
+  .urgent::before { top: -9rem; right: -7rem; width: 20rem; height: 20rem; background: var(--red); opacity: .55; }
+  .urgent::after { right: 6rem; bottom: -8rem; width: 12rem; height: 12rem; background: rgba(255, 255, 255, .07); }
+  .urgent > * { position: relative; z-index: 1; }
+  .app .urgent h2 { margin: 0 0 6px; font-size: 28px; }
+  .urgent :focus-visible { outline-color: var(--white); }
+  .urgent-caller { font-weight: 600; }
+  /* Pill label, like "You are doing the right thing" */
+  .calm { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 4px 14px; border-radius: 999px;
+          background: var(--red-tint); color: var(--red-dark); font-size: 16px; font-weight: 700; }
+  .calm .icon { width: 20px; height: 20px; }
+  .calm-white { background: var(--white); }
+  .rules { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .rules li { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .panel { margin-top: 14px; padding: 18px; background: var(--white); border: 1px solid var(--border);
+           border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+  .panel-ask { background: var(--red-tint); border-color: transparent; box-shadow: none; }
+  .ask-q { font-size: 19px; font-weight: 800; line-height: 1.35; }
+  .reasons { display: grid; gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+  .reasons li { display: flex; align-items: flex-start; gap: 10px; }
+  .reasons .icon { margin-top: 2px; color: var(--red-dark); }
+  .actions { display: grid; gap: 10px; margin-top: 18px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 56px;
+         padding: 12px 20px; border: 2px solid transparent; border-radius: 999px; font: 700 19px/1.2 var(--font-app);
+         text-align: center; transition: background-color .15s, transform .15s; }
+  .btn:active { transform: scale(.97); }
+  /* White bold 20px text counts as large text, so 4.4:1 on OCBC red passes WCAG AA */
+  .btn-primary { background: var(--red); color: var(--white); font-size: 20px; }
+  .btn-primary:hover { background: var(--red-dark); }
+  .btn-secondary { background: var(--white); color: var(--charcoal); border-color: var(--field-border); }
+  .btn-secondary:hover { background: var(--slate-tint); }
+  .app .hint { margin: -4px 0 4px; text-align: center; font-size: 16px; color: var(--slate); }
+  .app .one-sign { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 18px 0 2px;
+                   font-size: 16px; color: var(--slate); text-align: center; }
+  .one-sign .icon { width: 20px; height: 20px; }
+  .btn-link { display: block; min-height: 48px; margin: 0 auto; padding: 8px 12px; background: none; border: 0;
+              color: var(--slate); font: 600 17px var(--font-app); text-decoration: underline; text-underline-offset: 3px; }
+  /* A result: icon + words + heading, never colour alone (same as the website) */
+  .verdict { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; padding: 16px; border: 2px solid;
+             border-radius: var(--radius-lg); }
+  .verdict > .icon { width: 34px; height: 34px; }
+  .app .verdict h2 { margin: 0 0 6px; font-size: 23px; }
+  .app .verdict p { margin: 0; }
+  .v-bad { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+  .v-bad :focus-visible { outline-color: var(--white); }
+  .v-careful { background: var(--amber-tint); border-color: var(--amber); color: var(--amber-dark); }
+  .v-careful > .icon { width: 26px; height: 26px; }
+  .app .v-careful p { color: var(--charcoal); }
+  .badge { display: inline-block; margin-bottom: 8px; padding: 2px 10px; border: 2px solid currentColor;
+           border-radius: 999px; font-size: 15px; font-weight: 700; }
+  /* "Checking..." steps: done (tick), now (spinner), still to do (empty ring) */
+  .progress-list { display: grid; gap: 12px; margin: 14px 0 0; padding: 0; list-style: none; }
+  .progress-list li { display: flex; align-items: center; gap: 12px; color: var(--slate); font-weight: 600; }
+  .progress-list li.now, .progress-list li.done { color: var(--charcoal); }
+  .dot, .spin { flex: none; width: 24px; height: 24px; border: 3px solid var(--divider); border-radius: 50%; }
+  .spin { display: none; border-top-color: var(--red); animation: spin 1s linear infinite; }
+  .progress-list .tick { display: none; color: var(--red-dark); }
+  li.now .dot, li.done .dot { display: none; }
+  li.now .spin { display: inline-block; }
+  li.done .tick { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .num-steps { display: grid; gap: 12px; margin: 10px 0 14px; padding: 0; list-style: none; }
+  .num-steps li { display: flex; align-items: flex-start; gap: 12px; }
+  .num-steps .n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%;
+                  background: var(--red-tint); color: var(--red-dark); font-size: 16px; font-weight: 800; }
+
+  /* ---------- Our website, opened inside the phone (like Android's in-app browser) ---------- */
+  .web { display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; background: var(--white); }
+  .tab-bar { display: flex; align-items: center; gap: 4px; min-height: 56px; padding: 0 4px; background: var(--white);
+             border-bottom: 1px solid var(--border); font-family: var(--font-android); color: var(--charcoal); }
+  .tab-bar button, .tab-bar a { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0;
+                                border: 0; border-radius: 50%; background: none; color: inherit; }
+  .tab-title { flex: 1; min-width: 0; }
+  .tab-title h2 { margin: 0; font: 500 15px var(--font-android); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tab-title span { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--android-muted); }
+  .tab-title span .icon { width: 12px; height: 12px; }
+  .web-body { position: relative; flex: 1; }
+  .web-loading { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; padding: 24px;
+                 text-align: center; color: var(--slate); font-size: 16px; }
+  .web-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  /* ---------- Android's home screen after the call ---------- */
+  .home { color: var(--white); font-family: var(--font-android);
+          background: radial-gradient(90% 60% at 80% 10%, #4D6B78 0%, transparent 60%),
+                      radial-gradient(80% 50% at 0% 100%, #2F4A57 0%, transparent 60%), #16212A; }
+  .home-clock { display: flex; flex-direction: column; align-items: center; margin: 40px 0 28px; }
+  .home-clock .time { font: 300 76px/1 var(--font-android); letter-spacing: -.02em; }
+  .home-clock .date { margin-top: 10px; font-size: 16px; color: #E3E9EC; }
+  .home-notifs { display: grid; gap: 8px; padding: 0 8px; }
+
+  /* ---------- Android's phone keypad ---------- */
+  .dialer { display: flex; flex-direction: column; background: var(--white); color: var(--charcoal); font-family: var(--font-android); }
+  .dial-top { display: flex; align-items: center; gap: 6px; padding: 6px 16px 0; }
+  .dial-top h2 { margin: 0; font: 500 18px var(--font-android); }
+  .dial-space { flex: 1; min-height: 40px; }
+  .dial-display { display: block; min-height: 56px; padding: 0 16px; text-align: center; font: 400 34px var(--font-android);
+                  letter-spacing: .02em; overflow-wrap: anywhere; }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 0; padding: 4px 28px; }
+  .keypad button { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 58px;
+                   border: 0; border-radius: 999px; background: none; color: var(--charcoal); font: 400 28px/1 var(--font-android); }
+  .keypad button:hover { background: var(--slate-tint); }
+  .keypad small { margin-top: 3px; font-size: 11px; letter-spacing: .12em; color: var(--android-muted); }
+  .dial-actions { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 8px 28px 30px; }
+  .dial-call { display: grid; place-items: center; width: 64px; height: 64px; border: 0; border-radius: 50%;
+               background: var(--android-green); color: var(--white); }
+  .dial-call .icon { width: 28px; height: 28px; }
+  .dial-del { justify-self: center; display: grid; place-items: center; width: 48px; height: 48px; border: 0;
+              border-radius: 50%; background: none; color: var(--charcoal); }
+
+  /* ---------- Small things on top of everything ---------- */
+  .toast { position: absolute; z-index: 8; left: 50%; bottom: 150px; transform: translateX(-50%); padding: 10px 18px;
+           border-radius: 999px; background: #2B3236; color: var(--white); font: 15px var(--font-android);
+           white-space: nowrap; box-shadow: 0 6px 20px rgba(0, 0, 0, .3); }
+  /* Auto-play's pretend finger tap */
+  .tap-dot { position: absolute; z-index: 9; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%;
+             background: rgba(255, 255, 255, .55); border: 3px solid rgba(54, 59, 64, .8); pointer-events: none; }
+  .tap-dot.go { animation: tap .7s ease-out forwards; }
+  @keyframes tap { 0% { transform: scale(.4); opacity: 0; } 35% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+
+  /* ---------- Under (or beside) the phone ---------- */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ctrl { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 999px;
+          border: 2px solid var(--field-border); background: var(--white); color: var(--charcoal);
+          font: 700 16px var(--font-app); text-decoration: none; }
+  .ctrl .icon { width: 20px; height: 20px; }
+  .ctrl:hover { background: var(--slate-tint); }
+  .ctrl-main { background: var(--red-dark); border-color: var(--red-dark); color: var(--white); }
+  .ctrl-main:hover { background: #7E1528; }
+  .ctrl[aria-pressed="true"] { background: var(--charcoal); border-color: var(--charcoal); color: var(--white); }
+  .note { min-height: 1.55em; margin: 10px 0 18px; color: var(--slate); font-size: 16px; }
+  .steps-title { margin: 0 0 10px; font-size: 20px; font-weight: 800; }
+  .steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .steps li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 2px solid var(--border);
+              border-radius: var(--radius); background: var(--white); }
+  .steps .n { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%;
+              background: var(--slate-tint); font-weight: 800; }
+  .steps b { display: block; line-height: 1.3; }
+  .steps .sub { display: block; margin-top: 2px; font-size: 16px; color: var(--slate); }
+  .steps .now { display: none; margin-left: auto; padding: 2px 10px; border-radius: 999px; background: var(--red-tint);
+                color: var(--red-dark); font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .steps li[aria-current="step"] { border-color: var(--red); box-shadow: var(--shadow); }
+  .steps li[aria-current="step"] .n { background: var(--red-dark); color: var(--white); }
+  .steps li[aria-current="step"] .now { display: inline-block; }
+  .foot { margin: 18px 0 0; font-size: 16px; color: var(--slate); }
+  .foot a { color: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .phone-wrap.buzzing, .ringing .call-avatar, .headsup, .ring-hun, .tap-dot.go { animation: none; }
+    .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<!-- Icons: simple line drawings, used with <use href="#..."> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Our logo: a red rounded square with a white pause sign -->
+    <symbol id="logo" viewBox="0 0 24 24"><rect width="24" height="24" rx="5.5" fill="#C7241F"/>
+      <rect x="7.6" y="5" width="3.3" height="14" rx="1.65" fill="#fff"/><rect x="13.1" y="5" width="3.3" height="14" rx="1.65" fill="#fff"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4.5" height="16" rx="2"/><rect x="13.5" y="4" width="4.5" height="16" rx="2"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17.5v.01"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-xcircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+    <symbol id="i-tick" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-keypad" viewBox="0 0 24 24"><path stroke-width="3.2" d="M6 5h.01M12 5h.01M18 5h.01M6 11h.01M12 11h.01M18 11h.01M6 17h.01M12 17h.01M18 17h.01"/></symbol>
+    <symbol id="i-micoff" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 11.5 5.4M19 11a7 7 0 0 1-.4 2.3M12 18v3M3 3l18 18"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-addcall" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M19 8v6M16 11h6"/></symbol>
+    <symbol id="i-hold" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10.5 21 7v10l-5-3.5"/></symbol>
+    <symbol id="i-backspace" viewBox="0 0 24 24"><path d="M9 5h11v14H9l-6-7z"/><path d="M12 9.5l5 5M17 9.5l-5 5"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></symbol>
+  </defs>
+</svg>
+
+<main class="stage">
+  <header class="head">
+    <p class="eyebrow">Pause &amp; Prove · Android preview</p>
+    <h1>Incoming call warning</h1>
+    <p class="intro">What a customer sees when a reported number calls their Android phone. Tap the notification and try the buttons, or turn on auto-play.</p>
+  </header>
+
+  <div class="phone-col">
+    <div class="phone-wrap" id="phone-wrap">
+      <div class="phone" id="phone" data-tone="dark" role="region" aria-label="Phone screen (preview)">
+        <div class="punch" aria-hidden="true"></div>
+
+        <div class="status-bar">
+          <div class="sb-left">
+            <span id="sb-time">2:05</span>
+            <button class="call-chip" id="call-chip" type="button" data-act="to-call" aria-label="Back to the call" hidden>
+              <svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg><span id="chip-time">0:00</span>
+            </button>
+            <!-- Small icons for notifications that are waiting -->
+            <svg class="sb-icon" id="sb-app" viewBox="0 0 24 24" aria-hidden="true" hidden><use href="#i-pause"/></svg>
+            <svg class="sb-icon line" id="sb-missed" viewBox="0 0 24 24" aria-hidden="true" hidden><use href="#i-phone"/></svg>
+          </div>
+          <div class="sb-right" aria-hidden="true">
+            <svg class="sb-icon" viewBox="0 0 24 24"><path d="M12 20 1.5 8.5a15.5 15.5 0 0 1 21 0z"/></svg>
+            <svg class="sb-icon" viewBox="0 0 24 24"><path d="M3 21h18V3z"/></svg>
+            <svg class="sb-batt" viewBox="0 0 26 14"><rect x="1" y="1" width="21" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="14" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="5" width="2" height="4" rx="1" fill="currentColor"/></svg>
+            <span>82%</span>
+          </div>
+        </div>
+
+        <!-- Our notification, sliding in over the call -->
+        <div class="notif headsup" id="notif" hidden>
+          <button class="notif-main" id="notif-main" type="button" data-act="open-warning">
+            <span class="notif-head"><svg class="app-icon" aria-hidden="true"><use href="#logo"/></svg>Pause &amp; Prove · now
+              <svg class="icon chev" aria-hidden="true"><use href="#i-chev"/></svg></span>
+            <span class="notif-pill"><svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>Possible scam call</span>
+            <span class="notif-text">This number was reported as a scam. Don't share codes or move money.</span>
+          </button>
+          <div class="notif-actions">
+            <button type="button" data-act="open-warning">See why</button>
+            <button type="button" data-act="know-caller">I know this caller</button>
+          </div>
+        </div>
+
+        <!-- Android keeps a ringing call at the top of other apps, with Decline and Answer -->
+        <div class="ring-hun" id="ring-hun" hidden>
+          <button class="ring-main" type="button" data-act="to-call">
+            <span class="ring-av"><svg class="icon" aria-hidden="true"><use href="#i-person"/></svg></span>
+            <span><b>+44 20 7946 0123</b><small>Incoming call · United Kingdom</small></span>
+          </button>
+          <div class="ring-btns">
+            <button class="r-decline" type="button" data-act="decline"><svg class="icon hang" aria-hidden="true"><use href="#i-phone"/></svg>Decline</button>
+            <button class="r-answer" type="button" data-act="answer"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Answer</button>
+          </div>
+        </div>
+
+        <!-- A hint from Pause & Prove over the phone's keypad -->
+        <div class="notif headsup" id="dial-hint" hidden>
+          <div class="notif-pad">
+            <span class="notif-head"><svg class="app-icon" aria-hidden="true"><use href="#logo"/></svg>Pause &amp; Prove · now</span>
+            <span class="notif-title">Call OCBC yourself</span>
+            <span class="notif-text">Type the number on the back of your card. Don't call back the number that called you.</span>
+          </div>
+          <div class="notif-actions"><button type="button" data-act="hint-ok">Got it</button></div>
+        </div>
+
+        <!-- Screen: Android's incoming call -->
+        <section class="screen call" data-view="call" data-tone="dark" aria-label="Incoming call">
+          <div class="call-info">
+            <p class="call-label">Incoming call</p>
+            <h2 class="call-number" tabindex="-1" data-focus>+44 20 7946 0123</h2>
+            <p class="call-where">United Kingdom</p>
+          </div>
+          <div class="call-mid"><div class="call-avatar" aria-hidden="true"><svg class="icon"><use href="#i-person"/></svg></div></div>
+          <div class="call-btns">
+            <button class="call-btn" type="button" data-act="decline"><span class="disc decline"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>Decline</button>
+            <button class="call-btn" type="button" data-act="answer"><span class="disc answer"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>Answer</button>
+          </div>
+        </section>
+
+        <!-- Screen: Android's in-call screen after answering -->
+        <section class="screen incall" data-view="incall" data-tone="dark" aria-label="On a call" hidden>
+          <div class="call-info">
+            <h2 class="call-number" tabindex="-1" data-focus>+44 20 7946 0123</h2>
+            <p class="call-where">United Kingdom</p>
+            <p class="call-timer" id="incall-time" aria-label="Call time">0:00</p>
+          </div>
+          <div class="incall-grid">
+            <button type="button" data-preview="the keypad during a call is not part of this preview."><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-keypad"/></svg></span>Keypad</button>
+            <button type="button" data-act="toggle" aria-pressed="false"><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-micoff"/></svg></span>Mute</button>
+            <button type="button" data-act="toggle" aria-pressed="false"><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-speaker"/></svg></span>Speaker</button>
+            <button type="button" data-preview="adding a call is not part of this preview."><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-addcall"/></svg></span>Add call</button>
+            <button type="button" data-act="toggle" aria-pressed="false"><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-hold"/></svg></span>Hold</button>
+            <button type="button" data-preview="video calls are not part of this preview."><span class="disc"><svg class="icon" aria-hidden="true"><use href="#i-video"/></svg></span>Video</button>
+          </div>
+          <button class="end-btn hang" type="button" data-act="hangup" aria-label="End call"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></button>
+        </section>
+
+        <!-- Screen: our warning, opened from the notification -->
+        <section class="screen app" id="scr-app" data-view="app" data-tone="light" aria-label="Pause and Prove warning" hidden>
+          <div class="app-bar">
+            <button class="back" type="button" data-act="to-call" aria-label="Back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+            <svg class="mark" aria-hidden="true"><use href="#logo"/></svg><b>Pause &amp; Prove</b>
+          </div>
+          <div class="app-body">
+            <div class="urgent">
+              <p class="calm calm-white"><svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>Possible scam call</p>
+              <h2 tabindex="-1" data-focus>This call could be a scam</h2>
+              <p class="urgent-caller" id="app-caller">+44 20 7946 0123 is calling you now.</p>
+              <ul class="rules">
+                <li><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Do not share any code.</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Do not send any money.</li>
+              </ul>
+            </div>
+
+            <div class="panel" id="why">
+              <h3>Why we warned you</h3>
+              <ul class="reasons">
+                <li><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>37 people reported this number as a scam.</span></li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span>It's an overseas number (+44). Scammers often call from overseas and pretend to be local.</span></li>
+              </ul>
+            </div>
+
+            <div class="panel panel-ask">
+              <p class="calm calm-white"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg>Ask yourself</p>
+              <p class="ask-q">Is the caller asking you to move money, share a code or install an app?</p>
+              <p>Hang up. A real bank officer will never ask you for these.</p>
+            </div>
+
+            <div class="actions" id="actions">
+              <button class="btn btn-primary" id="btn-check" type="button" data-act="check-bank">Check if the bank is really calling</button>
+              <button class="btn btn-secondary" type="button" data-act="call-bank">Hang up and call the bank yourself</button>
+              <p class="hint">Use the number on the back of your card.</p>
+              <button class="btn btn-secondary" type="button" data-act="record">Record this call</button>
+              <p class="hint">Then check the voice. A real voice can still be a scammer.</p>
+            </div>
+            <p class="one-sign"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>This is one warning sign, not proof of a scam.</p>
+            <button class="btn-link" type="button" data-act="know-caller">I know this caller</button>
+          </div>
+        </section>
+
+        <!-- Screen: "Is the bank really calling?" The app already knows the number, so there is nothing to type -->
+        <section class="screen app" id="scr-check" data-view="check" data-tone="light" aria-label="Is the bank really calling?" hidden>
+          <div class="app-bar">
+            <button class="back" type="button" data-act="back" aria-label="Back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+            <b>Is the bank really calling?</b>
+          </div>
+          <div class="app-body">
+            <div class="panel" id="check-wait">
+              <h2 tabindex="-1" data-focus>Checking this number…</h2>
+              <p>We're checking +44 20 7946 0123 against the calls OCBC made to you.</p>
+              <ol class="progress-list" id="check-steps">
+                <li><span class="dot"></span><span class="spin"></span><svg class="icon tick" aria-hidden="true"><use href="#i-tick"/></svg>Looking up the number</li>
+                <li><span class="dot"></span><span class="spin"></span><svg class="icon tick" aria-hidden="true"><use href="#i-tick"/></svg>Matching it with the calls OCBC made to you</li>
+                <li><span class="dot"></span><span class="spin"></span><svg class="icon tick" aria-hidden="true"><use href="#i-tick"/></svg>Getting your answer ready</li>
+              </ol>
+            </div>
+            <div id="check-result" hidden>
+              <div class="verdict v-bad">
+                <svg class="icon" aria-hidden="true"><use href="#i-xcircle"/></svg>
+                <div>
+                  <span class="badge">No record</span>
+                  <h2 id="check-title" tabindex="-1">OCBC did not call you from this number</h2>
+                  <p>Scammers can make any number show on your phone. Hang up and call OCBC yourself.</p>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-primary" id="btn-hangup-now" type="button" data-act="hangup">Hang up now</button>
+                <button class="btn btn-secondary" id="btn-help" type="button" data-web="calling-now">Get step-by-step help</button>
+                <p class="hint">Opens our website.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Screen: how to record the call -->
+        <section class="screen app" id="scr-record" data-view="record" data-tone="light" aria-label="Record this call" hidden>
+          <div class="app-bar">
+            <button class="back" type="button" data-act="back" aria-label="Back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+            <b>Record this call</b>
+          </div>
+          <div class="app-body">
+            <div class="panel">
+              <h2 tabindex="-1" data-focus>Record the call, then check the voice</h2>
+              <ol class="num-steps">
+                <li><span class="n">1</span><span>Go back to the call. If your phone shows a Record button, tap it.</span></li>
+                <li><span class="n">2</span><span>After the call, check the recording on our website.</span></li>
+              </ol>
+              <div class="verdict v-careful">
+                <svg class="icon" aria-hidden="true"><use href="#i-warn"/></svg>
+                <p>Not every phone can record calls. WhatsApp and Telegram calls can't be recorded.</p>
+              </div>
+              <p style="margin-top:14px">A real voice can still be a scammer. If they ask for money, a code or an app, hang up.</p>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" type="button" data-act="to-call">Back to the call</button>
+              <button class="btn btn-secondary" type="button" data-web="analyser">Check a recording</button>
+              <p class="hint">Opens our website.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Screen: our real website inside the phone -->
+        <section class="screen web" data-view="web" data-tone="light" aria-label="Our website" hidden>
+          <div class="tab-bar">
+            <button type="button" id="web-close" data-act="web-close" aria-label="Close the website"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+            <div class="tab-title">
+              <h2 id="web-title" tabindex="-1" data-focus>Pause &amp; Prove</h2>
+              <span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>fsdp-project.vercel.app</span>
+            </div>
+            <a id="web-open" href="https://fsdp-project.vercel.app" target="_blank" rel="noopener" aria-label="Open this page in a new browser tab"><svg class="icon" aria-hidden="true"><use href="#i-ext"/></svg></a>
+          </div>
+          <div class="web-body">
+            <p class="web-loading">Loading our website…<br>It needs an internet connection.</p>
+            <iframe id="web-frame" title="Pause and Prove website" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </section>
+
+        <!-- Screen: Android's home screen after the call -->
+        <section class="screen home" data-view="home" data-tone="dark" aria-label="Home screen" hidden>
+          <h2 class="visually-hidden" tabindex="-1" data-focus>Home screen</h2>
+          <div class="home-clock"><span class="time" id="home-time">2:05</span><span class="date" id="home-date"></span></div>
+          <div class="home-notifs">
+            <div class="notif sys" id="home-missed" hidden>
+              <div class="notif-pad">
+                <span class="notif-head"><span class="sys-icon"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></span>Phone · now</span>
+                <span class="notif-sys-title">Missed call</span>
+                <span class="notif-text">+44 20 7946 0123</span>
+              </div>
+            </div>
+            <div class="notif" id="home-after" hidden>
+              <div class="notif-pad">
+                <span class="notif-head"><svg class="app-icon" aria-hidden="true"><use href="#logo"/></svg>Pause &amp; Prove · now</span>
+                <span class="notif-title" id="after-title">You hung up. Well done.</span>
+                <span class="notif-text" id="after-text">If you shared a code or sent money, freeze your accounts now.</span>
+              </div>
+              <div class="notif-actions">
+                <button type="button" id="after-freeze" data-web="freeze">Freeze accounts</button>
+                <button type="button" data-web="learn-signs">Learn the signs</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Screen: Android's phone keypad -->
+        <section class="screen dialer" data-view="dialer" data-tone="light" aria-label="Phone keypad" hidden>
+          <div class="dial-top">
+            <button class="back" type="button" data-act="dial-back" aria-label="Back"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+            <h2 tabindex="-1" data-focus>Keypad</h2>
+          </div>
+          <div class="dial-space"></div>
+          <output class="dial-display" id="dial-number" aria-label="Number typed"></output>
+          <div class="keypad" id="keypad"></div>
+          <div class="dial-actions">
+            <span></span>
+            <button class="dial-call" type="button" data-act="dial-call" aria-label="Call"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg></button>
+            <button class="dial-del" type="button" data-act="dial-del" aria-label="Delete"><svg class="icon" aria-hidden="true"><use href="#i-backspace"/></svg></button>
+          </div>
+        </section>
+
+        <div class="toast" id="toast" aria-hidden="true" hidden></div>
+        <div class="tap-dot" id="tap-dot" aria-hidden="true" hidden></div>
+        <div class="gesture" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="side" aria-label="Preview controls and steps">
+    <div class="controls">
+      <button class="ctrl ctrl-main" id="replay" type="button"><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg>Replay the call</button>
+      <button class="ctrl" id="autoplay" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Auto-play: off</span></button>
+      <button class="ctrl" id="sound" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-sound"/></svg><span>Sound: off</span></button>
+      <a class="ctrl" href="https://fsdp-project.vercel.app" target="_blank" rel="noopener">Our website<svg class="icon" aria-hidden="true"><use href="#i-ext"/></svg></a>
+    </div>
+    <p class="note" id="note" role="status"></p>
+
+    <h2 class="steps-title">What happens</h2>
+    <ol class="steps" id="steps">
+      <li data-step="1"><span class="n">1</span><span><b>A reported number calls</b><span class="sub">The phone rings as usual.</span></span><span class="now">Now</span></li>
+      <li data-step="2"><span class="n">2</span><span><b>Pause &amp; Prove sends a notification</b><span class="sub">As the phone's Caller ID &amp; spam app, it sees the number, not the conversation.</span></span><span class="now">Now</span></li>
+      <li data-step="3"><span class="n">3</span><span><b>The customer sees why</b><span class="sub">Two reasons, one question to ask themselves, and safe next steps.</span></span><span class="now">Now</span></li>
+      <li data-step="4"><span class="n">4</span><span><b>They choose what to do</b><span class="sub">Check if the bank is really calling, hang up and call back, or record the call. Some buttons open our website.</span></span><span class="now">Now</span></li>
+      <li data-step="5"><span class="n">5</span><span><b>After the call</b><span class="sub">The app says what to do next.</span></span><span class="now">Now</span></li>
+    </ol>
+    <p class="foot">Student prototype. Not a real OCBC service. All data is made up: the number is from a UK range kept for films and TV, so it belongs to no one. Buttons marked "Opens our website" load the real site, <a href="https://fsdp-project.vercel.app" target="_blank" rel="noopener">fsdp-project.vercel.app</a>, which needs an internet connection.</p>
+  </section>
+</main>
+
+<script>
+  "use strict";
+
+  // ---------- Settings (everything here is made up) ----------
+  const SITE = "https://fsdp-project.vercel.app";   // our real website on Vercel
+  const NUMBER = "+44 20 7946 0123";
+  const PAGES = {                                   // website pages the phone can open, and their titles
+    "calling-now": "Someone is calling me now",
+    "analyser": "Check a message, call or picture",
+    "freeze": "Freeze my accounts",
+    "learn-signs": "Learn the signs"
+  };
+  const NOTIF_DELAY = 1200;   // our notification appears this long after the phone starts ringing (ms)
+  const RING_SECONDS = 45;    // a call nobody answers becomes a missed call after this
+  const APP_SCREENS = ["app", "check", "record", "web"];   // screens where Android keeps the ringing call on top
+
+  const $ = id => document.getElementById(id);
+  const phone = $("phone");
+  const wrap = $("phone-wrap");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // What is happening right now
+  const state = {
+    phase: "ringing",    // "ringing", "oncall" or "ended"
+    view: "call",        // which phone screen is showing
+    notified: false,     // our notification has been posted
+    quiet: false,        // the customer tapped "I know this caller"
+    seenWarning: false,  // the customer has opened the warning
+    missed: false,
+    dialHint: false,     // show our hint over the keypad
+    outcome: "",         // "hungup" or "missed"
+    callStart: 0,        // when the call was answered (ms)
+    webBack: "app"       // the screen the website's X button goes back to
+  };
+
+  let callTimers = [];   // timeouts that belong to this call, so Replay can cancel them all
+  let notifTimer = null, missTimer = null, clockTimer = null, toastTimer = null;
+  function later(fn, ms) { const id = setTimeout(fn, ms); callTimers.push(id); return id; }
+
+  // ---------- Showing a screen ----------
+  function show(view) {
+    state.view = view;
+    let screen = null;
+    document.querySelectorAll(".screen").forEach(s => {
+      s.hidden = s.dataset.view !== view;
+      if (!s.hidden) screen = s;
+    });
+    phone.dataset.tone = screen.dataset.tone;   // colours of the status bar and gesture bar
+    if (view === "app") state.seenWarning = true;
+    refresh();
+    // Move focus to the new screen's heading so screen readers start there (not during auto-play)
+    if (!auto.on) screen.querySelector("[data-focus]")?.focus({ preventScroll: true });
+  }
+
+  // Show or hide everything that depends on the state: notifications, the call chip, icons, captions
+  function refresh() {
+    const v = state.view;
+    const ringing = state.phase === "ringing";
+    const callLive = ringing || state.phase === "oncall";
+    const warned = state.notified && !state.quiet;
+    $("notif").hidden = !(warned && callLive && (v === "call" || v === "incall"));
+    const ringOnTop = ringing && APP_SCREENS.includes(v);
+    $("ring-hun").hidden = !ringOnTop;
+    phone.classList.toggle("has-hun", ringOnTop);
+    $("dial-hint").hidden = !(v === "dialer" && state.dialHint);
+    $("call-chip").hidden = !(state.phase === "oncall" && v !== "incall");
+    $("sb-app").hidden = !warned;
+    $("sb-missed").hidden = !state.missed;
+    wrap.classList.toggle("ringing", ringing);
+    wrap.classList.toggle("buzzing", ringing && v === "call" && !reduceMotion);
+    $("app-caller").textContent = ringing ? `${NUMBER} is calling you now.`
+      : state.phase === "oncall" ? `You're on a call with ${NUMBER}.` : `${NUMBER} called you.`;
+    setStep(currentStep());
+  }
+
+  // ---------- The call ----------
+  function startCall() {
+    callTimers.forEach(clearTimeout);
+    callTimers = [];
+    stopClock();
+    stopRinging();
+    hideToast();
+    Object.assign(state, { phase: "ringing", notified: false, quiet: false, seenWarning: false, missed: false,
+                           dialHint: false, outcome: "", callStart: 0 });
+    resetCheck();
+    $("dial-number").textContent = "";
+    document.querySelectorAll(".incall-grid [aria-pressed]").forEach(b => b.setAttribute("aria-pressed", "false"));
+    document.querySelectorAll(".screen").forEach(s => { s.scrollTop = 0; });
+    show("call");
+    startRinging();
+    notifTimer = later(postNotification, NOTIF_DELAY);
+    missTimer = later(missCall, RING_SECONDS * 1000);
+    note(`The phone is ringing: ${NUMBER}.`);
+  }
+
+  // Pause & Prove saw a reported number and posts its notification
+  function postNotification() {
+    if (state.phase === "ended") return;
+    state.notified = true;
+    if (sound.on) chime();
+    refresh();
+    note("Notification from Pause & Prove: Possible scam call.");
+  }
+
+  function answer() {
+    if (state.phase !== "ringing") return;
+    clearTimeout(missTimer);
+    stopRinging();
+    state.phase = "oncall";
+    state.callStart = Date.now();
+    startClock();
+    show("incall");
+    note("Call answered. The call time counts up.");
+  }
+
+  // Ends the call. Returns false if it had already ended.
+  function endCall(outcome) {
+    if (state.phase === "ended") return false;
+    clearTimeout(missTimer);
+    clearTimeout(notifTimer);
+    stopRinging();
+    stopClock();
+    state.phase = "ended";
+    state.outcome = outcome;
+    state.missed = outcome === "missed";
+    fillAfterCall();
+    return true;
+  }
+
+  // Decline, End call or "Hang up now": the call ends and the home screen shows what to do next
+  function hangUp() {
+    if (endCall("hungup")) toast("Call ended");
+    show("home");
+    note("The call ended. Pause & Prove says what to do next.");
+  }
+
+  // Nobody answered. If the customer is reading our app, they stay there.
+  function missCall() {
+    endCall("missed");
+    if (state.view === "call") show("home");
+    else { refresh(); toast("Missed call"); }
+    note("Missed call. Pause & Prove says what to do next.");
+  }
+
+  // The notifications on the home screen after the call
+  function fillAfterCall() {
+    const missed = state.outcome === "missed";
+    $("home-missed").hidden = !missed;
+    $("home-after").hidden = !(state.notified && !state.quiet);
+    $("after-title").textContent = missed ? "Missed a possible scam call" : "You hung up. Well done.";
+    $("after-text").textContent = missed
+      ? "Don't call this number back. If you're worried, call OCBC on the number on your card."
+      : "If you shared a code or sent money, freeze your accounts now.";
+    $("after-freeze").hidden = missed;
+  }
+
+  // Back to whatever the call is doing now
+  function backToCall() {
+    show(state.phase === "ringing" ? "call" : state.phase === "oncall" ? "incall" : "home");
+  }
+
+  // ---------- Pause & Prove's screens ----------
+  function openWarning() {
+    $("scr-app").scrollTop = 0;
+    show("app");
+    note("Pause & Prove opened: This call could be a scam.");
+  }
+
+  function knowCaller() {
+    state.quiet = true;
+    toast("We won't warn you about this number again");
+    note("Preview: Pause & Prove won't warn you about this number again.");
+    backToCall();
+  }
+
+  // The app knows the incoming number, so it checks it straight away (same wording as our website)
+  function resetCheck() {
+    $("check-wait").hidden = false;
+    $("check-result").hidden = true;
+    setProgress(0);
+  }
+  function setProgress(step) {
+    [...$("check-steps").children].forEach((li, i) => { li.className = i < step ? "done" : i === step ? "now" : ""; });
+  }
+  function checkBank() {
+    resetCheck();
+    $("scr-check").scrollTop = 0;
+    show("check");
+    note("Checking this number against the calls OCBC made to you.");
+    later(() => setProgress(1), 700);
+    later(() => setProgress(2), 1400);
+    later(() => {
+      $("check-wait").hidden = true;
+      $("check-result").hidden = false;
+      if (!auto.on && state.view === "check") $("check-title").focus({ preventScroll: true });
+      note("Result: OCBC did not call you from this number.");
+    }, 2100);
+  }
+
+  // "Hang up and call the bank yourself": the call ends and the phone's keypad opens, with no number filled in
+  function hangUpAndDial() {
+    endCall("hungup");
+    state.dialHint = true;
+    $("dial-number").textContent = "";
+    show("dialer");
+    note("The call ended and the keypad opened. Type the number on the back of your card.");
+  }
+
+  function openRecord() {
+    $("scr-record").scrollTop = 0;
+    show("record");
+  }
+
+  // Opens a page of our real website inside the phone, like Android's in-app browser
+  function openWeb(page) {
+    if (state.view !== "web") state.webBack = state.view;
+    const url = `${SITE}/#${page}`;
+    $("web-title").textContent = PAGES[page] || "Pause & Prove";
+    $("web-open").href = url;
+    const frame = $("web-frame");
+    if (frame.dataset.page !== page) { frame.src = url; frame.dataset.page = page; }
+    show("web");
+    note(`Opened our website: ${PAGES[page]}.`);
+  }
+
+  // ---------- Buttons inside the phone ----------
+  const ACTIONS = {
+    "answer": answer,
+    "decline": hangUp,
+    "hangup": hangUp,
+    "open-warning": openWarning,
+    "know-caller": knowCaller,
+    "to-call": backToCall,
+    "back": () => show("app"),
+    "check-bank": checkBank,
+    "call-bank": hangUpAndDial,
+    "record": openRecord,
+    "web-close": () => show(state.webBack),
+    "toggle": btn => {
+      btn.setAttribute("aria-pressed", String(btn.getAttribute("aria-pressed") !== "true"));
+      note(`Preview only: ${btn.textContent.trim()} does nothing here.`);
+    },
+    "key": btn => {
+      const shown = $("dial-number");
+      if (shown.textContent.length < 16) shown.textContent += btn.dataset.key;
+    },
+    "dial-del": () => { const shown = $("dial-number"); shown.textContent = shown.textContent.slice(0, -1); },
+    "dial-call": () => {
+      const typed = $("dial-number").textContent;
+      note(typed ? `Preview only: this would call ${typed}.` : "Type the number on the back of your card first.");
+    },
+    "dial-back": () => show("home"),
+    "hint-ok": () => { state.dialHint = false; refresh(); }
+  };
+
+  // One listener for every button in the phone: data-act runs an action, data-web opens our website
+  phone.addEventListener("click", e => {
+    const btn = e.target.closest("button[data-act], button[data-web], button[data-preview]");
+    if (!btn) return;
+    if (btn.dataset.web) openWeb(btn.dataset.web);
+    else if (btn.dataset.preview) note(`Preview only: ${btn.dataset.preview}`);
+    else if (ACTIONS[btn.dataset.act]) ACTIONS[btn.dataset.act](btn);
+  });
+
+  // The phone's keypad buttons
+  const KEYS = [["1", ""], ["2", "ABC"], ["3", "DEF"], ["4", "GHI"], ["5", "JKL"], ["6", "MNO"],
+                ["7", "PQRS"], ["8", "TUV"], ["9", "WXYZ"], ["*", ""], ["0", "+"], ["#", ""]];
+  $("keypad").innerHTML = KEYS.map(([key, letters]) =>
+    `<button type="button" data-act="key" data-key="${key}">${key}<small>${letters}</small></button>`).join("");
+
+  // ---------- Clock, call time, toast and captions ----------
+  function updateClock() {
+    const d = new Date();
+    const time = `${d.getHours() % 12 || 12}:${String(d.getMinutes()).padStart(2, "0")}`;
+    $("sb-time").textContent = time;
+    $("home-time").textContent = time;
+    $("home-date").textContent = d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  }
+  function startClock() { tick(); clockTimer = setInterval(tick, 1000); }
+  function stopClock() { clearInterval(clockTimer); }
+  function tick() {
+    const s = Math.floor((Date.now() - state.callStart) / 1000);
+    const time = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    $("incall-time").textContent = time;
+    $("chip-time").textContent = time;
+  }
+  function toast(text) {
+    $("toast").textContent = text;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 2600);
+  }
+  function hideToast() { $("toast").hidden = true; }
+  function note(text) { $("note").textContent = text; }
+
+  // Which caption under the phone matches what is on screen
+  function currentStep() {
+    if (state.phase === "ended") return 5;
+    if (["check", "record", "web", "dialer"].includes(state.view)) return 4;
+    if (state.view === "app") return 3;
+    if (state.seenWarning) return 4;
+    if (state.notified && !state.quiet) return 2;
+    return 1;
+  }
+  function setStep(n) {
+    document.querySelectorAll("#steps li").forEach(li => {
+      if (Number(li.dataset.step) === n) li.setAttribute("aria-current", "step");
+      else li.removeAttribute("aria-current");
+    });
+  }
+
+  // ---------- Ringtone: made in the browser, no sound files. Off until the viewer turns it on ----------
+  const sound = { on: false, ctx: null, loop: null };
+  function setSound(on) {
+    sound.on = on;
+    $("sound").setAttribute("aria-pressed", String(on));
+    $("sound").querySelector("span").textContent = on ? "Sound: on" : "Sound: off";
+    if (on) {
+      sound.ctx = sound.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      sound.ctx.resume();
+    }
+    if (state.phase === "ringing") { if (on) startRingtone(); else stopRingtone(); }
+  }
+  function startRinging() { if (sound.on) startRingtone(); }
+  function stopRinging() { stopRingtone(); }
+  function startRingtone() { stopRingtone(); ringOnce(); sound.loop = setInterval(ringOnce, 2400); }
+  function stopRingtone() {
+    clearInterval(sound.loop);
+    sound.loop = null;
+    if (sound.on && navigator.vibrate) navigator.vibrate(0);   // browsers only allow vibration after a tap
+  }
+  function ringOnce() {
+    const start = sound.ctx.currentTime + 0.05;
+    const notes = [659.25, 830.61, 987.77, 830.61];   // a short four-note tune, played twice
+    for (let round = 0; round < 2; round++) {
+      notes.forEach((freq, i) => beep(freq, start + round * 0.8 + i * 0.15, 0.22));
+    }
+    if (navigator.vibrate) navigator.vibrate([500, 300, 500]);   // only works on phones
+  }
+  function chime() { const t = sound.ctx.currentTime + 0.02; beep(1046.5, t, 0.18); beep(1318.5, t + 0.12, 0.3); }
+  function beep(freq, start, length) {
+    const osc = sound.ctx.createOscillator();
+    const gain = sound.ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.12, start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    osc.connect(gain);
+    gain.connect(sound.ctx.destination);
+    osc.start(start);
+    osc.stop(start + length + 0.05);
+  }
+
+  // ---------- Auto-play for the booth: loops the whole story until someone touches the page ----------
+  const auto = { on: false, timers: [] };
+  function setAutoplay(on) {
+    auto.on = on;
+    auto.timers.forEach(clearTimeout);
+    auto.timers = [];
+    $("autoplay").setAttribute("aria-pressed", String(on));
+    $("autoplay").querySelector("span").textContent = on ? "Auto-play: on" : "Auto-play: off";
+    $("tap-dot").hidden = true;
+    if (on) playStory();
+  }
+  function playStory() {
+    let t = 0;
+    const next = (wait, fn) => { t += wait; auto.timers.push(setTimeout(fn, t)); };
+    startCall();
+    next(3400, () => tap($("notif-main")));       // tap the notification
+    next(2600, () => scrollPhoneTo("why"));            // read why we warned them
+    next(2600, () => scrollPhoneTo("actions"));
+    next(2600, () => tap($("btn-check")));        // check if the bank is really calling
+    next(4400, () => tap($("btn-help")));         // open "Someone is calling me now" on our website
+    next(5500, () => tap($("web-close")));
+    next(2000, () => tap($("btn-hangup-now")));   // hang up
+    next(6500, playStory);                        // start again
+  }
+  // Shows a pretend finger tap on a button, then presses it
+  function tap(el) {
+    if (!el || el.closest("[hidden]")) return;
+    const dot = $("tap-dot"), p = phone.getBoundingClientRect(), r = el.getBoundingClientRect();
+    dot.style.left = `${r.left + r.width / 2 - p.left - phone.clientLeft}px`;
+    dot.style.top = `${r.top + r.height / 2 - p.top - phone.clientTop}px`;
+    dot.hidden = false;
+    dot.classList.remove("go");
+    void dot.offsetWidth;   // restart the animation
+    dot.classList.add("go");
+    auto.timers.push(setTimeout(() => el.click(), 380));
+    auto.timers.push(setTimeout(() => { dot.hidden = true; }, 900));
+  }
+  // Scrolls the current phone screen so an element sits just under the status bar (and ringing call card)
+  function scrollPhoneTo(id) {
+    const screen = document.querySelector(".screen:not([hidden])");
+    const covered = 36 + ($("ring-hun").hidden ? 0 : $("ring-hun").offsetHeight + 10);
+    screen.scrollTo({ top: $(id).offsetTop - covered - 12, behavior: reduceMotion ? "auto" : "smooth" });
+  }
+  // A real tap or key press anywhere stops auto-play (taps made by auto-play itself are not "trusted")
+  ["pointerdown", "keydown"].forEach(type => document.addEventListener(type, e => {
+    if (auto.on && e.isTrusted && !e.target.closest("#autoplay, #sound")) {
+      setAutoplay(false);
+      note("Auto-play stopped. Turn it on again any time.");
+    }
+  }, true));
+
+  // ---------- Controls under the phone ----------
+  $("replay").addEventListener("click", () => { setAutoplay(false); startCall(); });
+  $("autoplay").addEventListener("click", () => setAutoplay(!auto.on));
+  $("sound").addEventListener("click", () => setSound(!sound.on));
+
+  updateClock();
+  setInterval(updateClock, 10000);
+  // Add ?autoplay to the address (for the booth laptop) to start the loop straight away
+  if (new URLSearchParams(location.search).has("autoplay")) setAutoplay(true);
+  else startCall();
+</script>
+</body>
+</html>
