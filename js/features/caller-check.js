@@ -1,44 +1,53 @@
 "use strict";
 
-// Feature: Is the caller a real person? (Mahjong & Kopitiam picture check + AI detection)
+// Feature: Is the caller a real person? (Two-Way Senior Verification + Live Caller Progress Box)
 // Owner: Yan Lin
-// website-refresh: cut from 4 steps to 2, from the team's feedback that it was confusing.
-// The customer no longer solves a puzzle themselves (they are not the one being checked):
-//   step 1  "Read this code to the caller"  (the caller types it on the OCBC Verify page)
-//   ...     a short wait while the caller solves a live picture puzzle there
-//   step 2  "Did they say the same picture and number?"  Yes / No
-// A real person can see and solve the picture puzzle; an AI voice bot can't, so it times out or
-// reads back the wrong picture. The caller's side is simulated (demo), and its screen is folded
-// away under "Demo: see the caller's screen" so it doesn't distract.
-// Every word comes from t() (js/core/i18n.js); the words are in CALLER_CHECK_DATA.text.
 
 (function () {
   const data = CALLER_CHECK_DATA;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
-  const STEP_OF = { code: 1, waiting: 2, otp: 2 };
+  const scenarios = data.scenarios;
 
-  // A random puzzle theme. Its stamp (e.g. "Red Dragon") is the picture the caller must read back.
-  function pickScenario() {
-    const list = (data && data.scenarios) || [];
-    return list[Math.floor(Math.random() * list.length)];
+  function randomDigits(count) {
+    let result = "";
+    for (let i = 0; i < count; i++) {
+      result += Math.floor(Math.random() * 10);
+    }
+    return result;
   }
 
-  function randomDigits(n) {
-    let digits = "";
-    for (let i = 0; i < n; i++) digits += Math.floor(Math.random() * 10);
-    return digits;
+  function shuffle(items) {
+    const copy = items.slice();
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   function freshState() {
-    const scenario = pickScenario();
     return {
-      phase: "code",
-      scenario,
-      code: `${scenario.prefix}-${randomDigits(4)}`,
-      sim: "human",          // demo only: is the simulated caller a real person or an AI bot?
+      view: "home", // home | gen-code | gen-check | recv-enter | recv-captcha | recv-done | result-ok | result-bad
+      scenarioIndex: 0,
+      options: shuffle(scenarios[0].options),
+      inviteCode: "ZHONG-4821",
+      matchDigits: "394 812",
+      enteredCode: "",
+      error: "",
+      startedAt: Date.now(),
+      pointerMoves: 0,
+      // Caller progress simulation state for Step 2
+      sim: "human",
       log: [],
-      left: (data && data.waitSeconds) || 60,
-      otp: randomDigits(6)   // the number shown on a real caller's screen after the puzzle
+      left: data.waitSeconds || 60,
+      callerDone: false
     };
   }
 
@@ -47,211 +56,151 @@
     return appState.callerCheck;
   }
 
-  // "ZHONG-4821" read out as "Z H O N G 4 8 2 1" by screen readers
-  function spelled(code) {
-    return code.replace("-", "").split("").join(" ");
+  function currentScenario(state) {
+    return scenarios[state.scenarioIndex];
   }
 
-  // ---------- Timers & Redraw Guard (matches router.js) ----------
-  let timers = [];
-  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
-  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function setScenario(state, index) {
+    state.scenarioIndex = index % scenarios.length;
+    state.options = shuffle(scenarios[state.scenarioIndex].options);
+    state.startedAt = Date.now();
+    state.pointerMoves = 0;
+    state.error = "";
+  }
 
+  // Timers for live caller progress & countdown
+  let timers = [];
+  function later(fn, ms) {
+    timers.push(setTimeout(fn, ms));
+  }
+  function clearTimers() {
+    timers.forEach(clearTimeout);
+    timers = [];
+  }
+
+  // Redraw guard so router.js redrawScreen() preserves current step
   let redrawing = false;
   function draw() {
     redrawing = true;
-    try { redrawScreen(); } finally { redrawing = false; }
+    try {
+      redrawScreen();
+    } finally {
+      redrawing = false;
+    }
   }
 
-  // ---------- Screens ----------
-  function topHtml(phase) {
-    const step = STEP_OF[phase];
-    return step
-      ? `<p class="step-dots cc-steps">${[1, 2].map(n => `<i class="${n <= step ? "on" : ""}" aria-hidden="true"></i>`).join("")}${t("cc.stepOf", { step })}</p>`
-      : "";
-  }
+  // Track natural cursor movement for human-vs-bot timing protection
+  document.addEventListener("pointermove", function () {
+    if (appState.callerCheck) {
+      appState.callerCheck.pointerMoves++;
+    }
+  }, { passive: true });
 
-  // Step 1: the code, big, and two short instructions
-  function codeHtml(state) {
-    const chars = state.code.replace("-", "").split("");
+  function renderCardGrid(options, actionName) {
     return `
-      <section class="panel" data-read>
-        <h1 tabindex="-1">${t("cc.code.title")}</h1>
-        <p class="cc-code"><span aria-hidden="true">${state.code}</span><span class="visually-hidden">${spelled(state.code)}</span></p>
-        <div class="cc-say">
-          <span>${t("cc.code.say")}</span>
-          <div class="cc-say-pills" aria-hidden="true">${chars.map(ch => `<span>${ch}</span>`).join("")}</div>
-        </div>
-        <ul class="points">
-          <li>${t("cc.code.ask1")}</li>
-          <li>${t("cc.code.ask2")}</li>
-        </ul>
-        <div class="stack">
-          <button type="button" class="btn btn-primary" data-cc="told">${t("cc.told")}</button>
-        </div>
-      </section>`;
+      <div class="rp-grid">
+        ${options.map(opt => `
+          <button type="button" class="rp-card" data-cc="${actionName}" data-id="${opt.id}" aria-label="${opt.title}, ${opt.hint}">
+            ${opt.type === "mj"
+              ? `<span class="rp-mj-tile ${opt.color}" aria-hidden="true">${opt.char}<span class="rp-mj-sub">${opt.sub}</span></span>`
+              : `<span class="rp-kopi-icon" aria-hidden="true">${opt.emoji}</span>`}
+            <span class="rp-cap-title">${opt.title}</span>
+            <span class="rp-cap-hint">${opt.hint}</span>
+          </button>
+        `).join("")}
+      </div>
+    `;
   }
 
   function callerLogHtml(state) {
     return state.log.length
       ? state.log.map(line => `<li>${line}</li>`).join("")
-      : `<li>${t("cc.log.waiting")}</li>`;
+      : "<li>Waiting for the caller to enter the code…</li>";
   }
 
-  // The simulated caller's screen, folded away: it is for showing judges how the check works
-  function callerViewHtml(state) {
+  function callerProgressBoxHtml(state) {
+    const chip = (val, label) =>
+      `<button type="button" class="chip" data-sim="${val}" aria-pressed="${state.sim === val}">${label}</button>`;
+
     return `
-      <details class="cc-caller-fold">
-        <summary>${t("cc.caller.show")}</summary>
-        <div class="cc-caller">
-          <span class="cc-tag">${t("cc.caller.tag")}</span>
-          <h2>${t("cc.caller.title")}</h2>
+      <div class="cc-progress-wrap">
+        <div class="cc-demo" role="group" aria-labelledby="cc-demo-title">
+          <strong id="cc-demo-title">Demo: who is calling?</strong>
+          <div class="cc-demo-chips">
+            ${chip("human", "A real person")}
+            ${chip("ai", "An AI voice bot")}
+          </div>
+        </div>
+
+        <aside class="cc-caller" aria-labelledby="cc-caller-title">
+          <div class="cc-caller-head">
+            <span class="cc-tag">Caller's progress</span>
+            <span class="cc-timer-pill">Time left: <strong id="cc-left">${state.left}</strong>s</span>
+          </div>
+          <h2 id="cc-caller-title">Live CAPTCHA Status</h2>
           <ol id="cc-log" aria-live="polite">${callerLogHtml(state)}</ol>
-        </div>
-      </details>`;
+        </aside>
+      </div>
+    `;
   }
 
-  function demoSwitchHtml(state) {
-    const chip = (value, label) => `<button type="button" class="chip" data-sim="${value}" aria-pressed="${state.sim === value}">${label}</button>`;
-    return `
-      <div class="cc-demo" role="group" aria-labelledby="cc-demo-title">
-        <strong id="cc-demo-title">${t("cc.demo.title")}</strong>
-        ${chip("human", t("cc.demo.human"))}${chip("ai", t("cc.demo.ai"))}
-      </div>`;
-  }
-
-  // Between the steps: waiting for the caller, with a countdown
-  function waitingHtml(state) {
-    const seconds = `<span class="cc-timer-pill"><strong id="cc-left">${state.left}</strong>s</span>`;
-    return `
-      <section class="panel cc-wait-box" data-read>
-        <h1 tabindex="-1">${t("cc.wait.title")}</h1>
-        <p class="lead">${t("cc.wait.lead", { seconds, code: `<strong>${state.code}</strong>` })}</p>
-        <div class="cc-wait-status">
-          <span class="spin" aria-hidden="true"></span>
-          <span>${t("cc.wait.status")}</span>
-        </div>
-      </section>
-      ${demoSwitchHtml(state)}
-      ${callerViewHtml(state)}`;
-  }
-
-  // Step 2: what a real caller can read back, and one question
-  function otpHtml(state) {
-    return `
-      <section class="panel" data-read>
-        <h1 tabindex="-1">${t("cc.otp.title2")}</h1>
-        <p>${t("cc.otp.ask2")}</p>
-        <div class="rp-stamp-box">${t(state.scenario.stamp)}</div>
-        <p class="cc-code">${state.otp.slice(0, 3)} ${state.otp.slice(3)}</p>
-        <h2 id="cc-match-title">${t("cc.match.title")}</h2>
-        <div class="stack answer-btns" role="group" aria-labelledby="cc-match-title">
-          <button type="button" class="btn btn-secondary" data-cc="same">${t("cc.same")}</button>
-          <button type="button" class="btn btn-secondary" data-cc="different">${t("cc.different")}</button>
-        </div>
-      </section>
-      ${callerViewHtml(state)}`;
-  }
-
-  function matchedHtml() {
-    return `
-      <section data-read>
-        <div class="verdict v-good">${icon("check")}<div><p><strong>${t("cc.ok.tag")}</strong></p><h1 tabindex="-1">${t("cc.ok.title")}</h1></div></div>
-        <div class="panel">
-          <ul class="points">
-            <li>${t("cc.ok.line1")}</li>
-            <li>${t("cc.ok.line2")}</li>
-          </ul>
-          <p class="cc-warning"><strong>${t("cc.ok.warning")}</strong></p>
-        </div>
-      </section>
-      <div class="stack">
-        <a class="btn btn-primary" href="#call-match">${t("cc.ok.callMatch")}</a>
-        <a class="btn btn-secondary" href="#customer">${t("common.backHome")}</a>
-      </div>`;
-  }
-
-  function failedHtml(state) {
-    const why = state.phase === "failed" ? t("cc.fail.timeout") : t("cc.fail.mismatch");
-    return `
-      <section data-read>
-        <div class="verdict v-bad">${icon("warning")}<div><p><strong>${t("cc.fail.tag")}</strong></p><h1 tabindex="-1">${t("cc.fail.title")}</h1></div></div>
-        <div class="panel">
-          <ul class="points">
-            <li>${why}</li>
-            <li>${t("cc.ai.line")}</li>
-            <li>${t("cc.fail.hangUp")}</li>
-          </ul>
-        </div>
-      </section>
-      <div class="stack">
-        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
-        <a class="btn btn-secondary" href="#report/call">${t("cc.fail.report")}</a>
-        <button type="button" class="btn btn-link" data-cc="again">${t("cc.fail.again")}</button>
-      </div>`;
-  }
-
-  function screenHtml() {
-    clearTimers();
-    if (!redrawing) appState.callerCheck = freshState();
-    const state = myState();
-    const body = {
-      code: codeHtml,
-      waiting: waitingHtml,
-      otp: otpHtml,
-      matched: matchedHtml,
-      mismatch: failedHtml,
-      failed: failedHtml
-    }[state.phase](state);
-    return customerPageHtml("", `<div class="narrow cc-screen">${topHtml(state.phase)}${body}</div>`);
-  }
-
-  // ---------- Caller Simulation (demo) ----------
-  function runCaller() {
+  function runCallerProgress() {
     clearTimers();
     const state = myState();
+    const sc = currentScenario(state);
     state.log = [];
     state.left = data.waitSeconds || 60;
+    state.callerDone = false;
 
-    // Each line is a translation key; t() fills in {code} and {callerPrompt}
-    const script = data.callerScripts[state.sim].map(([ms, key]) => [
+    const script = data.callerScripts[state.sim].map(([ms, text]) => [
       ms,
-      t(key, { code: state.code, callerPrompt: t(state.scenario.callerPrompt) })
+      text
+        .replace("{code}", state.inviteCode)
+        .replace("{callerPrompt}", sc.callerPrompt)
     ]);
 
-    const log = () => document.getElementById("cc-log");
-    if (log()) log().innerHTML = callerLogHtml(state);
-    const left = document.getElementById("cc-left");
-    if (left) left.textContent = state.left;
+    const logEl = () => document.getElementById("cc-log");
+    const leftEl = () => document.getElementById("cc-left");
+
+    if (logEl()) logEl().innerHTML = callerLogHtml(state);
+    if (leftEl()) leftEl().textContent = state.left;
 
     let i = 0;
     function step() {
-      if (state.phase !== "waiting" || !log()) return;
+      if (state.view !== "gen-check" || !logEl()) return;
       state.log.push(script[i][1]);
-      log().innerHTML = callerLogHtml(state);
+      logEl().innerHTML = callerLogHtml(state);
       i += 1;
-      if (i < script.length) later(step, script[i][0]);
-      else later(finish, 900);
+      if (i < script.length) {
+        later(step, script[i][0]);
+      } else {
+        later(finish, 800);
+      }
     }
 
     function finish() {
-      if (state.phase !== "waiting") return;
+      if (state.view !== "gen-check" || !logEl()) return;
+      state.callerDone = true;
       if (state.sim === "human") {
-        state.log.push(t("cc.log.shows", { stamp: t(state.scenario.stamp), otp: `${state.otp.slice(0, 3)} ${state.otp.slice(3)}` }));
-        state.phase = "otp";
+        state.log.push(`<strong>Done!</strong> Caller's screen now shows: <strong>${sc.stamp}</strong> &amp; <strong>${state.matchDigits}</strong>`);
       } else {
-        state.phase = "failed";
+        state.log.push(`<strong>Failed!</strong> Caller could not solve the puzzle in time.`);
       }
-      draw();
+      logEl().innerHTML = callerLogHtml(state);
     }
 
     function countdown() {
-      if (state.phase !== "waiting") return;
-      const el = document.getElementById("cc-left");
+      if (state.view !== "gen-check") return;
+      const el = leftEl();
       if (!el) return;
+      if (state.callerDone) return;
       state.left = Math.max(0, state.left - 1);
       el.textContent = state.left;
-      if (state.left === 0) { state.phase = "failed"; draw(); return; }
+      if (state.left === 0) {
+        state.log.push("<strong>Timed out!</strong> 60 seconds passed without solving.");
+        if (logEl()) logEl().innerHTML = callerLogHtml(state);
+        return;
+      }
       later(countdown, 1000);
     }
 
@@ -259,32 +208,314 @@
     later(countdown, 1000);
   }
 
-  // ---------- Event Binding ----------
+  function bodyHtml(state) {
+    const sc = currentScenario(state);
+
+    // 1. HOME ENTRY
+    if (state.view === "home") {
+      return `
+        ${homeLinkHtml()}
+        <section class="panel" data-read>
+          <h1 tabindex="-1">Is the caller a real person?</h1>
+          <p class="lead">Choose what you want to do:</p>
+          <div class="role-grid">
+            <button type="button" class="role-card primary-role" data-cc="start-gen">
+              <span class="role-icon" aria-hidden="true">📲</span>
+              <span>
+                <strong>Generate invite code</strong>
+                <span class="sub">I am on a call and want to test the caller</span>
+              </span>
+            </button>
+
+            <button type="button" class="role-card" data-cc="start-recv">
+              <span class="role-icon" aria-hidden="true">🔑</span>
+              <span>
+                <strong>I received a code</strong>
+                <span class="sub">Someone read me a code to verify myself</span>
+              </span>
+            </button>
+          </div>
+
+          <div class="how-box">
+            <p class="how-title">New here? It takes about a minute:</p>
+            <ol>
+              <li>Tap "Generate invite code" and read the code to the caller.</li>
+              <li>The caller enters it and taps a picture. This check shows if they are a bot.</li>
+              <li>A real person reads back a picture and 6 digits.</li>
+            </ol>
+          </div>
+        </section>
+      `;
+    }
+
+    // 2A. GENERATOR STEP 1 (Read the code out)
+    if (state.view === "gen-code") {
+      const chars = state.inviteCode.split("");
+      return `
+        <div class="cc-page-top">
+          <button type="button" class="btn btn-link" data-cc="home">← Back</button>
+        </div>
+        <section class="panel" data-read>
+          <div class="pill-row">
+            <span class="step-pill">Step 1 of 2</span>
+            <span class="theme-pill">${sc.theme}</span>
+          </div>
+          <h1 tabindex="-1">Read this code to the caller</h1>
+          <div class="cc-code">${state.inviteCode}</div>
+          <p class="cc-say-label">Say it slowly, one by one:</p>
+          <div class="cc-say-pills" aria-hidden="true">
+            ${chars.map(ch => ch === "-" ? `<span class="pill-dash">dash</span>` : `<span>${ch}</span>`).join("")}
+          </div>
+          <p class="lead">Ask them to open <strong>"I received a code"</strong> and type it in.</p>
+          <button type="button" class="btn btn-primary" data-cc="said-code">I have said the code</button>
+        </section>
+      `;
+    }
+
+    // 2B. GENERATOR STEP 2 (Check what the caller reads back + Live Caller Progress Box)
+    if (state.view === "gen-check") {
+      return `
+        <div class="cc-page-top">
+          <button type="button" class="btn btn-link" data-cc="back-code">← Back to code</button>
+        </div>
+        <section class="panel" data-read>
+          <div class="pill-row">
+            <span class="step-pill">Step 2 of 2</span>
+            <span class="theme-pill">${sc.theme}</span>
+          </div>
+          <h1 tabindex="-1">Ask the caller to read back</h1>
+          <p class="lead">Ask for the <strong>picture name</strong> and the <strong>6 digits</strong> on their screen.</p>
+
+          <div class="verify-box">
+            <p class="cc-expected-label">A real person will say:</p>
+            <div class="stamp-box">${sc.stamp} &nbsp;|&nbsp; ${state.matchDigits}</div>
+            <div class="stack">
+              <button type="button" class="btn btn-primary" data-cc="verify-yes">They read the exact match</button>
+              <button type="button" class="btn btn-secondary" data-cc="verify-no">They failed or got it wrong</button>
+            </div>
+          </div>
+
+          ${callerProgressBoxHtml(state)}
+        </section>
+      `;
+    }
+
+    // 3A. RECEIVER / CALLER STEP 1 (Enter Code)
+    if (state.view === "recv-enter") {
+      return `
+        <div class="cc-page-top">
+          <button type="button" class="btn btn-link" data-cc="home">← Back</button>
+        </div>
+        <section class="panel" data-read>
+          <div class="pill-row">
+            <span class="step-pill">Caller Check • Step 1 of 3</span>
+          </div>
+          <h1 tabindex="-1">Enter the code you received</h1>
+          <p class="lead">Type the code read to you over the phone.</p>
+
+          <label for="cc-code-in" class="visually-hidden">Invite code</label>
+          <input type="text" id="cc-code-in" class="code-input" value="${escapeHtml(state.enteredCode)}" placeholder="e.g. ZHONG-4821" maxlength="10" autocomplete="off">
+          ${state.error ? `<p class="cc-error" role="alert">${state.error}</p>` : ""}
+
+          <div class="quick-fill">
+            <span><strong>Demo shortcut:</strong></span>
+            <button type="button" class="chip" data-cc="fill-code">Use active code (${state.inviteCode})</button>
+          </div>
+
+          <button type="button" class="btn btn-primary" data-cc="submit-code">Next</button>
+        </section>
+      `;
+    }
+
+    // 3B. RECEIVER / CALLER STEP 2 (Live Picture Challenge)
+    if (state.view === "recv-captcha") {
+      return `
+        <div class="cc-page-top">
+          <button type="button" class="btn btn-link" data-cc="start-recv">← Back</button>
+        </div>
+        <section class="panel" data-read>
+          <div class="pill-row">
+            <span class="step-pill">Caller Check • Step 2 of 3</span>
+            <span class="theme-pill">${sc.theme}</span>
+          </div>
+          <h1 tabindex="-1">${sc.callerPrompt}</h1>
+          <p class="lead">Tap the right picture to prove you are a real person.</p>
+          ${state.error ? `<p class="cc-error" role="alert">${state.error}</p>` : ""}
+          ${renderCardGrid(state.options, "pick-recv")}
+        </section>
+      `;
+    }
+
+    // 3C. RECEIVER / CALLER STEP 3 (Read Stamp & 6 Digits Back)
+    if (state.view === "recv-done") {
+      return `
+        <div class="cc-page-top">
+          <button type="button" class="btn btn-link" data-cc="home">← Done</button>
+        </div>
+        <section class="panel" data-read>
+          <div class="pill-row">
+            <span class="step-pill">Caller Check • Step 3 of 3</span>
+            <span class="theme-pill">${sc.theme}</span>
+          </div>
+          <h1 tabindex="-1">Read this back on the phone</h1>
+          <p class="lead">Say both the picture name and the 6 digits out loud:</p>
+          <div class="stamp-box">Picture: ${sc.stamp}</div>
+          <div class="cc-code">${state.matchDigits}</div>
+          <button type="button" class="btn btn-secondary" data-cc="home">Back to start</button>
+        </section>
+      `;
+    }
+
+    // 4A. OUTCOME — REAL PERSON VERIFIED
+    if (state.view === "result-ok") {
+      return `
+        <section data-read>
+          <div class="verdict v-good">${icon("check")}<div><p><strong>Real person</strong></p><h1 tabindex="-1">The caller is a real person</h1></div></div>
+          <div class="panel">
+            <p class="cc-warning"><strong>This does not show they are from OCBC. Never share your OTP or send money.</strong></p>
+            <p>Scammers can be real people too.</p>
+          </div>
+        </section>
+        <div class="stack">
+          <a class="btn btn-primary" href="#call-match">Check if OCBC is really calling</a>
+          <button type="button" class="btn btn-secondary" data-cc="home">Done</button>
+        </div>
+      `;
+    }
+
+    // 4B. OUTCOME — CHECK FAILED / HANG UP WARNING
+    return `
+      <section data-read>
+        <div class="verdict v-bad">${icon("warning")}<div><p><strong>Check failed</strong></p><h1 tabindex="-1">Hang up now</h1></div></div>
+        <div class="panel">
+          <p>The caller could not pass the check. This may be an <strong>AI voice bot</strong> or scammer.</p>
+          <p><strong>Hang up now.</strong> Do not share any code or send money.</p>
+        </div>
+      </section>
+      <div class="stack">
+        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
+        <a class="btn btn-secondary" href="#report/call">Report this call</a>
+        <button type="button" class="btn btn-link" data-cc="home">Try again</button>
+      </div>
+    `;
+  }
+
+  function screenHtml() {
+    clearTimers();
+    if (!redrawing) appState.callerCheck = freshState();
+    const state = myState();
+    return customerPageHtml("", `<div class="narrow cc-screen">${bodyHtml(state)}</div>`);
+  }
+
   function afterRender() {
     const state = myState();
     const screen = document.querySelector(".cc-screen");
     if (!screen) return;
 
-    screen.addEventListener("click", event => {
-      const sim = event.target.closest("[data-sim]");
-      if (sim) {
-        state.sim = sim.dataset.sim;
-        screen.querySelectorAll("[data-sim]").forEach(b => b.setAttribute("aria-pressed", String(b === sim)));
-        runCaller();
+    screen.addEventListener("click", function (event) {
+      // Demo toggle between Real Person and AI Voice Bot
+      const simBtn = event.target.closest("[data-sim]");
+      if (simBtn) {
+        state.sim = simBtn.dataset.sim;
+        screen.querySelectorAll("[data-sim]").forEach(b => b.setAttribute("aria-pressed", String(b === simBtn)));
+        runCallerProgress();
         return;
       }
 
-      const action = event.target.closest("[data-cc]")?.dataset.cc;
-      if (action === "again") { appState.callerCheck = freshState(); draw(); }
-      if (action === "told") { state.phase = "waiting"; draw(); runCaller(); }
-      if (action === "same") { state.phase = "matched"; draw(); }
-      if (action === "different") { state.phase = "mismatch"; draw(); }
+      const actionBtn = event.target.closest("[data-cc]");
+      if (!actionBtn) return;
+
+      const act = actionBtn.dataset.cc;
+
+      if (act === "home") {
+        clearTimers();
+        state.view = "home";
+        state.error = "";
+        draw();
+      } else if (act === "start-gen") {
+        const idx = Math.floor(Math.random() * scenarios.length);
+        setScenario(state, idx);
+        const sc = currentScenario(state);
+        state.inviteCode = `${sc.prefix}-${randomDigits(4)}`;
+        state.matchDigits = `${randomDigits(3)} ${randomDigits(3)}`;
+        state.view = "gen-code";
+        draw();
+      } else if (act === "said-code") {
+        state.view = "gen-check";
+        draw();
+        runCallerProgress();
+      } else if (act === "back-code") {
+        clearTimers();
+        state.view = "gen-code";
+        draw();
+      } else if (act === "verify-yes") {
+        clearTimers();
+        state.view = "result-ok";
+        draw();
+      } else if (act === "verify-no") {
+        clearTimers();
+        state.view = "result-bad";
+        draw();
+      } else if (act === "start-recv") {
+        clearTimers();
+        state.enteredCode = "";
+        state.error = "";
+        state.view = "recv-enter";
+        draw();
+      } else if (act === "fill-code") {
+        state.enteredCode = state.inviteCode;
+        state.error = "";
+        draw();
+      } else if (act === "submit-code") {
+        const input = document.getElementById("cc-code-in");
+        const val = (input ? input.value : state.enteredCode).trim().toUpperCase();
+        if (!val || val.length < 4) {
+          state.error = "Please enter the code read to you.";
+          draw();
+          return;
+        }
+        state.enteredCode = val;
+        const matchedIdx = scenarios.findIndex(s => val.startsWith(s.prefix));
+        if (matchedIdx !== -1) {
+          setScenario(state, matchedIdx);
+        } else {
+          state.options = shuffle(currentScenario(state).options);
+          state.startedAt = Date.now();
+          state.pointerMoves = 0;
+        }
+        state.error = "";
+        state.view = "recv-captcha";
+        draw();
+      } else if (act === "pick-recv") {
+        const elapsed = Date.now() - state.startedAt;
+        if (event.detail > 0 && elapsed < 250 && state.pointerMoves === 0) {
+          state.error = "Too fast! Bots are blocked. Tap normally.";
+          draw();
+          return;
+        }
+        const sc = currentScenario(state);
+        if (actionBtn.dataset.id === sc.callerTarget) {
+          state.error = "";
+          state.view = "recv-done";
+        } else {
+          state.error = "Not that one. Try again!";
+        }
+        draw();
+      }
+    });
+
+    screen.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && event.target && event.target.id === "cc-code-in") {
+        event.preventDefault();
+        const nextBtn = screen.querySelector('[data-cc="submit-code"]');
+        if (nextBtn) nextBtn.click();
+      }
     });
   }
 
   registerRoute({
     name: "caller-check",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",
     render: screenHtml,
     afterRender
   });
