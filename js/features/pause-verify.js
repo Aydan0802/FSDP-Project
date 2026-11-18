@@ -202,7 +202,6 @@
   // The transfer that was stopped and why. If the customer came from Jose's risk scorer
   // (appState.riskScorer.lastResult, a Medium or High result), its real amount and reasons are
   // used. Otherwise (opened straight from the address bar) the made-up DATA.sampleTransfer.
-  // (Connected on frontend-update.)
   // The reasons come back as words in the customer's language: the made-up ones are keys, and
   // the risk scorer's reasons (English) are looked up by signal id, the same way its own screen does.
   function stoppedTransfer() {
@@ -462,7 +461,7 @@
 
   registerRoute({
     name: "pause-verify",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: pauseVerifyHtml,
     afterRender: afterPauseVerify
   });

@@ -114,7 +114,6 @@
     state.justAdded = "";
     state.checking = "";
     return customerPageHtml("", `<div class="narrow pp-screen">
-      ${homeLinkHtml()}
       <section class="panel" data-read>
         <h1 tabindex="-1">Family passphrase</h1>
         <p class="lead">Someone calls saying they are family and need money? Ask them for your safe word, then check it here.</p>

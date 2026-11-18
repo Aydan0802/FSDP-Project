@@ -1,13 +1,12 @@
 "use strict";
 
 // Feature: Customer home ("Need help right now?" card, check tools, be-ready tools, recent checks).
-// Owner: Yan Lin. Layout updated on frontend-update to match the senior flow preview.
-// website-refresh: this is now also the landing page. Guests (not signed in) see it too:
+// Owner: Yan Lin
+// This is also the landing page. Guests (not signed in) see it too:
 //   - a welcome for guests, with a small drawing, instead of "Hello, Mdm Lim"
 //   - the urgent card and the open check tools work straight away, with no sign-in
 //   - tools that need signing in show "Sign in needed" (tapping one goes to sign in, then back)
 //   - signed-in customers also get "Your safety checklist" (with a progress bar) and recent checks
-// The old "Good to know" tip now lives in Learn the signs (js/features/learn-signs.js).
 // Words come from t() (js/core/i18n.js); this screen's words are in CUSTOMER_HOME_DATA.text.
 
 (function () {
@@ -213,7 +212,7 @@
 
   registerRoute({
     name: "customer",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: homeHtml
   });
 })();

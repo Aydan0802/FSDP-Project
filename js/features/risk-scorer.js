@@ -5,8 +5,7 @@
 // The customer picks one of the sample transfers and sees its risk score, band, the points each
 // warning sign added, and what happens next. This file is the screen only: the scoring itself
 // is in js/features/risk-scorer-logic.js, and the weights and samples are in js/data/risk-scorer.js.
-// Look and flow updated on frontend-update to match the senior flow preview
-// (pick -> checking -> result -> sent / cancelled). The scoring, the API and the cases are unchanged.
+// Flow: pick -> checking -> result -> sent / cancelled.
 //
 // It asks the server first (POST /api/risk/score). If the server isn't running (for example
 // the site was opened with "python -m http.server"), it scores on this device instead, with
@@ -310,7 +309,7 @@
     if (!alreadyHere) { state.phase = "pick"; state.done = ""; }
     if (state.phase === "result" && !state.lastResult) state.phase = "pick";
     const body = { pick: pickHtml, scoring: scoringHtml, result: resultHtml, done: doneHtml }[state.phase]();
-    return customerPageHtml("", `<div class="narrow rs-screen">${homeLinkHtml()}${body}</div>`);
+    return customerPageHtml("", `<div class="narrow rs-screen">${body}</div>`);
   }
 
   // ---------- Wiring up ----------

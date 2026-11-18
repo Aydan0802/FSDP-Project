@@ -1,8 +1,7 @@
 "use strict";
 
 // Feature: Sign in (customers, #login), Sign up (#login/signup) and Staff sign-in (#staff-login).
-// Owner: Jiliana. Server sign-in and sign-up by Wei Ye (server/auth.js); merged into the
-// website-refresh layout.
+// Owner: Jiliana. Server sign-in and sign-up by Wei Ye (server/auth.js).
 //   - Customers don't have to sign in for urgent help: the home screen and urgent tools are
 //     open to everyone (access.js). Signing in is only for their own things.
 //   - One box for the ID (the user ID they signed up with; a mobile number can be used as the ID)

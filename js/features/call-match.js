@@ -1,7 +1,7 @@
 "use strict";
 
 // Feature: Is the bank really calling? (the screen). #call-match
-// Owner: Yan Lin. Built on frontend-update from the senior flow preview (it was a stub).
+// Owner: Yan Lin
 // The customer types the number that called them (or taps a sample). Jose's matchCall()
 // (js/features/call-match-logic.js) checks it against the calls OCBC really made.
 //
@@ -85,7 +85,7 @@
       </div>`;
   }
 
-  // website-refresh: a short "Checking..." step before the answer (about 1.6 seconds). The match
+  // A short "Checking..." step before the answer (about 1.6 seconds). The match
   // itself is instant, but an answer that appears with no visible work feels less trustworthy
   // for something this important (the "labour illusion"). The three steps tick off one by one.
   const CHECK_STEPS = ["cm.checking.step1", "cm.checking.step2", "cm.checking.step3"];
@@ -129,7 +129,7 @@
     const body = state.phase === "input" ? inputHtml(state)
       : state.phase === "checking" ? checkingHtml(state)
       : state.result.matched ? matchedHtml(state.result.call) : noMatchHtml();
-    return customerPageHtml("", `<div class="narrow call-match">${homeLinkHtml()}${body}</div>`);
+    return customerPageHtml("", `<div class="narrow call-match">${body}</div>`);
   }
 
   function afterRender() {
@@ -171,7 +171,7 @@
 
   registerRoute({
     name: "call-match",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: screenHtml,
     afterRender
   });

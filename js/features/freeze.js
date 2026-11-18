@@ -1,7 +1,7 @@
 "use strict";
 
 // Feature: Freeze my accounts. #freeze
-// Owner: Jose. Built on frontend-update from the senior flow preview (it was a stub).
+// Owner: Jose
 // One big button stops all payments (in the demo, nothing really happens), then the customer
 // is told to call OCBC and press 8. A "Call OCBC" bar stays at the bottom of the screen.
 // Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
@@ -20,7 +20,7 @@
     return appState.freeze;
   }
 
-  // website-refresh: guests (not signed in) can freeze too, without signing in. They only type
+  // Guests (not signed in) can freeze too, without signing in. They only type
   // their mobile number, so the bank knows whose accounts to freeze. (A real app would also
   // confirm it with a one-time code.)
   function phoneFieldHtml() {
@@ -102,7 +102,7 @@
 
   registerRoute({
     name: "freeze",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: screenHtml,
     afterRender
   });

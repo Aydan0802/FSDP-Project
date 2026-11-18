@@ -2,7 +2,7 @@
 
 // Feature: Report a scam. #report (and #report/call, #report/message, #report/sent, which pick
 // the answer to "What happened?" in advance, when another screen sends the customer here)
-// Owner: Jose. Built on frontend-update from the senior flow preview (it was a stub).
+// Owner: Jose
 // A short form: two questions answered with buttons, the amount only if money was lost, and
 // two optional boxes. Sending it shows a report number. Nothing is sent anywhere: it is a demo.
 // Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
@@ -98,7 +98,7 @@
     // page at this moment, because the router swaps it only after render() returns.
     const alreadyHere = document.querySelector(".rp-screen") !== null;
     if (!alreadyHere) Object.assign(state, freshForm(data.what.some(w => w.id === param) ? param : ""));
-    return customerPageHtml("", `<div class="narrow rp-screen">${homeLinkHtml()}${state.phase === "sent" ? sentHtml(state) : formHtml(state)}</div>`);
+    return customerPageHtml("", `<div class="narrow rp-screen">${state.phase === "sent" ? sentHtml(state) : formHtml(state)}</div>`);
   }
 
   function afterRender() {

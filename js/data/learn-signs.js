@@ -28,7 +28,6 @@ const LEARN_SIGNS_DATA = {
     wrong: "ls.quiz.wrong"
   },
 
-  // Moved here from the customer home screen's old "Good to know" box
   tip: "ls.tip",
 
   text: {
