@@ -214,13 +214,12 @@
     // 1. HOME ENTRY
     if (state.view === "home") {
       return `
-        ${homeLinkHtml()}
         <section class="panel" data-read>
           <h1 tabindex="-1">Is the caller a real person?</h1>
           <p class="lead">Choose what you want to do:</p>
           <div class="role-grid">
             <button type="button" class="role-card primary-role" data-cc="start-gen">
-              <span class="role-icon" aria-hidden="true">📲</span>
+              <span class="role-icon" aria-hidden="true">${icon("code")}</span>
               <span>
                 <strong>Generate invite code</strong>
                 <span class="sub">I am on a call and want to test the caller</span>
@@ -228,7 +227,7 @@
             </button>
 
             <button type="button" class="role-card" data-cc="start-recv">
-              <span class="role-icon" aria-hidden="true">🔑</span>
+              <span class="role-icon" aria-hidden="true">${icon("keypad")}</span>
               <span>
                 <strong>I received a code</strong>
                 <span class="sub">Someone read me a code to verify myself</span>

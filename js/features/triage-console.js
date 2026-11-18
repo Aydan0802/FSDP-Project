@@ -2,8 +2,6 @@
 
 // Feature: Triage console (staff overview, case queue, case detail).
 // Owner: Wei Ye
-// The overview was moved out of the theme samples (shared/samples.js). The case queue and
-// case detail are STUBS for now: build them here on your own branch.
 // The made-up data is in js/data/triage-console.js.
 // Everything is inside (function () { ... })(); so the names you create in this file stay
 // private to it and can't clash with a teammate's file.
@@ -118,32 +116,11 @@
       <p class="honesty">${icon("question")}<span>Results are warning signs drawn from the voice check, what the caller asked for and the customer's answers. They are not proof of a scam.</span></p>`);
   }
 
-  // Screen 2 (STUB): the case queue
-  function queueScreenHtml() {
-    return staffPageHtml("staff-queue", stubHtml(
-      "Case queue",
-      "Every report waiting for review, with filters and sorting.",
-      "staff", "Back to overview"));
-  }
-
-  // Screen 3 (STUB): one case. ref comes from the address, e.g. #staff-case/VC-2611-0103.
-  // It is only shown if it matches a real case in the data, so nothing typed into the address
-  // bar ends up on the page.
-  function caseHtml(ref) {
-    const found = data.queue.find(c => c.ref === ref);
-    return staffPageHtml("staff-queue", stubHtml(
-      found ? `Case ${found.ref}` : "Case not found",
-      found ? "The timeline, AI results and actions for this case." : "There is no case with that number.",
-      "staff-queue", "Back to the case queue"));
-  }
-
   registerRoute({ name: "staff", role: "staff", render: overviewHtml });
-  registerRoute({ name: "staff-queue", role: "staff", render: queueScreenHtml });
-  registerRoute({ name: "staff-case", role: "staff", render: caseHtml });
 })();
 
 // ======================================================================================
-// Flagged activity and case detail (MOCK-UP, added below the overview code).
+// Flagged activity and case detail (mock-up).
 // Owner: Wei Ye
 // The staff side is a VIEW-ONLY dashboard: staff look, they don't do. There are no buttons that
 // change anything and no jobs for staff. What it does:
@@ -157,8 +134,6 @@
 //                         what the customer told us, the evidence, and a timeline
 // (The address still says "queue" because the router and the side menu already use that name.
 // The tab is the bit after the slash, the same way #staff-case/<ref> works.)
-// It replaces the two stubs above: registerRoute() just keeps the LAST screen registered under
-// a name, so the stubs are still here but never shown. (Delete them whenever you are ready.)
 // Who does what instead of staff: the CUSTOMER chooses to continue or cancel a paused transfer,
 // and the SYSTEM records everything and passes serious cases to the investigators by itself.
 // PRIVACY: this screen never shows customer details (no name, age or usual amounts). The
@@ -901,7 +876,7 @@
       </section>`;
   }
 
-  // Replaces the old "Your decision" box: it only says where the case stands, with no buttons.
+  // Where the case stands. View-only, so there are no buttons.
   function standingHtml(c) {
     return `
       <section class="panel standing" aria-labelledby="stand-title" data-read>
@@ -964,7 +939,6 @@
     }
   }
 
-  // These two replace the stubs registered above.
   registerRoute({ name: "staff-queue", role: "staff", render: queueScreenHtml, afterRender: queueAfterRender });
   registerRoute({ name: "staff-case", role: "staff", render: caseHtml, afterRender: caseAfterRender });
 })();

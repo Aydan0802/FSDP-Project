@@ -1,7 +1,7 @@
 "use strict";
 
 // Made-up data for: Someone is calling me now (the stress flow).
-// Owner: added on frontend-update (from the senior flow preview). Ask the team who looks after it.
+// Owner: SHARED (whole team)
 // text: the screen's words in English, Chinese and Malay (see "How to translate your screen" in
 // TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native speaker to check them.
 

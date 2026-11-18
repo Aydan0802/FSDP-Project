@@ -1,7 +1,7 @@
 "use strict";
 
 // Feature: Call match logic (no screen of its own).
-// Owner: Jose. Built on frontend-update (it was a stub).
+// Owner: Jose
 // This file holds one function, matchCall(). Yan Lin's screen (js/features/call-match.js) calls
 // it, so keep its name, its inputs and the shape of what it returns the same.
 // It is NOT inside (function () { ... })(); like the other feature files, because matchCall

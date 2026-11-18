@@ -5,7 +5,7 @@
 // The words are translation keys; the English, Chinese and Malay for each are in text below
 // (see "How to translate your screen" in TEAM-FILES.md).
 // The Chinese and Malay are AI-drafted and still need a native speaker to check them.
-// website-refresh: the home screen is now also the landing page for guests (not signed in).
+// The home screen is also the landing page for guests (not signed in).
 // locked: true marks a tool that needs signing in (guests see "Sign in needed" on it).
 
 const CUSTOMER_HOME_DATA = {

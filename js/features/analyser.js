@@ -5,7 +5,7 @@
 // Owner: Aydan (the screen, and the message and voice checks).
 //        Yan Lin owns the screenshot and document checks: EVIDENCE_CHECKER in
 //        js/features/evidence-checker.js, with its data in js/data/evidence-checker.js.
-// Merged on frontend-update to match the senior flow preview: the customer adds a file, pastes
+// One screen for everything: the customer adds a file, pastes
 // a message or taps a sample. The screen works out what kind of thing it is, shows three
 // "checking" steps for that kind, then the result and what to do now.
 //
@@ -215,7 +215,7 @@
     const alreadyHere = document.querySelector(".an-screen") !== null;
     if (!alreadyHere && state.phase !== "input") Object.assign(state, freshCheck());
     const body = state.phase === "analysing" ? analysingHtml() : state.phase === "result" ? resultHtml() : inputHtml();
-    return customerPageHtml("", `<div class="narrow an-screen">${homeLinkHtml()}${body}</div>
+    return customerPageHtml("", `<div class="narrow an-screen">${body}</div>
       <p class="visually-hidden" role="status" id="an-status"></p>`);
   }
 
@@ -348,7 +348,7 @@
 
   // Three dots for low / medium / high. The words next to them say the same thing.
   // box is the result's colour class (v-bad, v-careful, v-good), so the dots are red, orange or
-  // green like the result above them (website-refresh): "very sure it's a scam" is never green.
+  // green like the result above them: "very sure it's a scam" is never green.
   function dotsHtml(level, box = "") {
     const filled = { low: 1, medium: 2, high: 3 }[level] || 2;
     return `<span class="an-dots${box ? ` an-dots--${box}` : ""}" aria-hidden="true">${[1, 2, 3].map(n => `<span${n <= filled ? ' class="on"' : ""}></span>`).join("")}</span>`;
@@ -807,7 +807,7 @@
 
   registerRoute({
     name: "analyser",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: screenHtml,
     afterRender: () => {
       const phase = myState().phase;

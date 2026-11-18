@@ -89,7 +89,7 @@ function showScreen() {
     firstLoad = false;
   }
 
-  // Page transitions (website-refresh), like the Grab app:
+  // Page transitions, like the Grab app:
   //   forward  the new screen slides in from the right, over the old one
   //   back     the screen slides away to the right, showing the one before
   //   lateral  switching tabs in the bottom bar or sidebar: a quick fade, no slide
@@ -113,7 +113,7 @@ function setNextMotion(kind) {
   nextMotion = kind;
 }
 
-// ---------- The Back button (website-refresh) ----------
+// ---------- The Back button ----------
 // Not every phone has a back button, so every inner screen has one at the top (helpers.js).
 // It should go to the screen the person came from, like the browser's Back. But if they opened
 // a link straight to an inner screen, the browser's Back would leave our site, so then it goes

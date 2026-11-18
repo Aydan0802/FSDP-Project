@@ -1,5 +1,5 @@
 /* Feature: Transfer risk scorer (pick a transfer, the risk result, sent or cancelled).
-   Owner: Jose. Look updated on frontend-update to match the senior flow preview.
+   Owner: Jose
    Styles for this feature only. Uses the Clarity variables (var(--red), var(--surface) ...),
    never new colour codes. Every band shows an icon and words as well as a colour. */
 

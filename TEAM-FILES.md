@@ -1,56 +1,67 @@
-# Verify the Caller: who owns which files
+# Pause & Prove: who owns which files
 
 Each person only edits **their own files**, on their own branch. Every file also says its owner in its first comment.
-Run it with `python -m http.server` in this folder, then open http://localhost:8000.
+Run it with `python -m http.server` in this folder, then open http://localhost:8000 (see [README.md](README.md)).
 
 ## Jiliana
 
 | File | What it is |
 |---|---|
-| `js/features/login.js` | Sign in (working, moved from the theme samples) |
-| `js/features/pause-verify.js` | Pause and check the caller: `#pause-verify` (stub) |
-| `js/features/learn-signs.js` | Learn the signs: `#learn-signs` (stub) |
-| `js/features/passphrase.js` | Family passphrase: `#passphrase` (stub) |
-| `js/data/login.js`, `js/data/pause-verify.js`, `js/data/learn-signs.js`, `js/data/passphrase.js` | Made-up data |
+| `js/features/login.js` | Sign in and sign up: `#login`, `#login/signup`, `#staff-login` (uses Wei Ye's server sign-in) |
+| `js/features/pause-verify.js` | Pause and check after a risky transfer: `#pause-verify` |
+| `js/features/learn-signs.js` | Learn the signs: `#learn-signs` |
+| `js/features/passphrase.js` | Family passphrase: `#passphrase` |
+| `server/passphrases.js` | Passphrase API (`/api/passphrases`), stores each word hashed |
+| `js/data/login.js`, `js/data/pause-verify.js`, `js/data/learn-signs.js`, `js/data/passphrase.js` | Made-up data and words |
 | `css/features/login.css`, `css/features/pause-verify.css`, `css/features/learn-signs.css`, `css/features/passphrase.css` | Styles |
 
 ## Aydan
 
 | File | What it is |
 |---|---|
-| `js/features/analyser.js` | Message and Call Analyser: `#analyser` (stub) |
-| `js/features/coming-soon.js` | One "Coming soon" screen for `#my-reports`, `#help`, `#staff-trends`, `#staff-scam-types`, `#staff-settings` (working) |
-| `js/data/analyser.js`, `js/data/coming-soon.js` | Made-up data |
-| `css/features/analyser.css`, `css/features/coming-soon.css` | Styles |
+| `js/features/analyser.js` | Check anything (message, picture, document, voice): `#analyser` |
+| `js/features/coming-soon.js` | One "Coming soon" screen for `#my-reports`, `#help`, `#staff-trends`, `#staff-scam-types`, `#staff-settings` |
+| `js/data/analyser.js`, `js/data/coming-soon.js` | Made-up data and words |
+| `css/features/analyser.css` | Styles |
+| `text detector prototype/` | The red-flag message checker the analyser loads |
+| `voice detector prototype/` | The deepfake voice checker (Python API) for voice recordings |
+| `android-call-preview/` | Android call warning preview (standalone page, see its README) |
 
 ## Jose
 
 | File | What it is |
 |---|---|
-| `js/features/risk-scorer.js` | Transfer risk scorer: `#risk-scorer` (stub) |
-| `js/features/report.js` | Report a scam: `#report` (stub) |
-| `js/features/freeze.js` | Freeze my accounts: `#freeze` (stub) |
-| `js/features/call-match-logic.js` | `matchCall()` only, no screen (stub). **Yan Lin's screen uses it: keep its name, inputs and return shape.** |
-| `js/data/risk-scorer.js`, `js/data/report.js`, `js/data/freeze.js`, `js/data/call-match-logic.js` | Made-up data (the fake OCBC outbound call list goes in `call-match-logic.js`) |
-| `css/features/risk-scorer.css`, `css/features/report.css`, `css/features/freeze.css`, `css/features/call-match-logic.css` | Styles |
-| `js/core/i18n.js` | Language switcher (English / 中文 / Bahasa Melayu): `t()`, `setLanguage()`, `getLanguage()`, `addTranslations()`. Everyone uses it; see "How to translate your screen" below. |
+| `js/features/risk-scorer.js`, `js/features/risk-scorer-logic.js` | Transfer risk scorer: `#risk-scorer`, and the scoring itself |
+| `js/features/report.js` | Report a scam: `#report` |
+| `js/features/freeze.js` | Freeze my accounts: `#freeze` |
+| `js/features/call-match-logic.js` | `matchCall()` only, no screen. **Yan Lin's screen uses it: keep its name, inputs and return shape.** |
+| `js/core/i18n.js` | Languages: `t()`, `setLanguage()`, `getLanguage()`, `addTranslations()`. Everyone uses it; see "How to translate your screen" below. |
+| `server/server.js`, `server/app.js` | Starts the server; the risk API (`/api/risk/score`, `/api/risk/cases`) |
+| `server/test/risk-scorer.test.js`, `server/test/i18n.test.js` | Tests |
+| `js/data/risk-scorer.js`, `js/data/report.js`, `js/data/freeze.js`, `js/data/call-match-logic.js` | Made-up data and words (the fake OCBC outbound call list is in `call-match-logic.js`) |
+| `css/features/risk-scorer.css`, `css/features/report.css`, `css/features/freeze.css` | Styles |
+| `docs/risk-scorer.md` | Risk scorer design and API |
 
 ## Yan Lin
 
 | File | What it is |
 |---|---|
-| `js/features/call-match.js` | Is the bank really calling?: `#call-match` (stub). Uses Jose's `matchCall()`. |
-| `js/features/evidence-checker.js` | Evidence checker: `#evidence` (stub) |
-| `js/features/customer-home.js` | Customer home: `#customer` (working, moved from the theme samples) |
-| `js/data/call-match.js`, `js/data/evidence-checker.js`, `js/data/customer-home.js` | Made-up data |
-| `css/features/call-match.css`, `css/features/evidence-checker.css`, `css/features/customer-home.css` | Styles |
+| `js/features/customer-home.js` | Customer home and landing page: `#customer` |
+| `js/features/call-match.js` | Is the bank really calling?: `#call-match`. Uses Jose's `matchCall()`. |
+| `js/features/caller-check.js` | Is the caller a real person? (invite code and picture check): `#caller-check` |
+| `js/features/evidence-checker.js` | Screenshots and documents, shown on the analyser screen (no screen of its own) |
+| `js/data/customer-home.js`, `js/data/call-match.js`, `js/data/caller-check.js`, `js/data/evidence-checker.js` | Made-up data and words |
+| `css/features/customer-home.css`, `css/features/call-match.css`, `css/features/caller-check.css` | Styles |
 
 ## Wei Ye
 
 | File | What it is |
 |---|---|
-| `js/features/triage-console.js` | Staff overview `#staff` (working), case queue `#staff-queue` (stub), case detail `#staff-case/<ref>` (stub) |
+| `js/features/triage-console.js` | Staff overview `#staff`, flagged activity `#staff-queue`, case detail `#staff-case/<ref>` |
 | `js/core/access.js` | Who may open which screen |
+| `server/auth.js`, `server/db/`, `server/scripts/hash-password.js` | Sign-in and sign-up API (`/api/auth`), Supabase or built-in demo accounts |
+| `server/test/auth.test.js` | Tests |
+| `database/` | Supabase setup for the sign-in tables |
 | `js/data/triage-console.js` | Made-up data |
 | `css/features/triage-console.css` | Styles |
 
@@ -58,13 +69,13 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 
 | File | What it is |
 |---|---|
-| `index.html` | Already links every file above. Nobody should need to edit it. |
+| `index.html` | Links every file above. Only edit it to add a new file. |
 | `css/base.css`, `css/clarity.css` | Shared styles and the Clarity theme |
-| `js/core/helpers.js` | `icon()`, `badge()`, `RESULTS`, brand, menus, `customerPageHtml()`, `staffPageHtml()`, `stubHtml()` |
+| `js/core/helpers.js` | `icon()`, `badge()`, `RESULTS`, brand, menus (top bar, bottom bar, sidebar), `customerPageHtml()`, `staffPageHtml()`, `stubHtml()` |
 | `js/core/state.js` | `appState`, `signIn()`, `signOut()`, `resetState()` |
 | `js/core/a11y.js` | Text size, read aloud, focus to heading, skip link |
-| `js/core/router.js` | `registerRoute()`, drawing screens, `#reset` |
-| `js/core/i18n.js` | Languages: `t()` and the language buttons. Owned by Jose; loads first, before `helpers.js`. |
+| `js/core/router.js` | `registerRoute()`, drawing screens, the Back button, `#reset` |
+| `js/features/calling-now.js`, `js/data/calling-now.js`, `css/features/calling-now.css` | Someone is calling me now: `#calling-now` |
 
 ## Rules for everyone
 
@@ -78,8 +89,8 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 
 ## How to translate your screen
 
-The customer header has English / 中文 / Bahasa Melayu buttons. The header, the menu and Jose's screens already
-switch; yours stays in English until you do this. Everything stays in **your own files**:
+The language picker (English / 中文 / Bahasa Melayu) is in the top bar, and in the menu on phones. Most screens
+already switch; a screen stays in English until its owner does this. Everything stays in **your own files**:
 
 ```js
 // 1. js/data/your-feature.js: add your words, with keys that start with your feature's short name

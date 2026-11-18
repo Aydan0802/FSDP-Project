@@ -3,7 +3,7 @@
 // Verify the Caller: accessibility helpers.
 // Owner: SHARED (whole team). Talk to the team before changing this file.
 // Text size (A / A+ / A++), read aloud, moving focus to the new screen's heading, and the
-// skip link. Copied and adapted from the theme samples (shared/samples.js).
+// skip link.
 
 // ---------- Text size ----------
 
@@ -59,7 +59,7 @@ function readAloudButtonHtml() {
   return `<button type="button" class="tool-btn" data-action="read" aria-pressed="false">${icon("speaker")}<span class="tool-label">${t("header.readAloud")}</span></button>`;
 }
 
-// ---------- Read-along: the word being spoken is highlighted (added on frontend-update) ----------
+// ---------- Read-along: the word being spoken is highlighted ----------
 // When reading starts, each piece of text in the areas being read is swapped for one
 // <read-run> holding a <read-word class="w"> per word. Each word remembers where it starts in
 // the text being spoken, so the browser's "now at character N" (boundary) event can be matched

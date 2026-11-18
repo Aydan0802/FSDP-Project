@@ -5,7 +5,7 @@
   <!-- viewport-fit=cover lets the bottom bar sit clear of the iPhone home bar (env(safe-area-inset-bottom) in base.css) -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pause & Prove</title>
-  <!-- The logo in the browser tab (website-refresh) -->
+  <!-- The logo in the browser tab -->
   <link rel="icon" type="image/png" href="img/pause&amp;prove_logo.png">
   <meta name="description" content="Pause & Prove: a student prototype of anti-AI-scam tools for OCBC's Digital Trust challenge. Not a real OCBC service.">
 
@@ -29,23 +29,18 @@
   <link rel="stylesheet" href="css/features/passphrase.css">
   <!-- Aydan -->
   <link rel="stylesheet" href="css/features/analyser.css">
-  <link rel="stylesheet" href="css/features/coming-soon.css">
   <!-- Jose -->
   <link rel="stylesheet" href="css/features/risk-scorer.css">
   <link rel="stylesheet" href="css/features/report.css">
   <link rel="stylesheet" href="css/features/freeze.css">
-  <link rel="stylesheet" href="css/features/call-match-logic.css">
   <!-- Yan Lin -->
   <link rel="stylesheet" href="css/features/call-match.css">
-  <link rel="stylesheet" href="css/features/evidence-checker.css">
   <link rel="stylesheet" href="css/features/customer-home.css">
   <link rel="stylesheet" href="css/features/caller-check.css">
-
   <!-- Wei Ye -->
   <link rel="stylesheet" href="css/features/triage-console.css">
-  <!-- Added on frontend-update (senior flow): someone is calling now, is the caller a real person? -->
+  <!-- Shared: Someone is calling me now -->
   <link rel="stylesheet" href="css/features/calling-now.css">
-  <link rel="stylesheet" href="css/features/caller-check.css">
 </head>
 <body data-theme="clarity">
   <!-- The skip link and the demo banner stay on every screen. The router draws the current
@@ -88,10 +83,9 @@
   <script src="js/data/evidence-checker.js"></script>
   <script src="js/data/customer-home.js"></script>
   <script src="js/data/caller-check.js"></script>
-
   <!-- Wei Ye -->
   <script src="js/data/triage-console.js"></script>
-  <!-- Added on frontend-update (senior flow) -->
+  <!-- Shared: Someone is calling me now -->
   <script src="js/data/calling-now.js"></script>
 
   <!-- Feature screens, one file per feature -->
@@ -117,7 +111,7 @@
   <script src="js/features/call-match-logic.js"></script>
   <!-- Yan Lin -->
   <script src="js/features/call-match.js"></script>
-    <!-- Client-side OCR & PDF libraries (no server uploads) -->
+  <!-- Reading text from pictures and PDFs, on this device (nothing is uploaded) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
@@ -131,7 +125,7 @@
   <script src="js/features/caller-check.js"></script>
   <!-- Wei Ye -->
   <script src="js/features/triage-console.js"></script>
-  <!-- Added on frontend-update (senior flow) -->
+  <!-- Shared: Someone is calling me now -->
   <script src="js/features/calling-now.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 // Made-up data for: Sign in (customers) and Staff sign-in.
 // Owner: Jiliana
 // Customers sign in with one box for whatever they remember (user ID, mobile number or name)
-// and one box for their password or PIN (changed on website-refresh, from the team's feedback).
+// and one box for their password or PIN.
 // Staff keep a staff ID and password, on their own screen (#staff-login), linked from the
 // bottom of the customer one.
 // Sign-in is checked by the server (server/auth.js: Supabase, or its built-in demo accounts when
