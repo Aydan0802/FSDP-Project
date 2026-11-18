@@ -1,9 +1,8 @@
 "use strict";
 
 // Feature: Learn the signs. #learn-signs
-// Owner: Jiliana. Built on frontend-update from the senior flow preview (it was a stub).
-// Four signs of a scam call, one practice question, and the "Good to know" tip that used to be
-// on the customer home screen.
+// Owner: Jiliana
+// Four signs of a scam call, one practice question, and a "Good to know" tip.
 //
 // What it remembers (appState.learnSigns, cleared by #reset):
 //   picked   the id of the answer the customer picked ("" until they pick one)
@@ -36,7 +35,6 @@
   function screenHtml() {
     const picked = myState().picked;
     return customerPageHtml("", `<div class="narrow ls-screen">
-      ${homeLinkHtml()}
       <section data-read>
         <h1 tabindex="-1">${t("ls.title")}</h1>
         <p class="lead">${t("ls.lead")}</p>
@@ -74,7 +72,7 @@
 
   registerRoute({
     name: "learn-signs",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: screenHtml,
     afterRender
   });

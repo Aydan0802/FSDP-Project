@@ -1,12 +1,12 @@
 /* Feature: Customer home ("Need help right now?" card, tool tiles, recent checks).
-   Owner: Yan Lin. Updated on frontend-update to match the senior flow preview.
+   Owner: Yan Lin
    Uses the Clarity variables only. */
 
 .hello { margin-bottom: 1.5rem; }
 .hello h1 { margin-bottom: .25rem; font-size: 2.25rem; }
 .hello-sub { margin: 0; color: var(--muted); font-size: 1.25rem; }
 
-/* ---------- The welcome with its drawing (website-refresh) ---------- */
+/* ---------- The welcome with its drawing ---------- */
 .hello--hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; }
 .hello--hero h1 { font-size: 1.875rem; }
 @media (min-width: 40rem) { .hello--hero h1 { font-size: 2.375rem; } }
@@ -70,7 +70,7 @@
 .big-choice:hover .big-choice-arrow { transform: translateX(3px); }
 .big-choice:active { transform: scale(.98); }
 
-/* "Someone is calling me now" is the one thing that should stand out most (website-refresh):
+/* "Someone is calling me now" is the one thing that should stand out most:
    its round icon sends out a soft ring three times when the page opens, like a phone ringing. */
 .big-choice--first .big-choice-icon { position: relative; }
 .big-choice--first .big-choice-icon::after {
@@ -112,7 +112,7 @@
 .tool:active { transform: scale(.98); }
 .tool-text .lock-tag { display: inline-flex; }
 
-/* ---------- "Your safety checklist" (signed-in customers, website-refresh) ----------
+/* ---------- "Your safety checklist" (signed-in customers) ----------
    A progress bar that fills when the screen opens, ticks for the steps done, and one button for
    the next step. */
 .checklist {
@@ -143,7 +143,7 @@
 .checklist-all .done-mark { flex: none; margin: 0; width: 3rem; height: 3rem; }
 .checklist-all .done-mark .icon { width: 1.5rem; height: 1.5rem; }
 
-/* Touch screens have no real hover: a tapped tile should not stay lifted (website-refresh) */
+/* Touch screens have no real hover: a tapped tile should not stay lifted */
 @media (hover: none) {
   .tool:hover, .big-choice:hover { transform: none; box-shadow: var(--shadow); }
   .tool:hover .tool-arrow, .big-choice:hover .big-choice-arrow { transform: none; }

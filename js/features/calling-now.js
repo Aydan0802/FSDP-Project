@@ -1,7 +1,7 @@
 "use strict";
 
 // Feature: Someone is calling me now (the stress flow). #calling-now, #calling-now/2, #calling-now/safe
-// Owner: added on frontend-update (from the senior flow preview). Ask the team who looks after it.
+// Owner: SHARED (whole team)
 // One instruction per screen, in short sentences, for someone who may be on a scam call:
 //   step 1   "Hang up the phone now."           -> I have hung up / check who is calling first
 //   step 2   "Did you give a code or send money?" -> No: the safe screen. Yes or Not sure: #freeze
@@ -102,7 +102,7 @@
 
   registerRoute({
     name: "calling-now",
-    role: "public",   // open to everyone: no sign-in needed (website-refresh)
+    role: "public",   // open to everyone: no sign-in needed
     render: screenHtml,
     afterRender
   });

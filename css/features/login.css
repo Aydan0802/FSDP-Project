@@ -2,7 +2,7 @@
    Owner: Jiliana
    Clarity look: a coloured band at the top (red for customers, charcoal for staff, so staff can
    see at once they are somewhere else), with the white card sitting over its bottom edge.
-   Rebuilt on website-refresh for the simpler name/mobile sign-in. Clarity variables only. */
+   Simple name/mobile sign-in. Clarity variables only. */
 
 .screen-login, .screen-staff-login {
   --band: 21rem;

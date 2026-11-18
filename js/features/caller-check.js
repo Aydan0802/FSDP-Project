@@ -214,7 +214,6 @@
     // 1. HOME ENTRY
     if (state.view === "home") {
       return `
-        ${homeLinkHtml()}
         <section class="panel" data-read>
           <h1 tabindex="-1">Is the caller a real person?</h1>
           <p class="lead">Choose what you want to do:</p>

@@ -15,7 +15,7 @@
   --red-tint: #FDEDEE;
   --slate-tint: #EEF2F4;
   --divider: #C9D2D7;
-  /* Traffic-light colours for results only (website-refresh, from the team's feedback):
+  /* Traffic-light colours for results only:
      green = looks safe, orange = be careful. Red stays the OCBC red above. Each text colour
      passes WCAG AA on white and on its own pale background. Always used with icon + words. */
   --green: #1B7A3A;        /* 5.4:1 on white */
@@ -241,7 +241,7 @@ h1:focus, main:focus { outline: none; }
 
 .cust-main { max-width: 72rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
-/* ---------- App frame for customer screens (website-refresh) ----------
+/* ---------- App frame for customer screens ----------
    One menu, three layouts, following Google's Material Design and Apple's guidelines:
      phone (under 600px):            top bar + bottom bar with 5 labelled buttons; "Menu" slides in the sidebar
      tablet, iPad upright (600-1023px): the same 5 buttons as a rail on the left; "Menu" slides in the sidebar
@@ -541,7 +541,7 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
 .data-table thead th { color: var(--muted); font-size: .9375rem; font-weight: 700; }
 .data-table tbody tr:last-child > * { border-bottom: 0; }
 
-/* ---------- Senior flow pieces (added on frontend-update), used by several screens ---------- */
+/* ---------- Senior flow pieces, used by several screens ---------- */
 
 /* One comfortable column for the simple, step-by-step screens */
 .narrow .cust-main, .cust-main .narrow { max-width: 46rem; margin-left: auto; margin-right: auto; }
@@ -600,7 +600,7 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
 }
 .done-mark .icon { width: 2rem; height: 2rem; }
 
-/* Short bullet points instead of long sentences (website-refresh): easier to take in when
+/* Short bullet points instead of long sentences: easier to take in when
    someone is stressed or on a call. A small dark red dot before each line. */
 .points { display: grid; gap: .5rem; margin: .75rem 0 1rem; }
 .points li { position: relative; padding-left: 1.5rem; }
@@ -612,7 +612,7 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
 .rules .icon { margin-top: .1rem; color: var(--red-dark); }
 
 /* A result: icon + words + heading, never colour alone.
-   Traffic lights (website-refresh): bad = solid dark red, careful = orange, good = green
+   Traffic lights: bad = solid dark red, careful = orange, good = green
    (the same as the result badges). */
 .verdict {
   display: flex; align-items: flex-start; gap: .875rem; margin-bottom: 1rem; padding: 1.125rem 1.25rem;
@@ -687,7 +687,7 @@ read-run, read-word { display: inline; margin: 0; padding: 0; border: 0; }
 }
 body:has(.call-bar) .read-stop { bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
 
-/* ---------- Feedback and polish (added on website-refresh) ----------
+/* ---------- Feedback and polish ----------
    Small touches so every tap answers back: each new screen fades in, buttons sink a little when
    pressed, "done" screens draw their tick, and short messages slide up. All of it is short
    (under half a second) and switches off for people who turn off animation (below). */

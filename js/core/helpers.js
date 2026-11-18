@@ -3,8 +3,8 @@
 // Pause & Prove: shared helpers.
 // Owner: SHARED (whole team). Talk to the team before changing this file.
 // Small pieces that many screens use: icons, the five result badges, the brand, the customer
-// and staff page frames (header and menu), and the stub screen. Copied and adapted from the
-// theme samples (shared/samples.js). Every function here returns a string of HTML.
+// and staff page frames (header and menu), and the stub screen. Every function here returns
+// a string of HTML.
 
 // ---------- The five results, told apart by icon and words as well as colour ----------
 
@@ -39,11 +39,11 @@ const ICONS = {
   logout: '<path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4M6 12h9"/>',
   speaker: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-  // New for the two added home tiles: money moving both ways, and a page with lines on it
+  // Money moving both ways, and a page with lines on it
   transfer: '<path d="M4 8h14M14 4l4 4-4 4"/><path d="M20 16H6M10 12l-4 4 4 4"/>',
   document: '<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h6"/>',
-  // Added for the senior flow (frontend-update): pictures, chat, upload, small arrows, a cross,
-  // a heart for the "you are doing the right thing" pill, and a clock
+  // Pictures, chat, upload, small arrows, a cross, a heart for the "you are doing the right
+  // thing" pill, and a clock
   image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M20.5 16l-5-5-9 8.5"/>',
   chat: '<path d="M4 5h16v11H9.5L5 20v-4H4z"/><path d="M8 9h8M8 12.5h5"/>',
   upload: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4.5 14.5V20h15v-5.5"/>',
@@ -52,7 +52,7 @@ const ICONS = {
   cross: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
   clock: '<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>',
-  // Added on website-refresh: a globe for the language picker and a small down arrow
+  // A globe for the language picker and a small down arrow
   globe: '<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5c-2.6-2.6-3.9-5.8-3.9-9.5S9.4 5.1 12 2.5z"/>',
   caret: '<path d="M7 10l5 5 5-5"/>',
   // For the bottom bar: three lines for "Menu", a magnifying glass for "Check"
@@ -91,9 +91,7 @@ function brandHtml(href, tag = "") {
     </a>`;
 }
 
-// ---------- Menus ----------
-
-// ---------- Customer navigation (website-refresh): one menu, three layouts ----------
+// ---------- Customer navigation: one menu, three layouts ----------
 // Following Google's Material Design and Apple's guidelines for phones, tablets and desktops:
 //   phone (under 600px)      a bar at the bottom with 5 big labelled buttons (TAB_MENU), easy to
 //                            reach with a thumb; "Menu" slides in the full sidebar
@@ -258,7 +256,7 @@ function customerPageHtml(current, content) {
     </div>`;
 }
 
-// ---------- The Back button (website-refresh) ----------
+// ---------- The Back button ----------
 // Not every phone has a back button, so every screen you open has one in the same place: the
 // top-left of the top bar. It goes back to the screen you came from, or home if there is none
 // (goBack() in router.js). extraClass places it (topbar-back, staff-back, login-home).
@@ -336,19 +334,11 @@ function staffPageHtml(current, content) {
     </div>`;
 }
 
-// ---------- Senior flow pieces (added on frontend-update) ----------
+// ---------- Senior flow pieces ----------
 
 // OCBC's phone number, written for people and as a link that dials it
 const OCBC_PHONE = "1800 363 3333";
 const OCBC_TEL = "tel:18003633333";
-
-// A small "Home" link for the top of a screen
-// website-refresh: now empty. Every screen has the Back button in the top bar instead, and Home
-// is always in the bottom bar, rail or sidebar, so this link would only repeat them. Screens that
-// still call it keep working.
-function homeLinkHtml() {
-  return "";
-}
 
 // The bar fixed to the bottom of the screen on stressful screens (calling now, freeze).
 // The spacer stops the bar covering the last button on the page.

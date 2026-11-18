@@ -307,8 +307,8 @@ function setLanguage(lang) {
 
 // ---------- The language picker (put in the customer header by helpers.js) ----------
 
-// One drop-down instead of three buttons, so the header has less to read (changed on
-// website-refresh). It is a real <select>: phones open their own big, easy list, and it works
+// One drop-down instead of three buttons, so the header has less to read.
+// It is a real <select>: phones open their own big, easy list, and it works
 // with Tab and the arrow keys without any extra code. The globe is the sign for "language" that
 // people know even when they can't read the words. Each name is written in its own language,
 // and lang="..." on each option makes screen readers pronounce it properly.
