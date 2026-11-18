@@ -13,6 +13,7 @@ const path = require("path");
 const express = require("express");
 const RISK_SCORER = require("../js/features/risk-scorer-logic.js");
 const { createAuthRouter } = require("./auth.js");   // sign in (Wei Ye)
+const { passphraseRoutes } = require("./passphrases.js");   // Family passphrase (Jiliana)
 
 const SITE_ROOT = path.join(__dirname, "..");
 
@@ -57,6 +58,9 @@ function createApp(options = {}) {
   app.get("/api/risk/cases", (req, res) => {
     res.json([...cases].reverse());
   });
+
+// Family passphrase: hashed safe words (server/passphrases.js)   
+  app.use("/api/passphrases", passphraseRoutes());  
 
   // Unknown API addresses get JSON, not the web page
   app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
