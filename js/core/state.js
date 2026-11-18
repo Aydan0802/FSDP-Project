@@ -52,6 +52,11 @@ document.addEventListener("click", event => {
   const wasStaff = appState.role === "staff";
   const message = t("header.signedOut");   // looked up before signing out, so staff still get English
   signOut();
-  location.hash = wasStaff ? "#staff-login" : "#customer";
+  const target = wasStaff ? "#staff-login" : "#customer";
+  // A customer who signs out on the home screen is already at #customer, so the address doesn't
+  // change and the browser never says "the address changed". Draw the screen again ourselves,
+  // or the Sign out button would stay and the Sign in button would not come back.
+  if (location.hash === target) showScreen();
+  else location.hash = target;
   showToast(message);
 });
