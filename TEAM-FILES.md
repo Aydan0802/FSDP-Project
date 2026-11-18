@@ -25,6 +25,7 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 | `css/features/analyser.css` | Styles |
 | `text detector prototype/` | The red-flag message checker the analyser loads |
 | `voice detector prototype/` | The deepfake voice checker (Python API) for voice recordings |
+| `android-call-preview/` | Android call warning preview (standalone page, see its README) |
 
 ## Jose
 

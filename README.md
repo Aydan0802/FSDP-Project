@@ -113,3 +113,4 @@ text size and language, which are saved on the device.
 | `docs/` | Risk scorer design and API |
 | `text detector prototype/` | The red-flag message checker the analyser uses (runs in the browser) |
 | `voice detector prototype/` | The deepfake voice checker (Python), for the voice check |
+| `android-call-preview/` | A standalone page: the warning an Android phone would show when a reported number calls |
