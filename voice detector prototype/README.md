@@ -54,7 +54,7 @@ It loads the model (about a minute the first time), then listens on http://127.0
 
 - `POST /api/voice/check?ext=m4a` with the recording as the body; `POST /api/voice/sample` checks our own synthetic sample clip (the first file in `data/fake_tts/piper/`); `GET /api/voice/health`.
 - The answer is one of the website's five results (likely / partial / uncertain / unsure / real) with the chance, how sure, and reasons as short codes (for example `{"key": "short", "seconds": 3.2}`), so the website can word them in English, Chinese or Malay.
-- It needs the downloaded model and AudioSeal files above **and** our trained head `models/finetuned/clips_final3.safetensors` (1.9 MB). Weights are never committed, so copy that file from the computer that trained it (or retrain with `train/finetune_head.py`).
+- It needs the downloaded model and AudioSeal files above **and** our trained head `models/finetuned/clips_final3.safetensors` (1.9 MB). That head is the one set of weights in git (allowed by our teacher, 19 Nov 2026), so it is already here; other weights are never committed. Retrain it with `train/finetune_head.py` if you want. For only running the API, `requirements-api.txt` is a smaller install than `requirements.txt`.
 - If the API isn't running, the website still works: the voice check shows a demo result, clearly marked as one.
 
 **At the booth (visitors' own phones):** the team laptop is the server. `app\start_booth.ps1` starts the API with `--site` (so it also serves the website) and an ngrok tunnel to the team's fixed address (`$PublicDomain` in the script; the same address is `voiceApiPublic` in `js/data/analyser.js`). Visitors scan the poster's QR code (the Vercel site), and the voice check goes through the tunnel to the laptop. Put the Vercel link in `$VercelSite` so the API accepts calls from it. Keep the laptop plugged in, online and awake (sleep off, closing the lid does nothing) all event.
@@ -115,4 +115,4 @@ python -m pytest tests
 
 ## Not in git
 
-Model weights, audio datasets (`data/`, `downloads/`, `models/`), `results/` and `.venv/` are ignored (see `../.gitignore`). Re-download or regenerate them with the scripts.
+Model weights, audio datasets (`data/`, `downloads/`, `models/`), `results/` and `.venv/` are ignored (see `../.gitignore`). Re-download or regenerate them with the scripts. The one exception is our own trained head, `models/finetuned/clips_final3.safetensors` (1.9 MB), kept in git so the voice check can run without retraining.

@@ -6,7 +6,7 @@ Built by a student team at Ngee Ann Polytechnic (FSDP) for the **OCBC Innovation
 
 > **Student prototype. Not a real OCBC service. All data is made up.**
 
-**Live site:** https://fsdp-project.vercel.app. The voice check needs the team laptop running ([Booth setup](#booth-setup)), and Family passphrase needs the server ([Setup](#setup)).
+**Live site:** https://fsdp-project.vercel.app. The voice check needs the team laptop running ([Booth setup](#booth-setup)), or the optional voice API on your own computer ([step 3](#3-voice-check-api-optional-large-download)); without it the site shows a clearly marked demo voice result. Family passphrase needs the server ([Setup](#setup)).
 
 ---
 
@@ -111,7 +111,7 @@ Open http://localhost:8000 and choose **Fill in for me (demo)** to sign in.
 |---|---|
 | Website | Any modern browser and any static file server (for example Python's) |
 | Server | Node.js 18 or newer |
-| Voice API | Windows, Python 3.13, about 4 GB of downloads (CUDA PyTorch 2.8 GB plus the models); an NVIDIA GPU is optional |
+| Voice API (optional) | Only for the live voice check. Windows, Python 3.13, about 1.6 GB of downloads with CPU-only PyTorch (about 4 GB with the NVIDIA GPU build); a GPU is optional |
 | Image check tests | Node.js 18 or newer (the test-image maker also needs Python with Pillow and `c2pa-python`) |
 
 ### 1. Website only
@@ -120,7 +120,7 @@ Open http://localhost:8000 and choose **Fill in for me (demo)** to sign in.
 python -m http.server
 ```
 
-Open http://localhost:8000. Everything works except Family passphrase (needs the server) and the live voice check (needs the voice API).
+Open http://localhost:8000. Everything works except Family passphrase (needs the server) and the live voice check (needs the optional voice API; without it the voice check shows a clearly marked "Demo result").
 
 ### 2. With the server
 
@@ -134,19 +134,23 @@ Open http://localhost:3000: the same website plus sign-in, the risk API and the 
 
 **Supabase (optional):** copy `server/.env.example` to `server/.env`, fill in `SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `SUPABASE_SERVICE_ROLE_KEY`, then follow [database/README.md](database/README.md). **Never commit `.env`.**
 
-### 3. Voice check API
+### 3. Voice check API (optional, large download)
 
-The full steps are in [voice detector prototype/README.md](voice%20detector%20prototype/README.md). In short, from inside `voice detector prototype/`:
+**This step is optional.** The website works without it: the voice check then shows a clearly marked "Demo result", and every other check still runs in the browser. Set it up only to try the real voice detector. Because of its size (the detector model alone is 1.2 GB), the model is not in this repository and is downloaded separately. Our own trained head, `voice detector prototype/models/finetuned/clips_final3.safetensors` (1.9 MB), is included.
+
+The smallest setup (Windows, Python 3.13, about 1.6 GB of downloads with CPU-only PyTorch), from inside `voice detector prototype/`:
 
 ```bash
 py -3.13 -m venv ..\.venv
 ..\.venv\Scripts\activate
-pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
-pip install -r requirements.txt
-python -m app.api
+pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements-api.txt
+python -c "from huggingface_hub import snapshot_download; snapshot_download('eliya/forensics_0.3B_xlsr_wild_deepfake_classifier', local_dir='models/forensics_xlsr', ignore_patterns=['*.pt'])"
+python -c "from huggingface_hub import hf_hub_download as d; [d('facebook/audioseal', f, local_dir='downloads/audioseal') for f in ('detector_base.pth', 'generator_base.pth')]"
+python -m app.api --site ..
 ```
 
-Before the first run, download the detector model (about 1.2 GB) and AudioSeal's checkpoints (about 94 MB) with the commands in that README. Also copy our trained head `models/finetuned/clips_final3.safetensors` from the computer that trained it, because weights are never committed. The API loads in about a minute and listens on http://127.0.0.1:7861. It only accepts calls from the website's own addresses.
+The last line starts the voice checker and also serves the website. It loads in about a minute; then open http://127.0.0.1:7861 and try "Sample voice message" on the Check anything screen, or add your own recording. On a CPU each check takes a few seconds; with an NVIDIA GPU (use `/whl/cu128` instead of `/whl/cpu`, about 2.8 GB) it takes about 0.3 s. **To have everything at once** (the server's sign-in and Family passphrase as well as the live voice check), keep the server from step 2 running too and open http://localhost:3000 instead: the website there reaches the voice API on its own. The API only accepts calls from the website's own addresses. The full steps, tests and evaluation are in [voice detector prototype/README.md](voice%20detector%20prototype/README.md) (`requirements.txt` there also installs the TTS voices and evaluation tools).
 
 ## Booth setup
 

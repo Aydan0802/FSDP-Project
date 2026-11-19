@@ -1,0 +1,24 @@
+# Only what the voice API (app/api.py) needs: a smaller install for running the voice check,
+# for example when marking. requirements.txt has everything (TTS voices, evaluation, charts).
+#
+# Install PyTorch first. The CPU build is enough (about 0.3 s per clip on a GPU, a few seconds on a CPU):
+#   pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+# Then:
+#   pip install -r requirements-api.txt
+
+# Detector model loading
+transformers==5.22.0
+safetensors==0.8.0
+huggingface_hub==2.4.0
+
+# Watermark detection (Meta AudioSeal)
+audioseal==0.2.0
+
+# Audio input and processing (imageio-ffmpeg reads phone recordings such as .m4a)
+soundfile==0.14.0
+librosa==1.0.0
+imageio-ffmpeg==0.7.0
+
+# Numbers
+numpy==2.5.4
+scipy==1.18.1
