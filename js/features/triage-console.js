@@ -3,8 +3,6 @@
 // Feature: Triage console (staff overview, case queue, case detail).
 // Owner: Wei Ye
 // The made-up data is in js/data/triage-console.js.
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
 
 (function () {
   const data = TRIAGE_CONSOLE_DATA;
@@ -12,7 +10,7 @@
   // A single-colour bar chart (one series, so no legend: the heading names it).
   // Hover or keyboard focus shows each day's number; today's number is always shown.
   function chartHtml() {
-    const top = 15;   // the top of the scale
+    const top = 15;
     const today = data.days.length - 1;
     return `
       <div class="chart">
@@ -120,27 +118,17 @@
 })();
 
 // ======================================================================================
-// Flagged activity and case detail (mock-up).
+// Flagged activity and case detail.
 // Owner: Wei Ye
-// The staff side is a VIEW-ONLY dashboard: staff look, they don't do. There are no buttons that
-// change anything and no jobs for staff. What it does:
-//   #staff-queue          Flagged activity, "Insights" tab (the default): numbers and trends, so staff
-//                         can spot patterns (per day or per week, what happens to paused transfers,
-//                         when flags happen, which warning signs show up, which receivers keep
-//                         being reported)
-//   #staff-queue/cases    Flagged activity, "Cases" tab: the list of individual cases, with search,
-//                         filters and sorting
-//   #staff-case/<ref>     one flagged case in detail: why it was flagged, the transfer, the receiver,
-//                         what the customer told us, the evidence, and a timeline
-// (The address still says "queue" because the router and the side menu already use that name.
-// The tab is the bit after the slash, the same way #staff-case/<ref> works.)
-// Who does what instead of staff: the CUSTOMER chooses to continue or cancel a paused transfer,
-// and the SYSTEM records everything and passes serious cases to the investigators by itself.
-// PRIVACY: this screen never shows customer details (no name, age or usual amounts). The
-// receiver is shown hidden (masked name, last 3 digits of the account). The only thing known
-// about a receiver is how many times other people reported it, so the dashboard can warn.
-// Nothing here is saved or sent anywhere. All the data is made up, see CASE_QUEUE_DATA in
-// js/data/triage-console.js.
+// View-only: staff look, they don't act. The customer chooses to continue or cancel a paused
+// transfer, and the system records it and passes serious cases to the investigators.
+//   #staff-queue          Flagged activity, "Insights" tab (default): totals and trends
+//   #staff-queue/cases    Flagged activity, "Cases" tab: the list, with search, filters and sorting
+//   #staff-case/<ref>     one flagged case in detail
+// (The address says "queue" because the router and the side menu already use that name.)
+// PRIVACY: never shows customer details. The receiver is masked (hidden name, last 3 digits of the
+// account) and the only thing known about it is how many times others reported it.
+// All data is made up: see CASE_QUEUE_DATA in js/data/triage-console.js.
 // ======================================================================================
 
 (function () {
@@ -151,10 +139,8 @@
   // false = show only the transfers the system flagged by itself (the other cases are hidden)
   const SHOW_CUSTOMER_REPORTS = true;
 
-  // The shared side menu (helpers.js) still says "Case queue" with a count of cases waiting.
-  // Nothing waits for staff any more, so rename it and drop the count. This changes the menu
-  // while the page runs, so the shared file stays exactly as the team wrote it. If the team
-  // prefers, change the label in helpers.js instead and delete these lines.
+  // The shared side menu (helpers.js) still says "Case queue" with a count. Nothing waits for
+  // staff, so rename it here instead of editing the shared file.
   const menuItem = STAFF_MENU.find(item => item.route === "staff-queue");
   if (menuItem) {
     menuItem.label = "Flagged activity";
@@ -217,8 +203,8 @@
 
   // ---------- What this screen remembers (appState.triageQueue) ----------
 
-  // The search, filters, sort and the daily/weekly choice. Created the first time it is needed, so we never have to touch
-  // state.js. Coming back from a case, the list still shows the same search. #reset wipes it.
+  // The search, filters, sort and daily/weekly choice. Coming back from a case, the list still
+  // shows the same search. #reset clears it.
   function view() {
     if (!appState.triageQueue) {
       appState.triageQueue = { source: "all", level: "all", sort: "newest", search: "", period: "daily", chartMode: "stacked" };
@@ -347,12 +333,12 @@
   const SHORT = { auto: "Auto", pause: "Pause", report: "Reports" };   // short table headings for narrow screens
 
   function totalAt(series, i) { return series.auto[i] + series.pause[i] + series.report[i]; }
-  function pausedAt(series, i) { return series.auto[i] + series.pause[i]; }   // transfers that were paused
+  function pausedAt(series, i) { return series.auto[i] + series.pause[i]; }
   function sumOf(obj) { return Object.keys(obj).reduce((sum, key) => sum + obj[key], 0); }
   function share(part, whole) { return whole ? Math.round((part / whole) * 100) : 0; }
 
-  // "Up 41% on last week". An arrow AND words, so it never relies on colour. The colour only adds to it:
-  // more flags is bad news (red), fewer is good news (green), no change is plain.
+  // "Up 41% on last week": an arrow and words, so it never relies on colour alone.
+  // More flags is red, fewer is green, no change is plain.
   function changeHtml(now, before, p) {
     if (!before) return `New ${p.now}`;
     const change = Math.round(((now - before) / before) * 100);
@@ -757,8 +743,7 @@
       document.getElementById("ins-status").textContent = `Now showing ${PERIODS[v.period].label.toLowerCase()} totals.`;
     });
 
-    // The chart style buttons live inside the part that gets redrawn, so listen on the part that
-    // stays (#ins-body). Only the chart is redrawn, so keyboard focus stays on the button.
+    // The chart style buttons are redrawn with the chart, so listen on #ins-body, which stays.
     document.getElementById("ins-body").addEventListener("click", event => {
       const btn = event.target.closest("[data-mode]");
       if (!btn) return;
@@ -787,8 +772,7 @@
     document.getElementById("qf-level").addEventListener("change", event => { v.level = event.target.value; refresh(); });
     document.getElementById("qf-sort").addEventListener("change", event => { v.sort = event.target.value; refresh(); });
 
-    // If a server is running, add its cases and redraw. If the person has already left the
-    // screen by then, there is no table to draw into, so we simply stop.
+    // If a server is running, add its cases and redraw (skipped if the person has left the screen).
     loadLiveCases().then(ok => { if (ok && document.getElementById("qt-table")) refresh(); });
   }
 
@@ -931,9 +915,8 @@
   }
 
   function caseAfterRender(ref) {
-    // A live case from the server isn't known yet if the page was opened straight on its address.
-    // Ask the server, and draw the screen again only if the case turns up (no loop: it stops
-    // as soon as the case is found).
+    // A live case isn't known yet if the page was opened straight on its address: ask the
+    // server, and draw the screen again only if the case turns up.
     if (!findCase(ref)) {
       loadLiveCases().then(ok => { if (ok && findCase(ref) && location.hash.indexOf("#staff-case") === 0) showScreen(); });
     }

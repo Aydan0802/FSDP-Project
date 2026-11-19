@@ -1,7 +1,6 @@
 /* Feature: Triage console (staff overview, case queue, case detail).
    Owner: Wei Ye
-   The staff overview styles were moved out of the theme samples: first the layout
-   (from base.css), then the Clarity look (from clarity.css). Clarity's rules come last and win. */
+   Layout first, then the Clarity look. Clarity's rules come last and win. */
 
 /* ---------- Layout (from base.css) ---------- */
 
@@ -107,11 +106,9 @@
 .kpi--alert .kpi-note { color: var(--white); }
 
 /* ======================================================================================
-   Flagged activity and case detail (mock-up added below the overview styles).
+   Flagged activity and case detail, in the order they appear on screen: queue, then case detail.
    Owner: Wei Ye
    Uses only Clarity's variables (var(--red), var(--surface), ...), no new colour codes.
-   Roughly in the order they appear on screen: queue, then case detail.
-   (A queue is a line. This is the paint for the line.)
    ====================================================================================== */
 
 /* ---------- Flagged activity: the "how does activity get here" box ---------- */
@@ -271,8 +268,8 @@
 
 /* ======================================================================================
    Flagged activity: the two mini tabs and the Insights tab.
-   Everything here starts with "ins-" or "subtab" so it can't clash with the overview's chart
-   (which uses .chart, .bars and .bar). Colours come from the theme's variables.
+   Class names start with "ins-" or "subtab" so they can't clash with the overview's chart
+   (.chart, .bars and .bar).
    ====================================================================================== */
 
 /* ---------- The two mini tabs (Insights, Cases) ---------- */

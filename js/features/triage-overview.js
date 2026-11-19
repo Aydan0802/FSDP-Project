@@ -2,20 +2,13 @@
 
 // Feature: Overview additions (staff). #staff
 // Owner: Wei Ye
-// Kept in its own folder and its own files so it can be committed separately from the original
-// Overview in js/features/triage-console.js, which is NOT edited.
-// What it adds: one panel, "Today in context", between the four numbers and the charts. The
-// Overview only ever says what is happening NOW ("14 new reports today"), and a number on its own
-// can't tell staff whether it is a lot. Each card compares today with the longer history, in one
-// plain sentence. The history comes from js/data/overview/triage-overview.js (OVERVIEW_CONTEXT).
-// It must load AFTER js/features/triage-console.js. If the data or the Overview isn't there, the
-// Overview simply stays as it was.
-// How it fits in without editing the Overview: registerRoute() keeps the LAST screen registered
-// under a name, so this file takes the Overview that triage-console.js registered, and registers it
-// again with the new panel added to its HTML. The screen's own behaviour is untouched.
-// PRIVACY: totals only, like the rest of the staff side.
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
+// Adds one panel, "Today in context", between the four numbers and the charts. A number like
+// "14 new reports today" can't say whether it is a lot, so each card compares today with the longer
+// history (OVERVIEW_CONTEXT in js/data/triage-overview.js) in one plain sentence.
+// registerRoute() keeps the last screen registered under a name, so this file takes the Overview
+// that triage-console.js registered and registers it again with the panel added. It must load after
+// triage-console.js. If the data or the Overview isn't there, the Overview stays as it was.
+// Totals only, like the rest of the staff side.
 
 (function () {
   if (typeof OVERVIEW_CONTEXT === "undefined" || typeof routes === "undefined" || !routes.staff) return;
@@ -28,9 +21,8 @@
     return String(text).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
   }
 
-  // A tiny line of the last 12 months, with a title and the first and last month written under it,
-  // so it's clear what it shows. The line itself only decorates: the sentence above says the same
-  // thing. "unit" is added after the latest number (for example "%").
+  // A tiny line of the last 12 months with its first and last values written under it. The line
+  // only decorates: the sentence above says the same thing. "unit" goes after the numbers (e.g. "%").
   function sparkHtml(values, unit) {
     const low = Math.min(...values);
     const span = (Math.max(...values) - low) || 1;

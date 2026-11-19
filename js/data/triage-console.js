@@ -2,7 +2,6 @@
 
 // Made-up data for: Triage console (staff overview, case queue, case detail).
 // Owner: Wei Ye
-// Moved out of the theme samples (shared/samples.js).
 
 const TRIAGE_CONSOLE_DATA = {
   // The four numbers at the top of the overview
@@ -47,21 +46,17 @@ const TRIAGE_CONSOLE_DATA = {
 };
 
 // ======================================================================================
-// Made-up data for: Case queue and case detail (mock-up added below the overview data).
+// Made-up data for: Case queue and case detail.
 // Owner: Wei Ye
-// PRIVACY RULE FOR THIS FILE: no customer details at all. No names, ages, usual amounts or
-// account history for the person sending money. The receiver (the account being paid) is
-// kept only in a hidden form: the name is already masked (first letter + stars) and the
-// account shows its last 3 digits only. The one thing we do keep about a receiver is how
-// many times OTHER people have reported it for scams, so the staff dashboard can show it straight away.
-// Everything here is invented. "Now" in the demo is Tuesday 3 Nov 2026, about 16:50, the same
-// moment the overview above is frozen at.
+// PRIVACY: no customer details at all. The receiver (the account being paid) is kept only in a
+// hidden form: the name is masked (first letter + stars) and the account shows its last 3 digits.
+// The one thing kept about a receiver is how many times other people reported it for scams.
+// "Now" in the demo is Tuesday 3 Nov 2026, about 16:50, the same moment the overview is frozen at.
 // ======================================================================================
 
 const CASE_QUEUE_DATA = {
-  // The three ways a case can reach the queue. A case is NEVER created by a person on the
-  // staff side: it comes from the customer's app, or from the risk scorer.
-  // (Fun fact: a queue is just a line, but with feelings.)
+  // The three ways a case can reach the queue. Staff never create a case: it comes from the
+  // customer's app or from the risk scorer.
   sources: {
     auto: {
       label: "Auto-flagged", icon: "transfer",
@@ -411,12 +406,9 @@ const CASE_QUEUE_DATA = {
 
 // ======================================================================================
 // Made-up numbers for the Insights tab of Flagged activity.
-// These are totals, not individual cases, and they hold no customer details at all. They are
-// counted by the system and have nothing to do with the 14 sample cases above, which are only
-// the latest few. (When the backend exists, these come from "count and group" queries.)
-// "Now" is Tuesday 3 Nov 2026. The last 7 days add up to 86 flags, the same "86 this week"
-// the overview shows. The three sources match the ones above: auto-flagged transfers, pause
-// checks and customer reports.
+// Totals only, no customer details, and separate from the sample cases above. The last 7 days add
+// up to 86 flags, the same "86 this week" the overview shows. The three sources match the ones
+// above: auto-flagged transfers, pause checks and customer reports.
 // ======================================================================================
 
 const CASE_INSIGHTS_DATA = {

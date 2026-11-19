@@ -2,10 +2,8 @@
 
 // Made-up data for: Overview additions (staff). #staff
 // Owner: Wei Ye
-// Feeds the "Today in context" panel (js/features/overview/triage-overview.js). It is its own small
-// file so the Overview additions don't depend on any other tab.
-// PRIVACY: totals only. No customer details.
-// Change these numbers freely; they are placeholders until real figures exist.
+// Feeds the "Today in context" panel (js/features/triage-overview.js).
+// Totals only, no customer details. The numbers are placeholders until real figures exist.
 
 const OVERVIEW_CONTEXT = {
   // A usual day of each name: the average number of reports over the last 12 weeks
