@@ -3,8 +3,10 @@
 // Pause & Prove: app state.
 // Owner: SHARED (whole team). Talk to the team before changing this file.
 // Everything the app remembers while the page is open lives in one object, appState.
-// It is only kept in memory: refreshing the page or visiting #reset starts again from scratch.
-// Nothing is ever saved or sent anywhere.
+// It is kept in memory: visiting #reset starts again from scratch. The one exception is who is
+// signed in (role, ID and name only, never a password), which is also kept for this browser tab
+// (sessionStorage), so refreshing the page does not sign people out. It is forgotten on Sign out,
+// on #reset and when the tab is closed. Nothing is ever sent anywhere.
 //
 // Feature owners: you don't need to edit this file. Store your feature's data under a key
 // named after your feature, for example appState.passphrase = "blue mango". #reset wipes it
@@ -21,7 +23,38 @@ function freshState() {
   };
 }
 
+// ---------- Keeping the sign-in for this tab ----------
+const SIGN_IN_KEY = "pp-signed-in";
+
+// Saves who is signed in for this tab, or clears it when nobody is
+function rememberSignIn() {
+  try {
+    if (appState.role) {
+      sessionStorage.setItem(SIGN_IN_KEY, JSON.stringify({ role: appState.role, userId: appState.userId, userName: appState.userName }));
+    } else {
+      sessionStorage.removeItem(SIGN_IN_KEY);
+    }
+  } catch (e) {
+    // Storage is blocked (some private windows): signing in still works until the page reloads
+  }
+}
+
+// When the page loads: signs the person back in if they were signed in before the refresh
+function restoreSignIn() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SIGN_IN_KEY) || "null");
+    if (saved && (saved.role === "customer" || saved.role === "staff")) {
+      appState.role = saved.role;
+      appState.userId = String(saved.userId || "");
+      appState.userName = String(saved.userName || "");
+    }
+  } catch (e) {
+    // Storage is blocked or the saved value is broken: start signed out
+  }
+}
+
 let appState = freshState();
+restoreSignIn();
 
 // Remembers who signed in. Called by the sign-in screens.
 // name is optional: customers may give their name so the home screen can greet them.
@@ -29,6 +62,7 @@ function signIn(role, userId, name = "") {
   appState.role = role;
   appState.userId = userId;
   appState.userName = name;
+  rememberSignIn();
 }
 
 // Forgets who signed in. message (optional) is shown on the sign-in screen, to explain why.
@@ -37,11 +71,13 @@ function signOut(message = "") {
   appState.userId = "";
   appState.userName = "";
   appState.loginMessage = message;
+  rememberSignIn();
 }
 
 // Throws away everything: who is signed in and every feature's data. Used by #reset (see router.js).
 function resetState() {
   appState = freshState();
+  rememberSignIn();
 }
 
 // Every "Sign out" button has data-action="signout". One listener on the whole page catches

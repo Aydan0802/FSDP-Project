@@ -52,6 +52,7 @@ const CUSTOMER_HOME_DATA = {
       "home.evening": "Good evening",
       "home.hello": "Hello, {name}",
       "home.helloNoName": "Welcome back",
+      "home.welcomeNew": "Welcome",   // just made an account, so not "back"
       "home.sub": "What would you like to do today?",
       "home.guest.title": "Not sure if it's a scam? Pause and check.",
       "home.guest.sub": "Free help from your bank. You don't need to sign in for urgent help.",
@@ -104,6 +105,7 @@ const CUSTOMER_HOME_DATA = {
       "home.evening": "晚上好",
       "home.hello": "{name}，您好",
       "home.helloNoName": "欢迎回来",
+      "home.welcomeNew": "欢迎",
       "home.sub": "今天想做什么？",
       "home.guest.title": "不确定是不是诈骗？先停一停，查一查。",
       "home.guest.sub": "银行提供的免费帮助。紧急帮助不需要登录。",
@@ -156,6 +158,7 @@ const CUSTOMER_HOME_DATA = {
       "home.evening": "Selamat malam",
       "home.hello": "Helo, {name}",
       "home.helloNoName": "Selamat kembali",
+      "home.welcomeNew": "Selamat datang",
       "home.sub": "Apa yang anda mahu buat hari ini?",
       "home.guest.title": "Tidak pasti jika ia penipuan? Berhenti dan semak.",
       "home.guest.sub": "Bantuan percuma daripada bank anda. Anda tidak perlu log masuk untuk bantuan segera.",

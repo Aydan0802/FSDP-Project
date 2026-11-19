@@ -60,7 +60,18 @@ const ICONS = {
   search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20.5 20.5"/>',
   // For "Is the caller a real person?": a hidden code (make one) and a phone keypad (type one in)
   code: '<rect x="2.5" y="6.5" width="19" height="11" rx="3"/><circle cx="7.5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="16.5" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
-  keypad: '<circle cx="6.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19.5" r="1.8" fill="currentColor" stroke="none"/>'
+  keypad: '<circle cx="6.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="4.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="9.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="6.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="17.5" cy="14.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19.5" r="1.8" fill="currentColor" stroke="none"/>',
+  // For the caller check's picture puzzle (Yan Lin): a mahjong tile (with 中 on it) and the
+  // kopitiam and tea-time foods, drawn in the same line style instead of emojis
+  tile: '<rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M9 9.5h6V13H9zM12 7v8.5"/>',
+  kopi: '<path d="M5 10h11v4.5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 14.5z"/><path d="M16 11.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c-.8 1 .8 2 0 3M12 3.5c-.8 1 .8 2 0 3M4 21.5h14"/>',
+  toast: '<path d="M6.5 20v-9.4A3.5 3.5 0 0 1 8 4h8a3.5 3.5 0 0 1 1.5 6.6V20z"/><path d="M9 14h6"/>',
+  egg: '<path d="M12 3.5c3.3 0 6 5 6 9.5a6 6 0 0 1-12 0c0-4.5 2.7-9.5 6-9.5z"/>',
+  icedTea: '<path d="M6 7h12l-1.5 13.5h-9z"/><path d="M13 7l2-4.5h3"/><path d="M8.8 10.5h3v3h-3zM12.3 13.5h3v3h-3z"/>',
+  curryPuff: '<path d="M3.5 17.5A2.4 2.4 0 0 1 4.64 13.25A2.4 2.4 0 0 1 7.75 10.14A2.4 2.4 0 0 1 12 9A2.4 2.4 0 0 1 16.25 10.14A2.4 2.4 0 0 1 19.36 13.25A2.4 2.4 0 0 1 20.5 17.5z"/>',
+  teapot: '<path d="M5.5 11h13v2.5a6.5 6.5 0 0 1-13 0z"/><path d="M8 11a4 4 0 0 1 8 0M12 5.5V7"/><path d="M5.6 13.5 2.5 10.5M18.5 12h.5a2.5 2.5 0 0 1 0 5h-1.3"/>',
+  pineapple: '<path d="M7.25 15.5a4.75 5.5 0 1 0 9.5 0a4.75 5.5 0 1 0-9.5 0z"/><path d="M8.2 14l4.8 4.8M11 11.2l4.8 4.8M15.8 14 11 18.8M13 11.2 8.2 16"/><path d="M12 10V4M12 9 8.5 5.5M12 9l3.5-3.5"/>',
+  rice: '<path d="M3.5 12h17a8.5 8.5 0 0 1-17 0z"/><path d="M7 12a5 4 0 0 1 10 0"/><path d="M14.5 9.5c.5-2.8 2.7-4.3 5.5-4-.3 2.8-2.6 4.4-5.5 4z"/>'
 };
 
 // Returns one icon as an SVG drawing. aria-hidden hides it from screen readers, because the
