@@ -21,9 +21,12 @@
   function feedbackHtml(picked) {
     if (!picked) return "";
     const right = picked === data.quiz.answer;
+    // Each wrong answer explains itself when it has its own reason, otherwise the general one
+    const option = data.quiz.options.find(o => o.id === picked);
+    const why = right ? data.quiz.right : ((option && option.why) || data.quiz.wrong);
     return `<div class="verdict ${right ? "v-good" : "v-bad"}">
         ${icon(right ? "check" : "cross")}
-        <div><p><strong>${right ? t("ls.correct") : t("ls.notQuite")}</strong></p><p>${right ? t(data.quiz.right) : t(data.quiz.wrong)}</p></div>
+        <div><p><strong>${right ? t("ls.correct") : t("ls.notQuite")}</strong></p><p>${t(why)}</p></div>
       </div>`;
   }
 

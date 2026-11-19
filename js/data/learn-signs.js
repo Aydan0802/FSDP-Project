@@ -16,12 +16,13 @@ const LEARN_SIGNS_DATA = {
   ],
 
   // One practice question. answer is the id of the right option.
+  // A wrong option can have its own explanation (why); otherwise the general "wrong" one shows.
   quiz: {
     question: "ls.quiz.question",
     options: [
       { id: "a", text: "ls.quiz.a" },
       { id: "b", text: "ls.quiz.b" },
-      { id: "c", text: "ls.quiz.c" }
+      { id: "c", text: "ls.quiz.c", why: "ls.quiz.wrongStaff" }
     ],
     answer: "b",
     right: "ls.quiz.right",
@@ -51,6 +52,7 @@ const LEARN_SIGNS_DATA = {
       "ls.notQuite": "Not quite",
       "ls.quiz.right": "Always hang up and call back on a number you found yourself.",
       "ls.quiz.wrong": "The police and the bank will never ask you to move money. Hang up and call them yourself.",
+      "ls.quiz.wrongStaff": "Anyone can make up a staff number, so it proves nothing. Hang up and call the police or the bank yourself.",
       "ls.goodToKnow": "Good to know",
       "ls.tip": "A real bank officer will never ask you to move money to a \"safe account\", or to share your one-time password (OTP)."
     },
@@ -74,6 +76,7 @@ const LEARN_SIGNS_DATA = {
       "ls.notQuite": "不太对",
       "ls.quiz.right": "一定要先挂电话，再用你自己找到的号码打回去。",
       "ls.quiz.wrong": "警察和银行绝对不会叫你转钱。请挂电话，然后自己打给他们。",
+      "ls.quiz.wrongStaff": "谁都可以编一个职员号码，所以这证明不了什么。请挂电话，然后自己打给警察或银行。",
       "ls.goodToKnow": "小提醒",
       "ls.tip": "真正的银行职员绝对不会叫你把钱转到“安全户口”，也不会叫你说出一次性密码（OTP）。"
     },
@@ -97,6 +100,7 @@ const LEARN_SIGNS_DATA = {
       "ls.notQuite": "Belum tepat",
       "ls.quiz.right": "Sentiasa letak telefon dan telefon semula nombor yang anda cari sendiri.",
       "ls.quiz.wrong": "Polis dan bank tidak akan sekali-kali suruh anda pindahkan wang. Letak telefon dan telefon mereka sendiri.",
+      "ls.quiz.wrongStaff": "Sesiapa pun boleh reka nombor kakitangan, jadi ia tidak membuktikan apa-apa. Letak telefon dan telefon polis atau bank sendiri.",
       "ls.goodToKnow": "Perlu tahu",
       "ls.tip": "Pegawai bank sebenar tidak akan sekali-kali suruh anda pindahkan wang ke \"akaun selamat\", atau minta kata laluan sekali guna (OTP) anda."
     }

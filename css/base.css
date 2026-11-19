@@ -138,6 +138,9 @@ h1:focus, main:focus { outline: none; }
   font-size: 1.125rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
 }
 .btn-small { width: auto; min-height: 48px; padding: .5rem 1rem; font-size: 1rem; }
+/* A small red button keeps bold 19px text: that still counts as large text, so white on OCBC red
+   (4.4:1) passes. At 16px it would need 4.5:1 and fail (the "Call OCBC" bar, Sign in, Check). */
+.btn-primary.btn-small { font-size: 1.1875rem; }
 
 /* ---------- Form fields (any screen with a form can use these) ---------- */
 
@@ -401,9 +404,24 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   .topbar:has(.topbar-back) .brand { display: none; }
   .topbar .tool-btn--signin { padding: .5rem 1rem; white-space: nowrap; }
   .topbar .tool-btn--signin .icon { display: none; }   /* the words "Sign in" are enough here */
+  /* But on screens you opened, Back is on the left too, and "Sign in" (longer in Malay, or at A++)
+     pushed the top bar wider than the phone. There, Sign in shows its person icon only, like
+     Sign out. The words stay for screen readers, and Sign in is in the menu as well. */
+  .topbar:has(.topbar-back) .tool-btn--signin { padding: .5rem; }
+  .topbar:has(.topbar-back) .tool-btn--signin .icon { display: block; }
+  .topbar:has(.topbar-back) .tool-btn--signin > span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  /* Last resort on very small phones: the Back word shortens ("Kemb…") instead of the page
+     scrolling sideways */
+  .topbar-back { min-width: 0; }
+  .topbar-back > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .topbar-tools { flex: none; }
-  /* With bigger text there is no room for the name next to the logo, so the logo stands alone */
-  html[data-size="large"] .topbar .brand-name, html[data-size="larger"] .topbar .brand-name { display: none; }
+  /* With bigger text there is no room for the name next to the logo, so the logo stands alone.
+     The name is only hidden from view: screen readers still hear "Pause & Prove" for the link. */
+  html[data-size="large"] .topbar .brand-name, html[data-size="larger"] .topbar .brand-name {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
   /* Read aloud and text size live in the menu on a phone, to keep the top bar short.
      The language stays in the top bar as a globe button, for anyone who can't read English.
      Sign out stays in the top bar too, as the exit icon only, like the staff screens (the word is
@@ -419,9 +437,12 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   body:has(.call-bar) .shell-main { padding-bottom: 0; }
   .read-stop { bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px)); }
 }
-/* Guests have the wider "Sign in" button, so on most phones the logo stands alone next to Menu */
+/* Guests have the wider "Sign in" button, so on most phones the logo stands alone next to Menu.
+   The name is only hidden from view, so the logo link still has a name for screen readers. */
 @media (max-width: 26.99rem) {
-  .topbar:has(.tool-btn--signin) .brand-name { display: none; }
+  .topbar:has(.tool-btn--signin) .brand-name {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
 }
 
 /* ----- Tablet and iPad upright (600px to 1023px): the rail ----- */
@@ -441,6 +462,18 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
   .side-display { display: none; }
   .call-bar { left: 6.5rem; }
   body:has(.shell) .demo-bar { padding-left: 7.5rem; }   /* clear of the rail */
+  /* With A+ or A++ text the top bar no longer fits on a tablet (worst in Malay), so the language
+     picker becomes the globe button and Sign in / Sign out become their icon, as on phones.
+     The words stay for screen readers. */
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .lang-pick { width: 48px; min-height: 48px; }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .lang-pick select { width: 100%; min-height: 44px; padding: 0; color: transparent; }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .lang-pick select option { color: var(--text); }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .lang-globe { left: 50%; transform: translate(-50%, -50%); }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .lang-caret { display: none; }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .topbar-account { min-width: 48px; padding: .5rem; justify-content: center; }
+  :is(html[data-size="large"], html[data-size="larger"]) .topbar .topbar-account > span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
 }
 
 /* ----- iPad sideways and desktop (1024px and up): the sidebar stays open ----- */

@@ -18,6 +18,13 @@
 (function () {
   const data = PASSPHRASE_DATA;
   const esc = escapeHtml;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+
+  // The server saves the English word ("Son"); show it in the customer's language
+  function relationshipLabel(value) {
+    const r = data.relationships.find(item => item.value === value);
+    return r ? t(r.key) : esc(value);
+  }
 
   function myState() {
     if (!appState.passphrase) appState.passphrase = { list: null, loadError: false, checking: "", justAdded: "" };
@@ -43,17 +50,17 @@
 
   // "2026-11-18T07:30:00Z" becomes "18 Nov 2026"
   function niceDate(iso) {
-    return new Date(iso).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" });
+    return new Date(iso).toLocaleDateString(getLocale(), { day: "numeric", month: "short", year: "numeric" });
   }
 
   // ---------- HTML ----------
 
   function checkFormHtml(p) {
     return `<form class="pp-check" data-check-form="${esc(p.id)}" novalidate>
-        <label for="pp-check-${esc(p.id)}">What word did the caller say?</label>
+        <label for="pp-check-${esc(p.id)}">${t("pp.checkLabel")}</label>
         <div class="pw-row">
           <input id="pp-check-${esc(p.id)}" type="password" autocomplete="off" spellcheck="false">
-          <button type="submit" class="btn btn-primary btn-small">Check</button>
+          <button type="submit" class="btn btn-primary btn-small">${t("pp.check")}</button>
         </div>
         <div class="pp-check-result" aria-live="polite"></div>
       </form>`;
@@ -61,18 +68,18 @@
 
   function listHtml() {
     const state = myState();
-    if (state.loadError) return `<li class="pp-empty">We could not load your list. Please try again later.</li>`;
-    if (!state.list) return `<li class="pp-empty">Loading…</li>`;
-    if (!state.list.length) return `<li class="pp-empty">Nobody added yet. Add a family member below.</li>`;
+    if (state.loadError) return `<li class="pp-empty">${t("pp.loadError")}</li>`;
+    if (!state.list) return `<li class="pp-empty">${t("pp.loading")}</li>`;
+    if (!state.list.length) return `<li class="pp-empty">${t("pp.empty")}</li>`;
     return state.list.map(p => {
       const isNew = p.id === state.justAdded;
       const open = p.id === state.checking;
       return `<li class="pp-person${isNew ? " pp-person--new" : ""}">
-          <p class="pp-name">${esc(p.name)}${isNew ? ` <span class="pp-tag">New</span>` : ""}</p>
-          <p class="pp-rel">${esc(p.relationship)} · safe word saved ${esc(niceDate(p.created_at))}</p>
+          <p class="pp-name">${esc(p.name)}${isNew ? ` <span class="pp-tag">${t("pp.new")}</span>` : ""}</p>
+          <p class="pp-rel">${t("pp.savedOn", { relationship: relationshipLabel(p.relationship), date: esc(niceDate(p.created_at)) })}</p>
           <div class="pp-actions">
-            <button type="button" class="btn btn-secondary btn-small" data-open-check="${esc(p.id)}" aria-expanded="${open}">Check a caller's word</button>
-            <button type="button" class="btn btn-link btn-small" data-remove="${esc(p.id)}">Remove<span class="visually-hidden"> ${esc(p.name)}</span></button>
+            <button type="button" class="btn btn-secondary btn-small" data-open-check="${esc(p.id)}" aria-expanded="${open}">${t("pp.checkWord")}</button>
+            <button type="button" class="btn btn-link btn-small" data-remove="${esc(p.id)}">${t("pp.remove")}<span class="visually-hidden"> ${esc(p.name)}</span></button>
           </div>
           ${open ? checkFormHtml(p) : ""}
         </li>`;
@@ -81,31 +88,31 @@
 
   function addFormHtml() {
     return `<form class="panel" id="pp-form" novalidate aria-labelledby="pp-add-title">
-        <h2 id="pp-add-title">Add a family member</h2>
+        <h2 id="pp-add-title">${t("pp.addTitle")}</h2>
         <div id="pp-success" tabindex="-1"></div>
         <div class="field">
-          <label for="pp-name">Their name</label>
+          <label for="pp-name">${t("pp.name")}</label>
           <input type="text" id="pp-name" autocomplete="off" aria-describedby="pp-name-error">
           <p class="field-error" id="pp-name-error"></p>
         </div>
         <div class="field">
-          <label for="pp-rel">How are they related to you?</label>
+          <label for="pp-rel">${t("pp.rel")}</label>
           <select id="pp-rel" aria-describedby="pp-rel-error">
-            <option value="">Choose one</option>
-            ${data.relationships.map(r => `<option>${r}</option>`).join("")}
+            <option value="">${t("pp.choose")}</option>
+            ${data.relationships.map(r => `<option value="${esc(r.value)}">${t(r.key)}</option>`).join("")}
           </select>
           <p class="field-error" id="pp-rel-error"></p>
         </div>
         <div class="field">
-          <label for="pp-word">Safe word you agreed together</label>
-          <p class="meta" id="pp-word-hint">Choose ${data.ideas}.</p>
+          <label for="pp-word">${t("pp.word")}</label>
+          <p class="meta" id="pp-word-hint">${t("pp.wordHint")}</p>
           <div class="pw-row">
             <input type="password" id="pp-word" autocomplete="off" spellcheck="false" aria-describedby="pp-word-hint pp-word-error">
-            <button type="button" class="pw-toggle" aria-controls="pp-word">Show<span class="visually-hidden"> safe word</span></button>
+            <button type="button" class="pw-toggle" aria-controls="pp-word">${t("pp.show")}<span class="visually-hidden"> ${t("pp.safeWord")}</span></button>
           </div>
           <p class="field-error" id="pp-word-error"></p>
         </div>
-        <div class="stack"><button type="submit" class="btn btn-primary">Save</button></div>
+        <div class="stack"><button type="submit" class="btn btn-primary">${t("pp.save")}</button></div>
       </form>`;
   }
 
@@ -115,15 +122,15 @@
     state.checking = "";
     return customerPageHtml("", `<div class="narrow pp-screen">
       <section class="panel" data-read>
-        <h1 tabindex="-1">Family passphrase</h1>
-        <p class="lead">Someone calls saying they are family and need money? Ask them for your safe word, then check it here.</p>
+        <h1 tabindex="-1">${t("pp.title")}</h1>
+        <p class="lead">${t("pp.lead")}</p>
         <div class="pp-promise">
           ${icon("lock")}
-          <p><strong>Your safe word is scrambled before it is saved.</strong> Nobody can read it back, not even the bank. If anyone asks you for it, it is a scam.</p>
+          <p>${t("pp.promise")}</p>
         </div>
       </section>
       <section class="panel" aria-labelledby="pp-list-title">
-        <h2 id="pp-list-title" tabindex="-1">Your family</h2>
+        <h2 id="pp-list-title" tabindex="-1">${t("pp.listTitle")}</h2>
         <ul id="pp-list" class="pp-list">${listHtml()}</ul>
       </section>
       ${addFormHtml()}
@@ -156,10 +163,10 @@
   // Shows the answer to "does this word match?"
   function resultHtml(person, reply) {
     if (reply.match) {
-      return `<div class="pp-result pp-result--match">${icon("check")}<p><strong>Matches.</strong> Even so, never send money only because of a call.</p></div>`;
+      return `<div class="pp-result pp-result--match">${icon("check")}<p>${t("pp.match")}</p></div>`;
     }
-    const left = reply.triesLeft > 0 ? ` ${reply.triesLeft} ${reply.triesLeft === 1 ? "try" : "tries"} left.` : "";
-    return `<div class="pp-result pp-result--no">${icon("cross")}<p><strong>Doesn't match.</strong> Hang up and call ${esc(person.name)} back on the number you already have.${left}</p></div>`;
+    const left = reply.triesLeft > 0 ? " " + (reply.triesLeft === 1 ? t("pp.triesLeftOne") : t("pp.triesLeft", { n: reply.triesLeft })) : "";
+    return `<div class="pp-result pp-result--no">${icon("cross")}<p>${t("pp.noMatch", { name: esc(person.name) })}${left}</p></div>`;
   }
 
   async function check(form) {
@@ -169,7 +176,7 @@
     const input = form.querySelector("input");
     const result = form.querySelector(".pp-check-result");
     if (!input.value.trim()) {
-      result.innerHTML = `<p class="field-error">Type the word the caller said.</p>`;
+      result.innerHTML = `<p class="field-error">${t("pp.typeWord")}</p>`;
       input.focus();
       return;
     }
@@ -178,8 +185,8 @@
       result.innerHTML = resultHtml(person, reply);
     } catch (err) {
       result.innerHTML = err.status === 429
-        ? `<div class="pp-result pp-result--no">${icon("clock")}<p><strong>Too many tries.</strong> Wait ${err.body.minutesLeft} minutes, or call ${esc(person.name)} back yourself.</p></div>`
-        : `<p class="field-error">We could not check right now. Please call ${esc(person.name)} back yourself.</p>`;
+        ? `<div class="pp-result pp-result--no">${icon("clock")}<p>${t("pp.tooMany", { minutes: esc(err.body.minutesLeft), name: esc(person.name) })}</p></div>`
+        : `<p class="field-error">${t("pp.cantCheck", { name: esc(person.name) })}</p>`;
     }
     input.value = "";   // never leave the word on screen
   }
@@ -192,10 +199,10 @@
       state.list = state.list.filter(p => p.id !== id);
       state.justAdded = "";
       redrawList();
-      showToast(`${person.name} removed`);
+      showToast(t("pp.removed", { name: person.name }));
       document.getElementById("pp-list-title").focus();
     } catch (err) {
-      showToast("Could not remove. Please try again.");
+      showToast(t("pp.cantRemove"));
     }
   }
 
@@ -233,7 +240,7 @@
     form.querySelector(".pw-toggle").addEventListener("click", event => {
       const show = wordBox.type === "password";
       wordBox.type = show ? "text" : "password";
-      event.currentTarget.innerHTML = `${show ? "Hide" : "Show"}<span class="visually-hidden"> safe word</span>`;
+      event.currentTarget.innerHTML = `${show ? t("pp.hide") : t("pp.show")}<span class="visually-hidden"> ${t("pp.safeWord")}</span>`;
     });
 
     form.addEventListener("input", event => {
@@ -246,9 +253,9 @@
       const name = nameBox.value.trim();
       const relationship = relBox.value;
       const word = wordBox.value;
-      setError(nameBox, name ? "" : "Please type their name.");
-      setError(relBox, relationship ? "" : "Please choose how they are related to you.");
-      setError(wordBox, word.trim().length >= data.minLength ? "" : `Please type a safe word with at least ${data.minLength} letters.`);
+      setError(nameBox, name ? "" : t("pp.err.name"));
+      setError(relBox, relationship ? "" : t("pp.err.rel"));
+      setError(wordBox, word.trim().length >= data.minLength ? "" : t("pp.err.word", { n: data.minLength }));
       const firstProblem = [nameBox, relBox, wordBox].find(input => input.getAttribute("aria-invalid") === "true");
       if (firstProblem) return firstProblem.focus();
 
@@ -260,13 +267,13 @@
         form.reset();
         wordBox.type = "password";
         success.innerHTML = `<div class="pp-success" role="status">
-            <p class="pp-success-title">${icon("check")}Saved</p>
-            <p><strong>${esc(saved.name)}</strong> is on your list above. Their safe word is scrambled, so it cannot be shown again.</p>
+            <p class="pp-success-title">${icon("check")}${t("pp.savedTitle")}</p>
+            <p>${t("pp.savedText", { name: esc(saved.name) })}</p>
           </div>`;
         success.focus();
       } catch (err) {
         wordBox.value = "";
-        success.innerHTML = `<p class="field-error">We could not save it. Please try again.</p>`;
+        success.innerHTML = `<p class="field-error">${t("pp.cantSave")}</p>`;
       }
     });
   }

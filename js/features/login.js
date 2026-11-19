@@ -106,9 +106,11 @@
   }
 
   // Goes to the screen the customer was trying to open, or home, and says hello
-  function finishCustomerSignIn(id, demo) {
+  // isNew: the account was made just now, so the home screen says "Welcome", not "Welcome back"
+  function finishCustomerSignIn(id, demo, isNew = false) {
     const name = looksLikeName(id) ? id : "";
     signIn("customer", id, name);
+    appState.newAccount = isNew;
     const next = appState.afterSignIn || "#customer";
     appState.afterSignIn = "";
     location.hash = next;
@@ -264,7 +266,7 @@
       (result.key === "signup.err.taken" || result.key === "signup.err.id" ? userid : password).focus();
       return;
     }
-    finishCustomerSignIn(result.userId, result.demo);   // a new account is signed in straight away
+    finishCustomerSignIn(result.userId, result.demo, true);   // a new account is signed in straight away
   }
 
   function afterLogin(param) {

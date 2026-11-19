@@ -6,6 +6,7 @@
 (function () {
   const data = CALLER_CHECK_DATA;
   const scenarios = data.scenarios;
+  addTranslations(data.text);   // this screen's English, Chinese and Malay words
 
   function randomDigits(count) {
     let result = "";
@@ -100,22 +101,29 @@
     return `
       <div class="rp-grid">
         ${options.map(opt => `
-          <button type="button" class="rp-card" data-cc="${actionName}" data-id="${opt.id}" aria-label="${opt.title}, ${opt.hint}">
+          <button type="button" class="rp-card" data-cc="${actionName}" data-id="${opt.id}" aria-label="${t(opt.title)}, ${t(opt.hint)}">
             ${opt.type === "mj"
               ? `<span class="rp-mj-tile ${opt.color}" aria-hidden="true">${opt.char}<span class="rp-mj-sub">${opt.sub}</span></span>`
-              : `<span class="rp-kopi-icon" aria-hidden="true">${opt.emoji}</span>`}
-            <span class="rp-cap-title">${opt.title}</span>
-            <span class="rp-cap-hint">${opt.hint}</span>
+              : `<span class="rp-kopi-icon" aria-hidden="true">${icon(opt.icon)}</span>`}
+            <span class="rp-cap-title">${t(opt.title)}</span>
+            <span class="rp-cap-hint">${t(opt.hint)}</span>
           </button>
         `).join("")}
       </div>
     `;
   }
 
+  // The picture the caller has to name, as a small icon next to its name.
+  // Food pictures use their own icon; mahjong tiles use the plain tile icon.
+  function stampIcon(sc) {
+    const target = sc.options.find(opt => opt.id === sc.callerTarget);
+    return icon((target && target.icon) || "tile");
+  }
+
   function callerLogHtml(state) {
     return state.log.length
       ? state.log.map(line => `<li>${line}</li>`).join("")
-      : "<li>Waiting for the caller to enter the code…</li>";
+      : `<li>${t("cc.log.waiting")}</li>`;
   }
 
   function callerProgressBoxHtml(state) {
@@ -125,19 +133,19 @@
     return `
       <div class="cc-progress-wrap">
         <div class="cc-demo" role="group" aria-labelledby="cc-demo-title">
-          <strong id="cc-demo-title">Demo: who is calling?</strong>
+          <strong id="cc-demo-title">${t("cc.demo.title")}</strong>
           <div class="cc-demo-chips">
-            ${chip("human", "A real person")}
-            ${chip("ai", "An AI voice bot")}
+            ${chip("human", t("cc.demo.human"))}
+            ${chip("ai", t("cc.demo.ai"))}
           </div>
         </div>
 
         <aside class="cc-caller" aria-labelledby="cc-caller-title">
           <div class="cc-caller-head">
-            <span class="cc-tag">Caller's progress</span>
-            <span class="cc-timer-pill">Time left: <strong id="cc-left">${state.left}</strong>s</span>
+            <span class="cc-tag">${t("cc.progress.tag")}</span>
+            <span class="cc-timer-pill">${t("cc.progress.timeLeft", { seconds: `<strong id="cc-left">${state.left}</strong>` })}</span>
           </div>
-          <h2 id="cc-caller-title">Live CAPTCHA Status</h2>
+          <h2 id="cc-caller-title">${t("cc.progress.title")}</h2>
           <ol id="cc-log" aria-live="polite">${callerLogHtml(state)}</ol>
         </aside>
       </div>
@@ -152,11 +160,9 @@
     state.left = data.waitSeconds || 60;
     state.callerDone = false;
 
-    const script = data.callerScripts[state.sim].map(([ms, text]) => [
+    const script = data.callerScripts[state.sim].map(([ms, key]) => [
       ms,
-      text
-        .replace("{code}", state.inviteCode)
-        .replace("{callerPrompt}", sc.callerPrompt)
+      t(key, { code: state.inviteCode, prompt: t(sc.callerPrompt) })
     ]);
 
     const logEl = () => document.getElementById("cc-log");
@@ -182,9 +188,9 @@
       if (state.view !== "gen-check" || !logEl()) return;
       state.callerDone = true;
       if (state.sim === "human") {
-        state.log.push(`<strong>Done!</strong> Caller's screen now shows: <strong>${sc.stamp}</strong> &amp; <strong>${state.matchDigits}</strong>`);
+        state.log.push(t("cc.log.done", { stamp: t(sc.stamp), digits: state.matchDigits }));
       } else {
-        state.log.push(`<strong>Failed!</strong> Caller could not solve the puzzle in time.`);
+        state.log.push(t("cc.log.failed"));
       }
       logEl().innerHTML = callerLogHtml(state);
     }
@@ -197,7 +203,7 @@
       state.left = Math.max(0, state.left - 1);
       el.textContent = state.left;
       if (state.left === 0) {
-        state.log.push("<strong>Timed out!</strong> 60 seconds passed without solving.");
+        state.log.push(t("cc.log.timedOut", { seconds: data.waitSeconds || 60 }));
         if (logEl()) logEl().innerHTML = callerLogHtml(state);
         return;
       }
@@ -215,32 +221,32 @@
     if (state.view === "home") {
       return `
         <section class="panel" data-read>
-          <h1 tabindex="-1">Is the caller a real person?</h1>
-          <p class="lead">Choose what you want to do:</p>
+          <h1 tabindex="-1">${t("cc.title")}</h1>
+          <p class="lead">${t("cc.choose")}</p>
           <div class="role-grid">
             <button type="button" class="role-card primary-role" data-cc="start-gen">
               <span class="role-icon" aria-hidden="true">${icon("code")}</span>
               <span>
-                <strong>Generate invite code</strong>
-                <span class="sub">I am on a call and want to test the caller</span>
+                <strong>${t("cc.gen.title")}</strong>
+                <span class="sub">${t("cc.gen.sub")}</span>
               </span>
             </button>
 
             <button type="button" class="role-card" data-cc="start-recv">
               <span class="role-icon" aria-hidden="true">${icon("keypad")}</span>
               <span>
-                <strong>I received a code</strong>
-                <span class="sub">Someone read me a code to verify myself</span>
+                <strong>${t("cc.recv.title")}</strong>
+                <span class="sub">${t("cc.recv.sub")}</span>
               </span>
             </button>
           </div>
 
           <div class="how-box">
-            <p class="how-title">New here? It takes about a minute:</p>
+            <p class="how-title">${t("cc.how.title")}</p>
             <ol>
-              <li>Tap "Generate invite code" and read the code to the caller.</li>
-              <li>The caller enters it and taps a picture. This check shows if they are a bot.</li>
-              <li>A real person reads back a picture and 6 digits.</li>
+              <li>${t("cc.how.1", { button: t("cc.gen.title") })}</li>
+              <li>${t("cc.how.2")}</li>
+              <li>${t("cc.how.3")}</li>
             </ol>
           </div>
         </section>
@@ -252,21 +258,21 @@
       const chars = state.inviteCode.split("");
       return `
         <div class="cc-page-top">
-          <button type="button" class="btn btn-link" data-cc="home">← Back</button>
+          <button type="button" class="btn btn-link" data-cc="home">← ${t("cc.back")}</button>
         </div>
         <section class="panel" data-read>
           <div class="pill-row">
-            <span class="step-pill">Step 1 of 2</span>
-            <span class="theme-pill">${sc.theme}</span>
+            <span class="step-pill">${t("cc.step1of2")}</span>
+            <span class="theme-pill">${icon(sc.icon)}${t(sc.theme)}</span>
           </div>
-          <h1 tabindex="-1">Read this code to the caller</h1>
+          <h1 tabindex="-1">${t("cc.code.title")}</h1>
           <div class="cc-code">${state.inviteCode}</div>
-          <p class="cc-say-label">Say it slowly, one by one:</p>
+          <p class="cc-say-label">${t("cc.code.say")}</p>
           <div class="cc-say-pills" aria-hidden="true">
-            ${chars.map(ch => ch === "-" ? `<span class="pill-dash">dash</span>` : `<span>${ch}</span>`).join("")}
+            ${chars.map(ch => ch === "-" ? `<span class="pill-dash">${t("cc.code.dash")}</span>` : `<span>${ch}</span>`).join("")}
           </div>
-          <p class="lead">Ask them to open <strong>"I received a code"</strong> and type it in.</p>
-          <button type="button" class="btn btn-primary" data-cc="said-code">I have said the code</button>
+          <p class="lead">${t("cc.code.ask", { button: t("cc.recv.title") })}</p>
+          <button type="button" class="btn btn-primary" data-cc="said-code">${t("cc.code.said")}</button>
         </section>
       `;
     }
@@ -275,22 +281,22 @@
     if (state.view === "gen-check") {
       return `
         <div class="cc-page-top">
-          <button type="button" class="btn btn-link" data-cc="back-code">← Back to code</button>
+          <button type="button" class="btn btn-link" data-cc="back-code">← ${t("cc.backToCode")}</button>
         </div>
         <section class="panel" data-read>
           <div class="pill-row">
-            <span class="step-pill">Step 2 of 2</span>
-            <span class="theme-pill">${sc.theme}</span>
+            <span class="step-pill">${t("cc.step2of2")}</span>
+            <span class="theme-pill">${icon(sc.icon)}${t(sc.theme)}</span>
           </div>
-          <h1 tabindex="-1">Ask the caller to read back</h1>
-          <p class="lead">Ask for the <strong>picture name</strong> and the <strong>6 digits</strong> on their screen.</p>
+          <h1 tabindex="-1">${t("cc.check.title")}</h1>
+          <p class="lead">${t("cc.check.lead")}</p>
 
           <div class="verify-box">
-            <p class="cc-expected-label">A real person will say:</p>
-            <div class="stamp-box">${sc.stamp} &nbsp;|&nbsp; ${state.matchDigits}</div>
+            <p class="cc-expected-label">${t("cc.check.expected")}</p>
+            <div class="stamp-box">${stampIcon(sc)}${t(sc.stamp)} &nbsp;|&nbsp; ${state.matchDigits}</div>
             <div class="stack">
-              <button type="button" class="btn btn-primary" data-cc="verify-yes">They read the exact match</button>
-              <button type="button" class="btn btn-secondary" data-cc="verify-no">They failed or got it wrong</button>
+              <button type="button" class="btn btn-primary" data-cc="verify-yes">${t("cc.check.yes")}</button>
+              <button type="button" class="btn btn-secondary" data-cc="verify-no">${t("cc.check.no")}</button>
             </div>
           </div>
 
@@ -303,25 +309,25 @@
     if (state.view === "recv-enter") {
       return `
         <div class="cc-page-top">
-          <button type="button" class="btn btn-link" data-cc="home">← Back</button>
+          <button type="button" class="btn btn-link" data-cc="home">← ${t("cc.back")}</button>
         </div>
         <section class="panel" data-read>
           <div class="pill-row">
-            <span class="step-pill">Caller Check • Step 1 of 3</span>
+            <span class="step-pill">${t("cc.recvStep1")}</span>
           </div>
-          <h1 tabindex="-1">Enter the code you received</h1>
-          <p class="lead">Type the code read to you over the phone.</p>
+          <h1 tabindex="-1">${t("cc.enter.title")}</h1>
+          <p class="lead">${t("cc.enter.lead")}</p>
 
-          <label for="cc-code-in" class="visually-hidden">Invite code</label>
-          <input type="text" id="cc-code-in" class="code-input" value="${escapeHtml(state.enteredCode)}" placeholder="e.g. ZHONG-4821" maxlength="10" autocomplete="off">
-          ${state.error ? `<p class="cc-error" role="alert">${state.error}</p>` : ""}
+          <label for="cc-code-in" class="visually-hidden">${t("cc.enter.label")}</label>
+          <input type="text" id="cc-code-in" class="code-input" value="${escapeHtml(state.enteredCode)}" placeholder="${escapeHtml(t("cc.enter.placeholder", { code: "ZHONG-4821" }))}" maxlength="10" autocomplete="off">
+          ${state.error ? `<p class="cc-error" role="alert">${t(state.error)}</p>` : ""}
 
           <div class="quick-fill">
-            <span><strong>Demo shortcut:</strong></span>
-            <button type="button" class="chip" data-cc="fill-code">Use active code (${state.inviteCode})</button>
+            <span><strong>${t("cc.enter.demo")}</strong></span>
+            <button type="button" class="chip" data-cc="fill-code">${t("cc.enter.useCode", { code: state.inviteCode })}</button>
           </div>
 
-          <button type="button" class="btn btn-primary" data-cc="submit-code">Next</button>
+          <button type="button" class="btn btn-primary" data-cc="submit-code">${t("cc.next")}</button>
         </section>
       `;
     }
@@ -330,16 +336,16 @@
     if (state.view === "recv-captcha") {
       return `
         <div class="cc-page-top">
-          <button type="button" class="btn btn-link" data-cc="start-recv">← Back</button>
+          <button type="button" class="btn btn-link" data-cc="start-recv">← ${t("cc.back")}</button>
         </div>
         <section class="panel" data-read>
           <div class="pill-row">
-            <span class="step-pill">Caller Check • Step 2 of 3</span>
-            <span class="theme-pill">${sc.theme}</span>
+            <span class="step-pill">${t("cc.recvStep2")}</span>
+            <span class="theme-pill">${icon(sc.icon)}${t(sc.theme)}</span>
           </div>
-          <h1 tabindex="-1">${sc.callerPrompt}</h1>
-          <p class="lead">Tap the right picture to prove you are a real person.</p>
-          ${state.error ? `<p class="cc-error" role="alert">${state.error}</p>` : ""}
+          <h1 tabindex="-1">${t(sc.callerPrompt)}</h1>
+          <p class="lead">${t("cc.pick.lead")}</p>
+          ${state.error ? `<p class="cc-error" role="alert">${t(state.error)}</p>` : ""}
           ${renderCardGrid(state.options, "pick-recv")}
         </section>
       `;
@@ -349,18 +355,18 @@
     if (state.view === "recv-done") {
       return `
         <div class="cc-page-top">
-          <button type="button" class="btn btn-link" data-cc="home">← Done</button>
+          <button type="button" class="btn btn-link" data-cc="home">← ${t("cc.done")}</button>
         </div>
         <section class="panel" data-read>
           <div class="pill-row">
-            <span class="step-pill">Caller Check • Step 3 of 3</span>
-            <span class="theme-pill">${sc.theme}</span>
+            <span class="step-pill">${t("cc.recvStep3")}</span>
+            <span class="theme-pill">${icon(sc.icon)}${t(sc.theme)}</span>
           </div>
-          <h1 tabindex="-1">Read this back on the phone</h1>
-          <p class="lead">Say both the picture name and the 6 digits out loud:</p>
-          <div class="stamp-box">Picture: ${sc.stamp}</div>
+          <h1 tabindex="-1">${t("cc.finish.title")}</h1>
+          <p class="lead">${t("cc.finish.lead")}</p>
+          <div class="stamp-box">${t("cc.finish.picture")} ${stampIcon(sc)}${t(sc.stamp)}</div>
           <div class="cc-code">${state.matchDigits}</div>
-          <button type="button" class="btn btn-secondary" data-cc="home">Back to start</button>
+          <button type="button" class="btn btn-secondary" data-cc="home">${t("cc.backToStart")}</button>
         </section>
       `;
     }
@@ -369,15 +375,15 @@
     if (state.view === "result-ok") {
       return `
         <section data-read>
-          <div class="verdict v-good">${icon("check")}<div><p><strong>Real person</strong></p><h1 tabindex="-1">The caller is a real person</h1></div></div>
+          <div class="verdict v-good">${icon("check")}<div><p><strong>${t("cc.ok.tag")}</strong></p><h1 tabindex="-1">${t("cc.ok.title")}</h1></div></div>
           <div class="panel">
-            <p class="cc-warning"><strong>This does not show they are from OCBC. Never share your OTP or send money.</strong></p>
-            <p>Scammers can be real people too.</p>
+            <p class="cc-warning"><strong>${t("cc.ok.warn")}</strong></p>
+            <p>${t("cc.ok.note")}</p>
           </div>
         </section>
         <div class="stack">
-          <a class="btn btn-primary" href="#call-match">Check if OCBC is really calling</a>
-          <button type="button" class="btn btn-secondary" data-cc="home">Done</button>
+          <a class="btn btn-primary" href="#call-match">${t("cc.ok.callMatch")}</a>
+          <button type="button" class="btn btn-secondary" data-cc="home">${t("cc.done")}</button>
         </div>
       `;
     }
@@ -385,16 +391,16 @@
     // 4B. OUTCOME — CHECK FAILED / HANG UP WARNING
     return `
       <section data-read>
-        <div class="verdict v-bad">${icon("warning")}<div><p><strong>Check failed</strong></p><h1 tabindex="-1">Hang up now</h1></div></div>
+        <div class="verdict v-bad">${icon("warning")}<div><p><strong>${t("cc.bad.tag")}</strong></p><h1 tabindex="-1">${t("cc.bad.title")}</h1></div></div>
         <div class="panel">
-          <p>The caller could not pass the check. This may be an <strong>AI voice bot</strong> or scammer.</p>
-          <p><strong>Hang up now.</strong> Do not share any code or send money.</p>
+          <p>${t("cc.bad.text")}</p>
+          <p>${t("cc.bad.hang")}</p>
         </div>
       </section>
       <div class="stack">
-        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}Call OCBC ${OCBC_PHONE}</a>
-        <a class="btn btn-secondary" href="#report/call">Report this call</a>
-        <button type="button" class="btn btn-link" data-cc="home">Try again</button>
+        <a class="btn btn-primary" href="${OCBC_TEL}">${icon("phone")}${t("common.callOcbcNumber", { phone: OCBC_PHONE })}</a>
+        <a class="btn btn-secondary" href="#report/call">${t("cc.bad.report")}</a>
+        <button type="button" class="btn btn-link" data-cc="home">${t("cc.tryAgain")}</button>
       </div>
     `;
   }
@@ -469,7 +475,7 @@
         const input = document.getElementById("cc-code-in");
         const val = (input ? input.value : state.enteredCode).trim().toUpperCase();
         if (!val || val.length < 4) {
-          state.error = "Please enter the code read to you.";
+          state.error = "cc.err.noCode";
           draw();
           return;
         }
@@ -488,7 +494,7 @@
       } else if (act === "pick-recv") {
         const elapsed = Date.now() - state.startedAt;
         if (event.detail > 0 && elapsed < 250 && state.pointerMoves === 0) {
-          state.error = "Too fast! Bots are blocked. Tap normally.";
+          state.error = "cc.err.tooFast";
           draw();
           return;
         }
@@ -497,7 +503,7 @@
           state.error = "";
           state.view = "recv-done";
         } else {
-          state.error = "Not that one. Try again!";
+          state.error = "cc.err.wrong";
         }
         draw();
       }

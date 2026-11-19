@@ -2,6 +2,12 @@
    Verify the Caller – Two-Way Senior Verification & Caller Progress Styles
    ========================================================================== */
 
+/* "Ink" (dark text colour) used below. base.css has no --ink, so without this line the
+   selected demo chip had white text on no background and could not be seen. */
+.cc-screen {
+  --ink: var(--charcoal);
+}
+
 .cc-page-top {
   display: flex;
   align-items: center;
@@ -209,9 +215,31 @@
   color: #363B40;
 }
 
+/* Food pictures: a line icon in a soft square, about the size of a mahjong tile.
+   Same warm colours as the theme pill and the picture box (stamp-box). */
 .rp-kopi-icon {
-  font-size: 3.1rem;
-  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 4.6rem;
+  height: 4.6rem;
+  border-radius: 16px;
+  background: #FFF3D1;
+  color: #7A4F00;
+}
+
+.rp-kopi-icon .icon {
+  width: 3rem;
+  height: 3rem;
+}
+
+.theme-pill .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.stamp-box .icon {
+  width: 1.6rem;
+  height: 1.6rem;
 }
 
 .rp-cap-title {

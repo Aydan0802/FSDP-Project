@@ -110,7 +110,7 @@
     return `<section class="hello hello--hero" data-read>
         <div class="hello-text">
           <p class="eyebrow">${greeting()}</p>
-          <h1 tabindex="-1">${name ? t("home.hello", { name }) : t("home.helloNoName")}</h1>
+          <h1 tabindex="-1">${name ? t("home.hello", { name }) : t(appState.newAccount ? "home.welcomeNew" : "home.helloNoName")}</h1>
           <p class="hello-sub">${t("home.sub")}</p>
         </div>
         ${heroArtHtml()}
