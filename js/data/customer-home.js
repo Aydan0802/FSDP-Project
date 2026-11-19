@@ -28,8 +28,7 @@ const CUSTOMER_HOME_DATA = {
   ],
 
   // "Your safety checklist" (signed-in customers only): four small steps, with a progress bar.
-  // Signing in counts as the first step, so everyone starts with one done: people finish a list
-  // more often when they can see they have already started (the goal-gradient effect).
+  // Signing in counts as the first step, so everyone starts with one done.
   checklist: [
     { id: "signIn", label: "home.progress.signIn", route: "customer" },
     { id: "passphrase", label: "home.progress.passphrase", route: "passphrase" },

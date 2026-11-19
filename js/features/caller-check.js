@@ -6,7 +6,7 @@
 (function () {
   const data = CALLER_CHECK_DATA;
   const scenarios = data.scenarios;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);
 
   function randomDigits(count) {
     let result = "";

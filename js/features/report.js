@@ -14,12 +14,11 @@
 //   amount, contact, more   what is typed in the boxes
 //   ref      the report number, once sent
 //   sent     every report sent during this visit: [{ ref, what, lost, amount, contact, more, time }]
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const data = REPORT_DATA;
   const esc = escapeHtml;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);
 
   function freshForm(what = "") {
     return { phase: "form", what, lost: "", amount: "", contact: "", more: "", ref: "" };
@@ -92,10 +91,10 @@
 
   function screenHtml(param) {
     const state = myState();
-    // Coming here from another screen starts a new form. #report/call etc. pick "What happened?".
-    // If this screen is already showing, it is only being drawn again (after "Send", or a
-    // language change), so keep what the customer has filled in. The old screen is still on the
-    // page at this moment, because the router swaps it only after render() returns.
+    // Coming from another screen starts a new form (#report/call etc. pick "What happened?").
+    // If this screen is already showing, it is only being redrawn (after "Send", or a language
+    // change), so what the customer filled in is kept. The old screen is still on the page here,
+    // because the router swaps it only after render() returns.
     const alreadyHere = document.querySelector(".rp-screen") !== null;
     if (!alreadyHere) Object.assign(state, freshForm(data.what.some(w => w.id === param) ? param : ""));
     return customerPageHtml("", `<div class="narrow rp-screen">${state.phase === "sent" ? sentHtml(state) : formHtml(state)}</div>`);

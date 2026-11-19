@@ -57,7 +57,7 @@ const EVIDENCE_CHECKER_DATA = {
     }
   },
 
-  // NEW (1): Dynamic outcomes mapped from TextDetector risk ("high" | "medium" | "low") & OCR errors
+  // Outcomes mapped from the text detector's risk ("high" | "medium" | "low") and from reading errors
   outcomes: {
     high: {
       result: "likely",
@@ -101,7 +101,7 @@ const EVIDENCE_CHECKER_DATA = {
   imageSteps: ["ev.img.step1", "ev.img.step2"],
 
   // Sample files for the "Try a sample" buttons.
-  // NEW (2): Added sampleText so clicking a sample feeds real text into TextDetector
+  // sampleText lets a sample feed real text into the text detector
   samples: [
     {
       kind: "screenshot",
@@ -146,7 +146,7 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.redirect.title": "Check anything you are not sure about",
       "ev.redirect.text": "Opening the checker…",
 
-      // NEW (3): Translations for extracted-text outcomes & errors
+      // Words for the extracted-text outcomes and errors
       "ev.ocr.scam.title": "Strong scam warning signs found in the words",
       "ev.ocr.scam.reason1": "The text in this file uses urgent threats, suspicious links, or asks you to contact an unofficial number.",
       "ev.ocr.scam.step1": "Do not tap any link, call any number, or send money.",
@@ -215,7 +215,7 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.redirect.title": "检查任何你不确定的东西",
       "ev.redirect.text": "正在打开检查工具…",
 
-      // NEW (3): Chinese translations
+      // Chinese words for the extracted-text outcomes and errors
       "ev.ocr.scam.title": "文字里发现明显的诈骗警告信号",
       "ev.ocr.scam.reason1": "文件里的文字包含紧急威胁、可疑链接，或要求你联系非官方号码。",
       "ev.ocr.scam.step1": "不要点击任何链接、拨打电话或转账。",
@@ -284,7 +284,7 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.redirect.title": "Semak apa sahaja yang anda tidak pasti",
       "ev.redirect.text": "Sedang membuka penyemak…",
 
-      // NEW (3): Malay translations
+      // Malay words for the extracted-text outcomes and errors
       "ev.ocr.scam.title": "Tanda amaran penipuan ditemui dalam teks",
       "ev.ocr.scam.reason1": "Teks dalam fail ini mengandungi ugutan segera, pautan mencurigakan, atau meminta anda hubungi nombor tidak rasmi.",
       "ev.ocr.scam.step1": "Jangan tekan mana-mana pautan, telefon mana-mana nombor, atau hantar wang.",

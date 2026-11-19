@@ -9,11 +9,10 @@
 // What it remembers (appState.freeze, cleared by #reset):
 //   frozen     true once the customer has pressed the button. It stays frozen for this visit.
 //   frozenAt   the time it was frozen, e.g. "14:05"
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const data = FREEZE_DATA;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);
 
   function myState() {
     if (!appState.freeze) appState.freeze = { frozen: false, frozenAt: "" };
@@ -102,7 +101,7 @@
 
   registerRoute({
     name: "freeze",
-    role: "public",   // open to everyone: no sign-in needed
+    role: "public",
     render: screenHtml,
     afterRender
   });

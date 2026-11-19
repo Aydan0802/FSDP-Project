@@ -5,11 +5,9 @@
 // Makes one "Coming soon" screen for each item in COMING_SOON_DATA.pages (js/data/coming-soon.js):
 // My reports, Help, Trends, Scam types and Settings.
 // Every word comes from t() (js/core/i18n.js); the words are in COMING_SOON_DATA.text.
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
 
 (function () {
-  addTranslations(COMING_SOON_DATA.text);   // this screen's English, Chinese and Malay words
+  addTranslations(COMING_SOON_DATA.text);
 
   // Builds the screen for one item. Customers get the customer frame and a way back home;
   // staff get the staff frame and a way back to the overview. The item's route is passed as

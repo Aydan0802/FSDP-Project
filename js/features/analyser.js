@@ -41,7 +41,6 @@
 //   voiceDemo  which of the five voice results the next voice check shows (the demo picker)
 //   history    checks from this visit, newest first: { kind, what, when, result | risk }.
 //              The customer home screen shows these under "My recent checks".
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 // Languages: the screen's words come from t() (js/core/i18n.js), with the words in
 // ANALYSER_DATA.text. Results are written in the language the customer picked, whatever language
@@ -53,7 +52,7 @@
 
 (function () {
   const data = ANALYSER_DATA;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);
   const STEP_MS = 1000;   // how long each "checking" step shows, so people see it happen
 
   // The icon that goes with each risk level (icon + words, never colour alone)
@@ -211,11 +210,10 @@
 
   function screenHtml() {
     const state = myState();
-    // Coming to this screen from somewhere else always starts with an empty box. If this screen
-    // is already showing, it is only being drawn again (the next phase, or a language change),
-    // so it stays on the same phase: a result stays put and is re-worded in the new language.
-    // The old screen is still on the page at this moment (the router swaps it after render()),
-    // the same way Jose's risk scorer does it.
+    // Coming from another screen starts with an empty box. If this screen is already showing, it is
+    // only being redrawn (next phase, or a language change), so it stays on the same phase and a result
+    // is re-worded in the new language. The old screen is still on the page here (the router swaps it
+    // after render()), the same way Jose's risk scorer does it.
     const alreadyHere = document.querySelector(".an-screen") !== null;
     if (!alreadyHere && state.phase !== "input") Object.assign(state, freshCheck());
     const body = state.phase === "analysing" ? analysingHtml() : state.phase === "result" ? resultHtml() : inputHtml();
@@ -830,7 +828,7 @@
 
   registerRoute({
     name: "analyser",
-    role: "public",   // open to everyone: no sign-in needed
+    role: "public",
     render: screenHtml,
     afterRender: () => {
       const phase = myState().phase;

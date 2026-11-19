@@ -10,11 +10,10 @@
 //   number   what is in the number box
 //   error    the box's error, if any
 //   result   what matchCall() returned: { matched, call }
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const esc = escapeHtml;
-  addTranslations(CALL_MATCH_DATA.text);   // this screen's English, Chinese and Malay words
+  addTranslations(CALL_MATCH_DATA.text);
 
   function freshState() {
     return { phase: "input", number: "", error: "", result: null };
@@ -85,9 +84,9 @@
       </div>`;
   }
 
-  // A short "Checking..." step before the answer (about 1.6 seconds). The match
-  // itself is instant, but an answer that appears with no visible work feels less trustworthy
-  // for something this important (the "labour illusion"). The three steps tick off one by one.
+  // A short "Checking..." step before the answer (about 1.6 seconds). The match is instant, but an
+  // answer that appears with no visible work feels less trustworthy for something this important.
+  // The three steps tick off one by one.
   const CHECK_STEPS = ["cm.checking.step1", "cm.checking.step2", "cm.checking.step3"];
   const STEP_MS = 550;
 
@@ -171,7 +170,7 @@
 
   registerRoute({
     name: "call-match",
-    role: "public",   // open to everyone: no sign-in needed
+    role: "public",
     render: screenHtml,
     afterRender
   });

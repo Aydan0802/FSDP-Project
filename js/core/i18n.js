@@ -1,6 +1,6 @@
 "use strict";
 
-// Verify the Caller: languages (English, 中文, Bahasa Melayu).
+// Pause & Prove: languages (English, 中文, Bahasa Melayu).
 // Owner: Jose. Shared by everyone: any screen can call t().
 //
 // Our users are seniors in Singapore, and many read Chinese or Malay more easily than English.

@@ -1,6 +1,6 @@
 "use strict";
 
-// Data for: Verify the Caller (Two-Way Senior Check + Caller Progress Simulation)
+// Data for: Is the caller a real person? (invite code check and caller progress simulation)
 // Owner: Yan Lin
 // The words are translation keys; the English, Chinese and Malay are in text below
 // (see "How to translate your screen" in TEAM-FILES.md).

@@ -1,7 +1,7 @@
 /* Feature: Overview additions (staff). #staff
    Owner: Wei Ye
-   Styles for the "Today in context" panel only (js/features/overview/triage-overview.js).
-   New class names start with "ov-". Load this AFTER triage-console.css. */
+   Styles for the "Today in context" panel only (js/features/triage-overview.js).
+   Class names start with "ov-". Load this after triage-console.css. */
 
 .ov-context { margin-bottom: 1.5rem; }
 .ov-sub { margin-top: 0; }
