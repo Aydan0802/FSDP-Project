@@ -12,7 +12,7 @@ Everything the message checker uses or was tested with. No model, no paid API an
 
 ## Reused from a teammate's project (with her permission)
 
-**KakiGuard**: a community scam-protection app built by a teammate for NCS Hackathon 2026 (Problem Statement 2). She gave permission to reuse it in this project (16 Nov 2026). Credit her by name in the pitch and the submission. What we took, and where it now lives:
+**KakiGuard**: a community scam-protection app built by a teammate for NCS Hackathon 2026 (Problem Statement 2). She gave permission to reuse it in this project (16 Nov 2026). She is credited by name in the project submission. What we took, and where it now lives:
 
 | From KakiGuard | Now in |
 |---|---|
