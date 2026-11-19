@@ -1,6 +1,4 @@
-/* ==========================================================================
-   Verify the Caller – Two-Way Senior Verification & Caller Progress Styles
-   ========================================================================== */
+/* Feature: Is the caller a real person? Two-way verification and caller progress styles. */
 
 /* "Ink" (dark text colour) used below. base.css has no --ink, so without this line the
    selected demo chip had white text on no background and could not be seen. */

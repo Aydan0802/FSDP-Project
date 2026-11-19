@@ -10,7 +10,7 @@
 // Words come from t() (js/core/i18n.js); this screen's words are in CUSTOMER_HOME_DATA.text.
 
 (function () {
-  addTranslations(CUSTOMER_HOME_DATA.text);   // this screen's English, Chinese and Malay words
+  addTranslations(CUSTOMER_HOME_DATA.text);
   const RISK_WORDS = { high: "home.risk.high", medium: "home.risk.medium", low: "home.risk.low" };
   // A message's risk level shown with the shared badge styles: icon + words, never colour alone
   const RISK_BADGE = { high: ["likely", "warning"], medium: ["uncertain", "warning"], low: ["real", "check"] };
@@ -21,7 +21,6 @@
     return hour < 12 ? t("home.morning") : hour < 18 ? t("home.afternoon") : t("home.evening");
   }
 
-  // (The loop name is "tool", not "t", so it doesn't hide the t() that looks up words.)
   // A locked tool still links to its screen: the router sends a guest to sign in first and then
   // straight back to it (router.js).
   // If the tiles that share rows (two per row) are an odd number, the last one would sit alone
@@ -134,8 +133,7 @@
   }
 
   // A progress bar ("2 of 4 done"), the steps with ticks, and a button for the next step.
-  // When everything is done, the bar is full and a tick celebrates it (the peak-end rule:
-  // people remember the high point, so finishing should feel good).
+  // When everything is done, the bar is full and a tick shows it.
   function checklistHtml(data) {
     const steps = data.checklist.map(step => ({ ...step, done: stepDone(step.id) }));
     const done = steps.filter(step => step.done).length;
@@ -212,7 +210,7 @@
 
   registerRoute({
     name: "customer",
-    role: "public",   // open to everyone: no sign-in needed
+    role: "public",
     render: homeHtml
   });
 })();

@@ -2,8 +2,6 @@
 
 // Feature: Evidence checker (screenshots, photos, letters and documents). No screen of its own.
 // Owner: Yan Lin
-// Data & translation keys for Evidence Checker (Screenshots & Documents)
-//
 // EVIDENCE_CHECKER is exposed as a global lexical binding so analyser.js can reach it.
 //
 // OCR and detector results are computed on this device. Static labels and outcomes are translated
