@@ -14,8 +14,7 @@
 //     so the prototype can still be shown. A server that answers "wrong password" is never skipped.
 // The password is only sent to the server to be checked. It is never kept in the page.
 // After signing in, a customer goes back to the screen they were trying to open (if any).
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
+
 
 (function () {
   const data = LOGIN_DATA;

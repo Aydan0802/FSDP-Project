@@ -1,26 +1,17 @@
 "use strict";
 
-// Feature: Family passphrase. #passphrase
+// Feature: Family passphrase. 
 // Owner: Jiliana
 // The customer saves a safe word for each family member. The server stores it HASHED, so nobody,
 // not even the bank, can read it back. When someone calls saying "it's me, I need money", the
 // customer asks for the word, types what the caller says, and the app answers "Matches" or
 // "Doesn't match". There is no "Show" button, because the app no longer knows the word.
-// Server side: server/passphrases.js (routes under /api/passphrases).
-//
-// What it remembers (appState.passphrase, cleared by #reset):
-//   list      the family list from the server ([{ id, name, relationship, created_at }]), null while loading
-//   loadError true if the list could not be loaded
-//   checking  the id of the card whose "Check a caller's word" box is open, or ""
-//   justAdded the id of the person just added, or ""
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const data = PASSPHRASE_DATA;
   const esc = escapeHtml;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);    // this screen's English, Chinese and Malay words
 
-  // The server saves the English word ("Son"); show it in the customer's language
   function relationshipLabel(value) {
     const r = data.relationships.find(item => item.value === value);
     return r ? t(r.key) : esc(value);
@@ -31,8 +22,7 @@
     return appState.passphrase;
   }
 
-  // Talks to the server. Throws an Error whose .status is the HTTP status, and .body the reply.
-  // DEMO ONLY: X-User-Id tells the server who is signed in. Swap for your login's token when it is ready.
+  // DEMO ONLY: X-User-Id tells the server who is signed in. 
   async function api(path, options = {}) {
     const res = await fetch(`/api/passphrases${path}`, {
       ...options,

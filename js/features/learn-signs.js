@@ -3,10 +3,6 @@
 // Feature: Learn the signs. #learn-signs
 // Owner: Jiliana
 // Four signs of a scam call, one practice question, and a "Good to know" tip.
-//
-// What it remembers (appState.learnSigns, cleared by #reset):
-//   picked   the id of the answer the customer picked ("" until they pick one)
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const data = LEARN_SIGNS_DATA;

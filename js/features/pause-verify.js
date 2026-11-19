@@ -6,35 +6,16 @@
 // customer sees why the transfer was stopped, answers one question per screen, then sees their
 // own answers played back with what to do next. The made-up data (questions, scam lines,
 // results) is at the top of this file, in DATA.
-//
-// What this feature remembers lives in appState.pauseVerify (#reset clears it):
-//   step     0 = "why we stopped you", 1..N = the questions, N + 1 = the result
-//   answers  the Yes / No / Not sure answers, by question id, e.g. { phone: "yes" }
-//   heard    the ids of the scam lines the customer ticked
-//   endsAt   the clock time (in milliseconds) when the kopi break ends
-//   outcome  "scam", "careful" or "clear", once the questions are finished
-//   done     "" while in progress, then "cancelled" or "sent"
-// Wei Ye: outcome, answers, heard and done stay here afterwards, for the staff case queue.
-//
-// Everything is inside (function () { ... })(); so the names you create in this file stay
-// private to it and can't clash with a teammate's file.
 
 (function () {
-  // This screen's words in English, Chinese and Malay. DATA below holds their keys (e.g.
-  // "pv.q.phone"), and t() turns a key into words in the customer's language (js/core/i18n.js).
-  addTranslations(PAUSE_VERIFY_DATA.text);
+  addTranslations(PAUSE_VERIFY_DATA.text);  // this screen's English, Chinese and Malay words
 
   // ---------- Made-up data ----------
-
-  // Everything the screen shows that is not layout: how long the break lasts, the example
-  // transfer, the questions, the scam lines and the three possible results. It is all fixed
-  // text for now (nothing comes from a server), kept here so the feature is one file.
   const DATA = {
     // How long the kopi break lasts, in seconds. Short so the demo is quick; a real bank would wait longer.
     breakSeconds: 90,
 
     // The transfer that was stopped, and why. Made up for now.
-    // When Joseph's risk scorer is ready, its reasons replace these (see whyHtml() further down).
     sampleTransfer: {
       amount: "S$8,000",
       reasons: [
@@ -44,9 +25,6 @@
     },
 
     // The questions, asked one per screen, in this order.
-    //   type "choice": Yes / No / Not sure buttons. riskyAnswer is the answer that is a warning sign,
-    //                  and playback is the sentence shown back to the customer at the end.
-    //   type "lines":  the kopitiam menu board. The customer taps every line they heard.
     questions: [
       {
         id: "phone",
@@ -151,10 +129,10 @@
     return count >= 2 ? "scam" : count === 1 ? "careful" : "clear";
   }
 
-  // ---------- HTML: the pieces of the screen ----------
+  // ---------- HTML ----------
 
   // The kopi cup drawing: a white kopitiam cup and saucer with a green flower on it, sitting
-  // on a round table top. Its colours are set in css/features/pause-verify.css.
+  // on a round table top. 
   function cupHtml() {
     const leaves = `<path d="M112 114c-14-8-26-2-30 8c12 6 24 2 30-8z"/><path d="M114 123c-10 2-17 9-17 17c9 0 17-8 17-17z"/>`;
     const petals = [0, 72, 144, 216, 288].map(turn =>
@@ -199,11 +177,7 @@
       </aside>`;
   }
 
-  // The transfer that was stopped and why. If the customer came from Jose's risk scorer
-  // (appState.riskScorer.lastResult, a Medium or High result), its real amount and reasons are
-  // used. Otherwise (opened straight from the address bar) the made-up DATA.sampleTransfer.
-  // The reasons come back as words in the customer's language: the made-up ones are keys, and
-  // the risk scorer's reasons (English) are looked up by signal id, the same way its own screen does.
+  // The transfer that was stopped and why. 
   function stoppedTransfer() {
     const last = appState.riskScorer && appState.riskScorer.lastResult;
     const sample = last && RISK_SCORER_DATA.samples.find(s => s.id === last.sampleId);
@@ -412,7 +386,7 @@
     switch (button.dataset.pv) {
       case "toggle":
         toggleLine(button);
-        return;   // nothing else changes, so no redraw
+        return;   
       case "start":
       case "next":
         state.step += 1;
@@ -461,7 +435,7 @@
 
   registerRoute({
     name: "pause-verify",
-    role: "public",   // open to everyone: no sign-in needed
+    role: "public",   
     render: pauseVerifyHtml,
     afterRender: afterPauseVerify
   });
