@@ -12,7 +12,7 @@ __pycache__/
 models/
 hf_cache/
 # The one exception (allowed by our teacher, 19 Nov 2026): our own small trained voice head
-# (1.9 MB), so markers can run the voice check. Everything else above stays out of git.
+# (1.9 MB), so the voice check can run without retraining. Everything else above stays out of git.
 !/voice detector prototype/models/
 /voice detector prototype/models/*
 !/voice detector prototype/models/finetuned/

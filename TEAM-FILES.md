@@ -104,4 +104,4 @@ addTranslations(PAUSE_VERIFY_DATA.text);
 
 A word missing in Chinese or Malay shows in English, with a warning in the console. Blanks work too:
 `t("common.callOcbcNumber", { phone: OCBC_PHONE })`. Copy `js/data/freeze.js` and `js/features/freeze.js` for a full example.
-Get a native speaker to check your Chinese and Malay before the demo.
+The Chinese and Malay need checking by a native speaker before real customers see them.

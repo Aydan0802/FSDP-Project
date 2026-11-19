@@ -16,8 +16,8 @@
 
 # ---------- Fill these in ----------
 $PublicDomain = "stagnant-powdered-playing.ngrok-free.dev"   # the team's free fixed ngrok address
-$VercelSite   = ""   # the team's Vercel link, e.g. "https://verify-the-caller.vercel.app" ("" if none yet)
-$SiteFolder   = ".claude\worktrees\detectors-in-analyser"   # the website folder, from the project root
+$VercelSite   = "https://fsdp-project.vercel.app"   # the team's Vercel link ("" if none)
+$SiteFolder   = "."   # the website folder, from the project root (the website is at the root)
 # -----------------------------------
 
 $ErrorActionPreference = "Stop"

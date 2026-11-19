@@ -639,7 +639,7 @@ Inconclusive (under 2 s, or windows disagree): 5 clean, 3 phone.
 2. **Results depend heavily on the generator.** SpeechT5 is caught perfectly on clean audio; Piper is much harder (EER 11% clean, 25% phone). Quoting one overall number would hide this.
 3. **The raw score is not a probability.** Scores top out around 0.75 even for obvious fakes, and the best cut-off moves from about 0.11 (clean) to about 0.42 (phone). A fixed 0.5 threshold misses half the clean Piper fakes. Calibration on phone-quality data is needed before showing users a percentage.
 
-**Limits (say these in the pitch):**
+**Limits:**
 - EER uses the best threshold for this test set, so it is optimistic.
 - Only two TTS generators, both older designs; no codec-based (newer) TTS yet.
 - Real voices are read audiobook speech, not phone conversations. The detector may also have seen similar audiobook data in training (unknown).

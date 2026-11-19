@@ -71,4 +71,4 @@ If the key leaks (for example, committed by mistake): Supabase, **Project Settin
 | "Sign in is not working right now" | The server couldn't reach Supabase. Read the terminal for the real error. |
 | `Supabase answered 401` / `403` | Wrong or missing `SUPABASE_SECRET_KEY`. |
 | `Supabase answered 404` | The table name is wrong, or the `public` schema isn't exposed in Data API settings. |
-| Everything suddenly fails after a quiet week | Free projects pause after about a week of inactivity. Open the dashboard and press **Restore** (do this before the presentation). |
+| Everything suddenly fails after a quiet week | Free projects pause after about a week of inactivity. Open the dashboard and press **Restore**. |

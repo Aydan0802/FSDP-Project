@@ -202,10 +202,10 @@ Each detector also has an evaluation you can rerun. See its README for the comma
 
 ## Limitations
 
-These are prototypes. Say these limits in the pitch:
+These are prototypes, with these limits:
 
 - **Messages:** hand-written rules miss reworded or new scams (about 4 in 10 scam texts in our test data) and can flag real business messages with links. See `text detector prototype/docs/evaluation.md`.
-- **Voice:** results differ by source and by clean or phone audio, and are not real-world findings. See `voice detector prototype/docs/eval_results.md`. The live check needs the team laptop.
+- **Voice:** results differ by source and by clean or phone audio, and are not real-world findings. See `voice detector prototype/docs/eval_results.md`. The live check needs the voice API (the team laptop at the booth, or step 3 of Setup).
 - **Pictures:** the AI label check finds labels, not AI. WhatsApp, screenshots and scammers remove the labels, and Google's SynthID watermark can't be checked here. It was tested on our own test images, not yet on real AI pictures sent between phones. See `image detector prototype/docs/eval_results.md` and the phone test in `docs/phone_test.md` there.
 - **Reading words in pictures** uses English only, so Chinese text in a screenshot may not be read.
 - **Server:** risk cases are kept in memory, and Family passphrase doesn't work on the Vercel site.

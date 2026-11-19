@@ -47,7 +47,7 @@ These are limits of the results, so they are stated in `docs/eval_results.md` ra
 - **A resampling control.** DAC works at 16 kHz; EnCodec, SNAC and UnivNet go 16 to 24 to 16 kHz. "DAC is the weak spot" may partly be "the others leave a resampling trace". Check: resample real clips the same way and see whether they get flagged.
 - **Real phone calls.** All phone audio here is simulated.
 
-## Code that needs care to explain in the pitch
+## Code that needs care to explain
 
 1. `train/finetune_head.py`, `main()`: about 165 lines with many options and nested functions; the loss shaping is mixed in with loading data.
 2. `detectors/watermark.py`: the restricted unpickler and the replaced loader functions.

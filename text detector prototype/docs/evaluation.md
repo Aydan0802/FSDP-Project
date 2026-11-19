@@ -45,7 +45,7 @@ One more thing for whoever wires this into the screen: "impersonation" now also 
 
 The rest of this file is the first evaluation, run on 13 Nov 2026. Checker: 28 hand-written rules plus a link check, in English, Chinese and Malay (`detector/`). Settings: medium risk at 2 points, high risk at 4 points **and** the message must ask you to do something (tap, pay, call, reply, share a code).
 
-**Short version for the pitch:** on public scam texts it had never seen, the checker warned about roughly **6 in 10** (95% range 54–70%) and almost never warned about everyday chats between friends. It still **misses about 4 in 10**, most scams get "medium" rather than "high", and real messages from banks or couriers can set it off. It is one warning sign next to the pause-and-verify step, not a verdict.
+**In short:** on public scam texts it had never seen, the checker warned about roughly **6 in 10** (95% range 54–70%) and almost never warned about everyday chats between friends. It still **misses about 4 in 10**, most scams get "medium" rather than "high", and real messages from banks or couriers can set it off. It is one warning sign next to the pause-and-verify step, not a verdict.
 
 ## How we tested, and why the numbers can be trusted (and where they can't)
 

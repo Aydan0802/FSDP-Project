@@ -1,6 +1,6 @@
 # Phone test: do AI labels survive WhatsApp and Telegram?
 
-Our evaluation (`eval_results.md`) only *assumes* what the apps do. This 20-minute test with our own phones measures it. Do it before quoting any real-world numbers in the pitch.
+Our evaluation (`eval_results.md`) only *assumes* what the apps do. This 20-minute test with our own phones measures it. Real-world numbers should come from this test, not from the evaluation.
 
 ## Rules
 - Make **harmless** pictures only, for example "a cartoon cat reading a newspaper" or "a red teapot on a table". No real people, no faces, no bank logos, no documents, nothing that looks like a scam.

@@ -71,7 +71,7 @@ The first picture with credentials took about 4.5 s, because the 9 MB library do
 - Content credentials are the strongest evidence when they are present: a checked signature raises confidence to high. They are also the most fragile: none survived any re-save, because Pillow can't copy them and any change breaks them anyway.
 - The checker never says "real". A picture with no label, or with camera credentials, gets "unsure".
 
-### Limits (say these in the pitch)
+### Limits
 - **No real AI images were tested.** The labels copy the format that tools are reported to write, so a real ChatGPT, Gemini or Meta AI image may differ. The phone test (`docs/phone_test.md`) is the next step and uses the team's own AI images.
 - **The messaging-app conditions are assumptions.** One public source (Lumethic, Jul 2026) says WhatsApp strips metadata on a normal photo send and keeps it when sent as a document. We haven't tested this.
 - 19 pictures is a tiny set. The rates above describe these files, not the real world.

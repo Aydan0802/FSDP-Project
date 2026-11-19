@@ -1,5 +1,5 @@
 # Only what the voice API (app/api.py) needs: a smaller install for running the voice check,
-# for example when marking. requirements.txt has everything (TTS voices, evaluation, charts).
+# for example to try the voice check. requirements.txt has everything (TTS voices, evaluation, charts).
 #
 # Install PyTorch first. The CPU build is enough (about 0.3 s per clip on a GPU, a few seconds on a CPU):
 #   pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cpu

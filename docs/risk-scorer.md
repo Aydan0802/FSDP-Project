@@ -109,7 +109,7 @@ npm test         # the scorer and API tests
 The site still works with `python -m http.server`. The "Check a transfer" screen then scores on the
 device with the same code, and says so on the screen.
 
-## Known limits (things a judge may ask about)
+## Known limits
 
 - The rules are yes/no. A transfer at 2.9× the usual amount scores 0 for "amount" and one at 3× scores 25. A later version could use a sliding scale.
 - The weights are our judgement from how common scam scripts work. They have not been tuned on real bank data, which we don't have.

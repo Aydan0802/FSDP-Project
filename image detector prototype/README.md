@@ -19,7 +19,7 @@ Browsers block the C2PA library on pages opened straight from a file, so serve t
 ../.venv/Scripts/python.exe -m http.server 8810 --bind 127.0.0.1
 ```
 
-Then open http://127.0.0.1:8810/demo/ and choose a picture. (In the Claude app this is the `image-demo` entry in `../.claude/launch.json`.) The first picture that has content credentials downloads Adobe's C2PA library from jsDelivr (about 9 MB, once).
+Then open http://127.0.0.1:8810/demo/ and choose a picture. The first picture that has content credentials downloads Adobe's C2PA library from jsDelivr (about 9 MB, once).
 
 ## Check a file from the command line
 
