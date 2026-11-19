@@ -1,6 +1,6 @@
 "use strict";
 
-// Verify the Caller: the server (Express).
+// Pause & Prove: the server (Express).
 // Owner: Jose. Jira FSDP-134 (R-5).
 // Serves the web app's files, plus the risk scoring API. The API uses exactly the same
 // scoring code and settings as the browser (js/features/risk-scorer-logic.js and

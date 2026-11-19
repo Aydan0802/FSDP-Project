@@ -23,11 +23,10 @@
 //   lastResult  the last result, for Jiliana's Pause-and-Verify screen:
 //               { sampleId, score, band, bandLabel, action, actionText, reasons, signals, caseRef, source }
 //   cases       High-risk cases for Wei Ye's staff console: { ref, createdAt, payeeName, amount, score, band, reasons }
-// Everything is inside (function () { ... })(); so its names stay private to this file.
 
 (function () {
   const data = RISK_SCORER_DATA;
-  addTranslations(data.text);    // this screen's English, Chinese and Malay words
+  addTranslations(data.text);
   const API_TIMEOUT_MS = 2000;   // R-5: the API must answer within 2 seconds
   const MIN_CHECK_MS = 900;      // show "Checking..." at least this long, so people see it happen
 
@@ -301,10 +300,10 @@
 
   function screenHtml() {
     const state = myState();
-    // Coming here from another screen starts at the picker. The last result is kept for #pause-verify.
-    // If this screen is already showing, it is only being drawn again (the next phase, or a
-    // language change), so stay on the same phase. The old screen is still on the page at
-    // this moment, because the router swaps it only after render() returns.
+    // Coming from another screen starts at the picker (the last result is kept for #pause-verify).
+    // If this screen is already showing, it is only being redrawn (next phase, or a language change),
+    // so it stays on the same phase. The old screen is still on the page here, because the router
+    // swaps it only after render() returns.
     const alreadyHere = document.querySelector(".rs-screen") !== null;
     if (!alreadyHere) { state.phase = "pick"; state.done = ""; }
     if (state.phase === "result" && !state.lastResult) state.phase = "pick";

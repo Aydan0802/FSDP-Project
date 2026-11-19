@@ -1,6 +1,6 @@
 "use strict";
 
-// Verify the Caller: starts the server.
+// Pause & Prove: starts the server.
 // Owner: Jose
 // Run it from this folder:  npm install   (once)   then   npm start
 // Then open http://localhost:3000
