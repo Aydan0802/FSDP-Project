@@ -192,6 +192,12 @@
         <p class="call-line">${t("home.callYourself")} <a class="tel-link" href="${OCBC_TEL}">${OCBC_PHONE}</a></p>
       </section>
 
+      ${typeof HELPER_DATA === "undefined" ? "" : `<a class="tool tool--main hp-home" href="#helper">
+        <span class="tool-icon">${icon("chat")}</span>
+        <span class="tool-text"><strong>${t("hp.home.title")}</strong><span>${t("hp.home.text")}</span></span>
+        ${icon("chevron", "tool-arrow")}
+      </a>`}
+
       ${signedIn ? checklistHtml(data) : ""}
 
       <section class="tools-section" aria-labelledby="check-title" data-read>
