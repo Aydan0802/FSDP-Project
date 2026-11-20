@@ -2,20 +2,26 @@
 
 // Feature: the AI part of the helper chat (used by server/chat.js).
 // Owner: Jose
-// Asks a language model running in Ollama for a reply and up to 3 buttons. Ollama is free and runs
-// the model on our own computer, with no daily limit (just slower than a paid cloud AI).
+// Asks a language model through Ollama for a reply and up to 3 buttons. Two ways to run it:
+//   Ollama Cloud   with OLLAMA_API_KEY: the model runs on Ollama's servers (https://ollama.com),
+//                  so it also works on Vercel. Has usage limits.
+//   On a laptop    without a key: Ollama installed on this computer. Free, no limits, slower,
+//                  and it can't run on Vercel.
 //
-// Settings in server/.env:
-//   OLLAMA_MODEL   which model, e.g. gemma3:4b (install it first: ollama pull gemma3:4b).
-//                  Blank = no AI: the chat uses its scripted demo replies.
-//   OLLAMA_URL     where Ollama runs. Blank = http://localhost:11434, Ollama's own address.
-//   AI_TIMEOUT_MS  how long to wait for the model before using the demo reply. Blank = 30000.
+// Settings in server/.env (and in Vercel's Environment Variables for the live site):
+//   OLLAMA_MODEL    which model, e.g. gpt-oss:20b (cloud) or gemma3:4b (laptop).
+//                   Blank = no AI: the chat uses its scripted demo replies.
+//   OLLAMA_API_KEY  your Ollama Cloud key. Never put it in the code or in git.
+//   OLLAMA_URL      where Ollama is. Blank = https://ollama.com with a key, http://localhost:11434 without.
+//   AI_TIMEOUT_MS   how long to wait for the model before using the demo reply. Blank = 20000.
 //
-// The model must answer in a fixed shape: { reply, actions, urgent }. Ollama's "structured outputs"
-// force that shape (the "format" below), and chat.js checks the answer again before using it.
+// The model must answer in a fixed shape: { reply, actions, urgent }. On a laptop, Ollama's
+// "structured outputs" force that shape. Ollama Cloud doesn't support that yet, so there we only
+// ask for it in the instructions. Either way chat.js checks the answer before using it.
 
-const DEFAULT_URL = "http://localhost:11434";
-const DEFAULT_TIMEOUT_MS = 30000;
+const LAPTOP_URL = "http://localhost:11434";
+const CLOUD_URL = "https://ollama.com";
+const DEFAULT_TIMEOUT_MS = 20000;
 
 const LANGUAGE_NAMES = { en: "English", zh: "Simplified Chinese", ms: "Malay", ta: "Tamil" };
 
@@ -73,11 +79,23 @@ const REPLY_SHAPE = {
 
 // Gives back a function ask(messages, lang) -> { reply, actions, urgent }, or null if no model is
 // set (then chat.js uses its demo replies). messages are [{ role: "user" | "bot", text }].
+// The JSON object in the model's answer. Some models wrap it in ```json ... ``` or add a sentence,
+// so we take everything from the first { to the last }.
+function readJson(text) {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start < 0 || end < start) throw new Error("The model did not answer with JSON.");
+  return JSON.parse(text.slice(start, end + 1));
+}
+
 function createAi(env = process.env, fetchImpl = fetch) {
   const model = String(env.OLLAMA_MODEL || "").trim();
   if (!model) return null;
-  const url = String(env.OLLAMA_URL || DEFAULT_URL).replace(/\/+$/, "");
+  const key = String(env.OLLAMA_API_KEY || "").trim();
+  const url = String(env.OLLAMA_URL || (key ? CLOUD_URL : LAPTOP_URL)).replace(/\/+$/, "");
   const timeoutMs = Number(env.AI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
+  const headers = { "Content-Type": "application/json" };
+  if (key) headers.Authorization = `Bearer ${key}`;   // the key only ever goes to Ollama, from the server
 
   return async function ask(messages, lang) {
     const controller = new AbortController();
@@ -85,12 +103,12 @@ function createAi(env = process.env, fetchImpl = fetch) {
     try {
       const res = await fetchImpl(`${url}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         signal: controller.signal,
         body: JSON.stringify({
           model,
           stream: false,                     // one whole answer, not word by word
-          format: REPLY_SHAPE,               // structured outputs: the answer must fit this shape
+          ...(key ? {} : { format: REPLY_SHAPE }),   // laptop only: the answer must fit this shape
           options: { temperature: 0.2 },     // low = calmer, more predictable answers
           messages: [
             { role: "system", content: systemPrompt(lang) },
@@ -100,11 +118,11 @@ function createAi(env = process.env, fetchImpl = fetch) {
       });
       if (!res.ok) throw new Error(`Ollama answered ${res.status}`);
       const data = await res.json();
-      return JSON.parse(data.message.content);
+      return readJson(String((data.message && data.message.content) || ""));
     } finally {
       clearTimeout(timer);
     }
   };
 }
 
-module.exports = { createAi, systemPrompt, REPLY_SHAPE, BUTTONS };
+module.exports = { createAi, systemPrompt, readJson, REPLY_SHAPE, BUTTONS };

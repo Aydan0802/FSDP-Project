@@ -178,7 +178,9 @@ function checkAiReply(raw) {
 async function answer({ lang, messages }, ai = null) {
   // 1. Hide secrets in EVERY message the senior sent, not just the last one
   const safeMessages = messages.map(m => (m.role === "user" ? { ...m, text: hideSecrets(m.text).text } : m));
-  const hidSecret = hideSecrets(messages[messages.length - 1].text).hidSecret;
+  // "[hidden]" means the chat screen already hid a secret on the phone; the reminder still shows
+  const lastText = messages[messages.length - 1].text;
+  const hidSecret = hideSecrets(lastText).hidSecret || lastText.includes("[hidden]");
   const topic = findTopic(safeMessages[safeMessages.length - 1].text);
 
   // 2 and 3. The AI's answer if it is good, otherwise the demo reply

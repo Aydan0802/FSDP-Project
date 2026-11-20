@@ -125,7 +125,8 @@ const TAB_MENU = [
 // Everything, in groups, for the sidebar
 const SIDE_MENU = [
   { groupKey: "side.group.now", items: [
-    { route: "freeze", icon: "lock", labelKey: "side.freeze" }
+    { route: "freeze", icon: "lock", labelKey: "side.freeze" },
+    { route: "helper", icon: "chat", labelKey: "hp.menu" }   // Jose: js/features/chatbot.js
   ] },
   { groupKey: "side.group.check", items: [
     { route: "customer", icon: "home", labelKey: "menu.home" },

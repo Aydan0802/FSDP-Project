@@ -42,6 +42,12 @@ test("OTPs, card numbers and NRICs are hidden; phone numbers are not", () => {
   assert.deepEqual(hideSecrets("6363 3333 called me"), { text: "6363 3333 called me", hidSecret: false });
 });
 
+test("a secret the phone already hid still gets the reminder", async () => {
+  const result = await ask("He wants the OTP [hidden]");
+  assert.equal(result.hidSecret, true);
+  assert.ok(result.reply.startsWith(SECRET_WARNING.en));
+});
+
 test("a hidden secret puts a warning in front of the reply, in the senior's language", async () => {
   for (const lang of LANGS) {
     const result = await ask("He wants the code 482915", lang);
@@ -165,6 +171,21 @@ test("createAi is off without OLLAMA_MODEL, and asks Ollama for our reply shape 
   assert.equal(sent.body.messages[0].role, "system");
   assert.match(sent.body.messages[0].content, /Reply ONLY in Tamil/);
   assert.deepEqual(sent.body.messages.slice(1).map(m => m.role), ["user", "assistant", "user"]);
+});
+
+test("with OLLAMA_API_KEY it calls Ollama Cloud with the key, and reads JSON even inside ```json", async () => {
+  const { readJson } = require("../ai.js");
+  let sent = null;
+  const fakeCloud = async (url, options) => {
+    sent = { url, headers: options.headers, body: JSON.parse(options.body) };
+    return { ok: true, json: async () => ({ message: { content: 'Sure!\n```json\n{"reply":"Hang up now.","actions":["calling-now"],"urgent":false}\n```' } }) };
+  };
+  const ai = createAi({ OLLAMA_MODEL: "gpt-oss:20b", OLLAMA_API_KEY: "test-key" }, fakeCloud);
+  assert.deepEqual(await ai([{ role: "user", text: "Help" }], "en"), { reply: "Hang up now.", actions: ["calling-now"], urgent: false });
+  assert.equal(sent.url, "https://ollama.com/api/chat");
+  assert.equal(sent.headers.Authorization, "Bearer test-key");
+  assert.equal(sent.body.format, undefined);   // Ollama Cloud doesn't support structured outputs
+  assert.throws(() => readJson("no json here"), /JSON/);
 });
 
 test("the AI's buttons and chat.js's buttons are the same list", () => {
