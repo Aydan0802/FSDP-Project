@@ -9,11 +9,16 @@
 //   reply            { reply: "...", actions: ["calling-now", "call-match"], urgent: false,
 //                      hidSecret: false, source: "demo" }
 //
-// Step 2 (this file for now): the safety rules and the scripted "demo" replies. No AI yet.
-// Step 3 adds Gemini between the two safety checks. The safety rules are plain code on purpose:
-// they must work the same every time, even if the AI says something wrong or is not running.
+// How one request is answered:
+//   1. check the request, and hide any OTP, card number or NRIC (before the AI sees anything)
+//   2. ask the AI (server/ai.js, Ollama), if one is set up
+//   3. check the AI's answer: only our buttons, no links, no made-up phone numbers. If anything is
+//      wrong, or the AI is off, slow or broken, use the scripted demo reply instead
+//   4. the safety rules again: money already sent always gets Freeze + Call OCBC
+// The safety rules are plain code on purpose: they work the same every time, whatever the AI says.
 
 const express = require("express");
+const { createAi } = require("./ai.js");
 
 const LANGS = ["en", "zh", "ms", "ta"];
 const MAX_MESSAGES = 12;       // only the latest messages are kept, so a long chat stays small
@@ -149,30 +154,72 @@ const SECRET_WARNING = {
   ta: "நீங்கள் தட்டச்சு செய்த குறியீடு அல்லது எண்ணை மறைத்துவிட்டேன். உங்கள் OTP, PIN அல்லது அட்டை எண்ணை யாரிடமும், என்னிடமும் வங்கியிடமும்கூட, பகிர வேண்டாம்."
 };
 
-// ---------- Putting it together ----------
+// ---------- 5. Checking the AI's answer ----------
 
-// The whole answer for one request. Step 3 will try Gemini first and only use DEMO when it can't.
-function answer({ lang, messages }) {
-  const last = messages[messages.length - 1];
-  const { text, hidSecret } = hideSecrets(last.text);
-  const topic = findTopic(text);
-  const demo = DEMO[topic];
-  const reply = (hidSecret ? SECRET_WARNING[lang] + " " : "") + demo.text[lang];
-  return { reply, actions: demo.actions.slice(), urgent: demo.urgent, hidSecret, source: "demo" };
+// The only phone numbers a reply may contain (OCBC, police). 1799 is too short to be caught below.
+const ALLOWED_NUMBERS = ["63633333", "18003633333", "18002550000"];
+const MAX_REPLY = 600;
+
+// Gives back a clean { reply, actions, urgent }, or null if the AI's answer can't be trusted
+function checkAiReply(raw) {
+  if (!raw || typeof raw.reply !== "string") return null;
+  const reply = raw.reply.trim();
+  if (!reply || reply.length > MAX_REPLY) return null;
+  if (/https?:|www\.|\.(com|sg|net|org|ly)\b/i.test(reply)) return null;   // a link: never from us
+  const numbers = (reply.match(/\+?\d[\d\s-]{6,}\d/g) || []).map(n => n.replace(/\D/g, "").replace(/^65(?=\d{8}$)/, ""));
+  if (numbers.some(n => !ALLOWED_NUMBERS.includes(n))) return null;           // a made-up number
+  const actions = [...new Set(Array.isArray(raw.actions) ? raw.actions : [])].filter(a => ACTIONS.includes(a)).slice(0, 3);
+  return { reply, actions, urgent: raw.urgent === true };
 }
 
-function chatRoutes() {
+// ---------- Putting it together ----------
+
+// The whole answer for one request. ai is the function from ai.js, or null (demo replies only).
+async function answer({ lang, messages }, ai = null) {
+  // 1. Hide secrets in EVERY message the senior sent, not just the last one
+  const safeMessages = messages.map(m => (m.role === "user" ? { ...m, text: hideSecrets(m.text).text } : m));
+  const hidSecret = hideSecrets(messages[messages.length - 1].text).hidSecret;
+  const topic = findTopic(safeMessages[safeMessages.length - 1].text);
+
+  // 2 and 3. The AI's answer if it is good, otherwise the demo reply
+  let result = null;
+  if (ai) {
+    try {
+      result = checkAiReply(await ai(safeMessages, lang));
+      if (!result) console.error("The AI's answer was not safe to show, so the demo reply was used.");
+    } catch (err) {
+      console.error(`The AI could not answer (${err.name === "AbortError" ? "too slow" : err.message}), so the demo reply was used.`);
+    }
+  }
+  const source = result ? "ai" : "demo";
+  if (!result) {
+    const demo = DEMO[topic];
+    result = { reply: demo.text[lang], actions: demo.actions.slice(), urgent: demo.urgent };
+  }
+
+  // 4. Money already sent or a code already given: always urgent, Freeze and Call OCBC first
+  if (topic === "money") {
+    result.urgent = true;
+    result.actions = ["freeze", "call-ocbc", ...result.actions.filter(a => a !== "freeze" && a !== "call-ocbc")].slice(0, 3);
+  }
+  const reply = (hidSecret ? SECRET_WARNING[lang] + " " : "") + result.reply;
+  return { reply, actions: result.actions, urgent: result.urgent, hidSecret, source };
+}
+
+// options.ai: for the tests. Normally the AI comes from server/.env (ai.js)
+function chatRoutes(options = {}) {
+  const ai = "ai" in options ? options.ai : createAi();
   const router = express.Router();
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     let request;
     try {
       request = cleanRequest(req.body);
     } catch (err) {
       return res.status(400).json({ error: err.message });
     }
-    res.json(answer(request));
+    res.json(await answer(request, ai));
   });
   return router;
 }
 
-module.exports = { chatRoutes, cleanRequest, hideSecrets, findTopic, answer, ACTIONS, DEMO, SECRET_WARNING, LANGS };
+module.exports = { chatRoutes, cleanRequest, hideSecrets, findTopic, checkAiReply, answer, ACTIONS, DEMO, SECRET_WARNING, LANGS };

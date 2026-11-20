@@ -6,10 +6,12 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { cleanRequest, hideSecrets, findTopic, answer, ACTIONS, DEMO, SECRET_WARNING, LANGS } = require("../chat.js");
+const { cleanRequest, hideSecrets, findTopic, checkAiReply, answer, ACTIONS, DEMO, SECRET_WARNING, LANGS } = require("../chat.js");
+const { createAi, systemPrompt, BUTTONS } = require("../ai.js");
 const { createApp } = require("../app.js");
 
-const ask = (text, lang = "en") => answer({ lang, messages: [{ role: "user", text }] });
+// ai: a pretend AI for the tests (null = demo replies only)
+const ask = (text, lang = "en", ai = null) => answer({ lang, messages: [{ role: "user", text }] }, ai);
 
 // ---------- Checking the request ----------
 
@@ -40,9 +42,9 @@ test("OTPs, card numbers and NRICs are hidden; phone numbers are not", () => {
   assert.deepEqual(hideSecrets("6363 3333 called me"), { text: "6363 3333 called me", hidSecret: false });
 });
 
-test("a hidden secret puts a warning in front of the reply, in the senior's language", () => {
+test("a hidden secret puts a warning in front of the reply, in the senior's language", async () => {
   for (const lang of LANGS) {
-    const result = ask("He wants the code 482915", lang);
+    const result = await ask("He wants the code 482915", lang);
     assert.equal(result.hidSecret, true);
     assert.ok(result.reply.startsWith(SECRET_WARNING[lang]), lang);
     assert.ok(!result.reply.includes("482915"));
@@ -51,7 +53,7 @@ test("a hidden secret puts a warning in front of the reply, in the senior's lang
 
 // ---------- What the senior is talking about ----------
 
-test("money already sent, or a code already given, is urgent in all four languages", () => {
+test("money already sent, or a code already given, is urgent in all four languages", async () => {
   for (const text of [
     "I already sent money to him",
     "I gave them the OTP just now",
@@ -64,7 +66,7 @@ test("money already sent, or a code already given, is urgent in all four languag
   ]) {
     assert.equal(findTopic(text), "money", text);
   }
-  const result = ask("I already sent money to him");
+  const result = await ask("I already sent money to him");
   assert.equal(result.urgent, true);
   assert.deepEqual(result.actions.slice(0, 2), ["freeze", "call-ocbc"]);
 });
@@ -93,14 +95,87 @@ test("every demo reply has words in all four languages and only allowed buttons"
   for (const lang of LANGS) assert.ok(SECRET_WARNING[lang], lang);
 });
 
-test("the reply follows the language picked", () => {
-  assert.equal(ask("Hello", "zh").reply, DEMO.general.text.zh);
-  assert.equal(ask("Hello", "ta").reply, DEMO.general.text.ta);
+test("the reply follows the language picked", async () => {
+  assert.equal((await ask("Hello", "zh")).reply, DEMO.general.text.zh);
+  assert.equal((await ask("Hello", "ta")).reply, DEMO.general.text.ta);
+});
+
+// ---------- The AI (server/ai.js), with a pretend AI so no Ollama is needed ----------
+
+test("a good AI answer is used, with only our buttons", async () => {
+  const ai = async () => ({ reply: "Please hang up and call OCBC on 6363 3333.", actions: ["calling-now", "hack-the-bank", "call-ocbc", "calling-now"], urgent: false });
+  const result = await ask("A man says he is from OCBC", "en", ai);
+  assert.equal(result.source, "ai");
+  assert.equal(result.reply, "Please hang up and call OCBC on 6363 3333.");
+  assert.deepEqual(result.actions, ["calling-now", "call-ocbc"]);
+});
+
+test("an AI answer with a link or a made-up phone number is thrown away", () => {
+  assert.equal(checkAiReply({ reply: "Go to ocbc-help.com now", actions: [], urgent: false }), null);
+  assert.equal(checkAiReply({ reply: "Visit https://x.y", actions: [], urgent: false }), null);
+  assert.equal(checkAiReply({ reply: "Call our officer on 8123 4567", actions: [], urgent: false }), null);
+  assert.ok(checkAiReply({ reply: "Call 1800 363 3333, or +65 6363 3333, or ScamShield 1799.", actions: [], urgent: false }));
+  assert.equal(checkAiReply({ reply: "", actions: [], urgent: false }), null);
+  assert.equal(checkAiReply("not an object"), null);
+});
+
+test("if the AI is broken, slow or unsafe, the demo reply is used instead", async () => {
+  const broken = async () => { throw new Error("connection refused"); };
+  const unsafe = async () => ({ reply: "Visit www.claim-refund.com", actions: [], urgent: false });
+  for (const ai of [broken, unsafe]) {
+    const result = await ask("I got an SMS with a link", "ms", ai);
+    assert.equal(result.source, "demo");
+    assert.equal(result.reply, DEMO.message.text.ms);
+  }
+});
+
+test("money already sent stays urgent with Freeze and Call OCBC, whatever the AI says", async () => {
+  const relaxed = async () => ({ reply: "That sounds fine.", actions: ["learn-signs"], urgent: false });
+  const result = await ask("I already transferred the money", "en", relaxed);
+  assert.equal(result.urgent, true);
+  assert.deepEqual(result.actions, ["freeze", "call-ocbc", "learn-signs"]);
+});
+
+test("the AI never sees a code the senior typed, in any message", async () => {
+  let seen = null;
+  const spy = async messages => { seen = messages; return { reply: "Never share your OTP.", actions: [], urgent: false }; };
+  await answer({ lang: "en", messages: [
+    { role: "user", text: "My card is 4111 1111 1111 1111" },
+    { role: "bot", text: "Please don't share that." },
+    { role: "user", text: "He wants the OTP 482915" }
+  ] }, spy);
+  assert.ok(!JSON.stringify(seen).includes("482915"));
+  assert.ok(!JSON.stringify(seen).includes("4111"));
+});
+
+test("createAi is off without OLLAMA_MODEL, and asks Ollama for our reply shape when it is set", async () => {
+  assert.equal(createAi({}), null);
+  let sent = null;
+  const fakeOllama = async (url, options) => {
+    sent = { url, body: JSON.parse(options.body) };
+    return { ok: true, json: async () => ({ message: { content: '{"reply":"Hang up.","actions":["calling-now"],"urgent":false}' } }) };
+  };
+  const ai = createAi({ OLLAMA_MODEL: "gemma3:4b" }, fakeOllama);
+  const answerFromAi = await ai([{ role: "user", text: "Hi" }, { role: "bot", text: "Hello" }, { role: "user", text: "Help" }], "ta");
+  assert.deepEqual(answerFromAi, { reply: "Hang up.", actions: ["calling-now"], urgent: false });
+  assert.equal(sent.url, "http://localhost:11434/api/chat");
+  assert.equal(sent.body.model, "gemma3:4b");
+  assert.equal(sent.body.stream, false);
+  assert.deepEqual(sent.body.format.required, ["reply", "actions", "urgent"]);
+  assert.equal(sent.body.messages[0].role, "system");
+  assert.match(sent.body.messages[0].content, /Reply ONLY in Tamil/);
+  assert.deepEqual(sent.body.messages.slice(1).map(m => m.role), ["user", "assistant", "user"]);
+});
+
+test("the AI's buttons and chat.js's buttons are the same list", () => {
+  assert.deepEqual(Object.keys(BUTTONS).sort(), ACTIONS.slice().sort());
+  for (const lang of LANGS) assert.ok(systemPrompt(lang).length > 200);
 });
 
 // ---------- The API ----------
 
 async function withServer(run) {
+  delete process.env.OLLAMA_MODEL;   // the API test uses the demo replies, even on a computer with Ollama set up
   const server = createApp().listen(0);
   await new Promise(resolve => server.once("listening", resolve));
   try {
