@@ -439,7 +439,7 @@
 .ins-kpis .kpi { container-type: inline-size; }
 .ins-kpis .kpi-value { font-size: clamp(1.5rem, 19cqi, 2.5rem); overflow-wrap: anywhere; }
 
-/* ---------- Flagged activity: pressable panels, summary length, the two new line styles ---------- */
+/* ---------- Flagged activity: pressable panels, summary, one-line charts ---------- */
 
 /* The four panels reuse the pressable look from triage-overview.css. The red "money sent" panel is only
    filled when picked, like the others, and keeps its red top edge so it still stands out. */

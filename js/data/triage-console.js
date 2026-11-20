@@ -463,11 +463,9 @@ const CASE_INSIGHTS_DATA = {
     }
   },
 
-  // The same numbers over time, for the "Cancelled by customers" and "Money already sent" panels
-  // (oldest first, like the lists above). The last value is today / this week and the one before it
-  // is yesterday / last week, so they match "outcomes" and "money" above. "cancelRate" is the % of
-  // paused transfers the customer cancelled; "sent" is the dollars that had already left.
-  // When the real database is connected, work these out from the cases instead of typing them.
+  // The same numbers over time for the "Cancelled by customers" and "Money already sent" panels (oldest first).
+  // The last two values match "outcomes" and "money" above. "cancelRate" is the % of paused transfers
+  // cancelled, "sent" is dollars. With the real database, work these out from the cases.
   trend: {
     daily: {
       cancelRate: [48, 45, 50, 42, 46, 44, 41, 47, 43, 40, 39, 45, 44, 38],

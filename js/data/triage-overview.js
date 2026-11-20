@@ -8,6 +8,11 @@
 // the chart. Totals only, no customer details.
 
 const OVERVIEW_DATA = {
+  // Reports in the 4 weeks before the 8 in CASE_INSIGHTS_DATA, so the Overview can show 12 (oldest first)
+  earlierReportWeeks: {
+    labels: [{ day: "Wk of", date: "12", month: "Aug" }, { day: "Wk of", date: "19", month: "Aug" }, { day: "Wk of", date: "26", month: "Aug" }, { day: "Wk of", date: "2", month: "Sep" }],
+    reports: [17, 19, 18, 21]
+  },
   // Checks used per day (pause checks and voice checks together), for the same last 14 days as
   // CASE_INSIGHTS_DATA.daily, oldest first. The last number is today.
   checksPerDay: [46, 49, 44, 31, 28, 48, 50, 51, 53, 47, 33, 30, 52, 55],

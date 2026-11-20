@@ -332,9 +332,8 @@
   const STACK = ["auto", "pause", "report"];
   const SHORT = { auto: "Auto", pause: "Pause", report: "Reports" };   // short table headings for narrow screens
 
-  // The four panels at the top. Pressing one changes the chart under it. "parts" are the lines the
-  // chart draws (the sources of a flag); the other two panels draw one line from I.trend.
-  // "say" is how one value reads out loud, "axis" how it is written on the scale.
+  // The four panels; pressing one changes the chart. "parts" are the chart's lines, the other two use
+  // one line from I.trend. "say" reads a value aloud, "axis" writes it on the scale.
   const METRICS = {
     flags: { title: "Flagged activity over time", parts: ["auto", "pause", "report"], say: n => `${n} flags`, axis: n => String(n) },
     paused: { title: "Paused transfers over time", parts: ["auto", "pause"], say: n => `${n} paused transfers`, axis: n => String(n) },
@@ -346,7 +345,7 @@
 
   function currentMetric() { return METRICS[view().metric] || METRICS.flags; }
 
-  // The lines of the chart for one panel and period: a label, a style name and a number for every day or week
+  // The chart's lines for one panel and period
   function linesOf(m, p) {
     if (m.parts) return m.parts.map(k => ({ key: k, label: q.sources[k].label, short: SHORT[k], values: p.series[k] }));
     return [{ key: "one", label: m.label, short: m.label, values: I.trend[p.unit === "day" ? "daily" : "weekly"][m.trend] }];
@@ -393,7 +392,6 @@
       { metric: "sent", label: "Money already sent", value: formatMoney(cash.sent.now.amount), alert: cash.sent.now.count > 0,
         note: `${cash.sent.now.count} ${cash.sent.now.count === 1 ? "case" : "cases"}. ${formatMoney(cash.sent.before.amount)} ${p.before}.` }
     ];
-    // Each panel is a button: pressing it changes the chart below (see insightsAfterRender)
     return `<ul class="kpis ins-kpis ov-kpis" data-read>${items.map(k => `<li><button type="button" class="kpi ov-kpi${k.alert ? " kpi--alert" : ""}" data-metric="${k.metric}" aria-pressed="${view().metric === k.metric}">
         <span class="kpi-label">${k.label}</span>
         <span class="kpi-value">${k.value}</span>
@@ -401,8 +399,7 @@
       </button></li>`).join("")}</ul>`;
   }
 
-  // The summary comes in two lengths. Short: the three things staff need to know. Detailed: every
-  // sentence. The choice is remembered (view().summary) and the buttons only redraw the text.
+  // Two lengths: short (what staff need to know) and detailed (every sentence)
   function summaryLines(p, detailed) {
     const s = p.series;
     const last = s.labels.length - 1;
@@ -813,9 +810,7 @@
       document.getElementById("ins-status").textContent = `Now showing ${PERIODS[v.period].label.toLowerCase()} totals.`;
     });
 
-    // The chart style buttons, the panels and the summary buttons are all inside #ins-body, which
-    // stays put, so one listener there catches them. Only the part that changed is redrawn, and an
-    // open "Show as a table" stays open.
+    // One listener on #ins-body (it stays put) for the style, panel and summary buttons. Only what changed is redrawn.
     document.getElementById("ins-body").addEventListener("click", event => {
       const p = PERIODS[v.period] || PERIODS.daily;
       const status = document.getElementById("ins-status");
