@@ -2,12 +2,9 @@
 
 // Feature: Overview (staff). #staff
 // Owner: Wei Ye
-// Four panels at the top, each with a header, today's number and the average in small grey text.
-// Clicking a panel switches the chart under it, and the breakdown box beside it, to that panel's numbers.
-// registerRoute() keeps the last screen registered under a name, so this file takes the Overview
-// that triage-console.js registered and registers it again with the panels, chart and breakdown box replaced.
-// It must load after triage-console.js. If anything it needs is missing, the Overview stays as it was.
-// Totals only, like the rest of the staff side.
+// Four clickable panels: the picked one drives the chart and the breakdown box beside it.
+// Re-registers the "staff" route from triage-console.js with those parts replaced, so it must load after it.
+// If anything it needs is missing, the original Overview stays. Totals only, no customer details.
 
 (function () {
   if (typeof OVERVIEW_DATA === "undefined" || typeof CASE_INSIGHTS_DATA === "undefined" ||
@@ -16,18 +13,21 @@
   const base = routes.staff;   // the Overview as triage-console.js made it
   const D = CASE_INSIGHTS_DATA.daily;
   const W = CASE_INSIGHTS_DATA.weekly;
+  // 12 weeks of reports: 4 earlier weeks, then the 8 from CASE_INSIGHTS_DATA
+  const E = OVERVIEW_DATA.earlierReportWeeks || { labels: [], reports: [] };
+  const weekLabels = E.labels.concat(W.labels);
+  const weekReports = E.reports.concat(W.report);
 
   function esc(text) {
     return String(text).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
   }
 
-  // The four panels. The last number in each list is today (or this week).
-  // Change "label", or point "values" at other numbers, to change a panel.
+  // The four panels. The last value in each list is today (or this week).
   const METRICS = [
     { key: "reports-day", label: "Reports today", per: "day", noun: "reports",
       title: "Reports each day, last 14 days", values: D.report, labels: D.labels, side: () => resultsSide("today") },
     { key: "reports-week", label: "Reports this week", per: "week", noun: "reports",
-      title: "Reports each week, last 8 weeks", values: W.report, labels: W.labels, side: () => resultsSide("week") },
+      title: `Reports each week, last ${weekReports.length} weeks`, values: weekReports, labels: weekLabels, side: () => resultsSide("week") },
     { key: "checks-day", label: "Checks used today", per: "day", noun: "checks",
       title: "Checks used each day, last 14 days", values: OVERVIEW_DATA.checksPerDay, labels: D.labels, side: toolsSide },
     { key: "flags-day", label: "Flagged activity today", per: "day", noun: "flagged",
@@ -38,8 +38,7 @@
 
   // ---------- The box next to the chart: a breakdown of the number on the picked panel ----------
 
-  // One bar per row. "name" is the words or badge at the left; the bars are all one colour, so the
-  // name says what each row is.
+  // One bar per row. "name" is the words or badge at the left.
   function rowsHtml(rows, note) {
     const total = rows.reduce((sum, r) => sum + r.count, 0);
     const most = Math.max(...rows.map(r => r.count), 1);
@@ -83,9 +82,9 @@
         </section>`;
   }
 
-  // The panel that is showing, kept for this visit so coming back from a case shows the same chart
+  // The picked panel and chart style, kept so coming back shows the same chart
   function state() {
-    if (!appState.overview) appState.overview = { metric: METRICS[0].key };
+    if (!appState.overview) appState.overview = { metric: METRICS[0].key, style: "line" };
     return appState.overview;
   }
   function current() { return METRICS.find(m => m.key === state().metric) || METRICS[0]; }
@@ -127,25 +126,33 @@
     return `${l.day} ${l.date} ${l.month}${isLast ? " (today)" : ""}`;
   }
 
-  // One colour of bars (one series, so no legend: the heading names it).
-  // Hover or keyboard focus shows a bar's number; the latest number is always shown.
+  // One series, so no legend. Hover or focus shows a number; the latest is always shown.
   function chartHtml(m) {
     const last = m.values.length - 1;
     const top = scaleTop(Math.max(...m.values));
     const days = m.per === "day";
+    const line = state().style !== "bars";
+    const pct = v => (v / top) * 100;
+    const x = i => ((i + 0.5) / m.values.length) * 100;
+    // Lines mode keeps the columns as invisible hover and keyboard spots and draws the line over them
+    const overlay = line ? `<div class="ov-lines" aria-hidden="true">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><polyline points="${m.values.map((v, i) => x(i).toFixed(2) + "," + (100 - pct(v)).toFixed(2)).join(" ")}"></polyline></svg>
+          ${m.values.map((v, i) => `<span class="ov-pt${i === last ? " is-today" : ""}" style="left: ${x(i)}%; bottom: ${pct(v)}%"></span>`).join("")}
+        </div>` : "";
     return `
-      <div class="chart">
+      <div class="chart${line ? " ov-line-mode" : ""}">
         <div class="chart-scale" aria-hidden="true">
           ${[1, 2 / 3, 1 / 3, 0].map(f => `<span style="--y: ${1 - f}">${Math.round(top * f)}</span>`).join("")}
         </div>
         <ol class="bars">
           ${m.values.map((v, i) => `<li class="bar-col${i === last ? " is-today" : ""}">
-              <span class="bar" style="--h: ${(v / top) * 100}%" role="img" tabindex="0" aria-label="${esc(columnName(m, m.labels[i], i))}: ${v} ${m.noun}">
+              <span class="bar" style="--h: ${line ? 100 : pct(v)}%; --v: ${pct(v)}%" role="img" tabindex="0" aria-label="${esc(columnName(m, m.labels[i], i))}: ${v} ${m.noun}">
                 ${i === last ? `<span class="bar-value" aria-hidden="true">${v}</span>` : ""}
                 <span class="bar-tip" aria-hidden="true">${esc(columnName(m, m.labels[i], i))}: ${v}</span>
               </span>
             </li>`).join("")}
         </ol>
+        ${overlay}
         <span></span>
         <ol class="bar-days ov-days" aria-hidden="true">
           ${m.labels.map((l, i) => `<li${i === last ? ' class="is-today"' : ""}>${
@@ -168,14 +175,19 @@
     return `<section class="panel panel-chart" aria-labelledby="chart-title">
           <h2 id="chart-title">${esc(m.title)}</h2>
           <p class="visually-hidden" id="ov-status" role="status"></p>
+          <div class="ins-modes-row">
+            <span id="ov-style-label" class="ins-period-label">Chart style</span>
+            <div class="ins-modes" role="group" aria-labelledby="ov-style-label">
+              ${[["line", "Lines"], ["bars", "Bars"]].map(([key, label]) => `<button type="button" class="chip" data-style="${key}" aria-pressed="${state().style === key}">${label}</button>`).join("")}
+            </div>
+          </div>
           <div id="ov-chart">${chartHtml(m)}</div>
         </section>`;
   }
 
   // ---------- The screen ----------
 
-  // Swap the panels and the chart in the Overview triage-console.js made. If either one can't be
-  // found (the original was changed), leave the Overview exactly as it was.
+  // Swaps in the new panels, chart and box. If any can't be found, the Overview is left as it was.
   function overviewHtml(param) {
     const html = base.render(param);
     const kpis = /<ul class="kpis">[\s\S]*?<\/ul>/;
@@ -189,6 +201,22 @@
     if (base.afterRender) base.afterRender(param);
     const panels = document.querySelector(".ov-kpis");
     if (!panels) return;
+    // Redraws the chart; an open table stays open
+    function redrawChart(m) {
+      const holder = document.getElementById("ov-chart");
+      const tableOpen = !!holder.querySelector("details[open]");
+      holder.innerHTML = chartHtml(m);
+      if (tableOpen) holder.querySelector("details").open = true;
+    }
+    // Lines or Bars
+    document.querySelector(".panel-chart").addEventListener("click", event => {
+      const button = event.target.closest("[data-style]");
+      if (!button) return;
+      state().style = button.dataset.style;
+      document.querySelectorAll(".panel-chart [data-style]").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
+      redrawChart(current());
+      document.getElementById("ov-status").textContent = `Chart style: ${state().style === "bars" ? "bars" : "lines"}.`;
+    });
     // One listener for the four panels. Only the chart and the box are redrawn, so keyboard focus stays on the panel.
     panels.addEventListener("click", event => {
       const button = event.target.closest(".ov-kpi");
@@ -197,10 +225,7 @@
       const m = current();
       panels.querySelectorAll(".ov-kpi").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
       document.getElementById("chart-title").textContent = m.title;
-      const holder = document.getElementById("ov-chart");
-      const tableOpen = !!holder.querySelector("details[open]");   // keep "Show as a table" open when swapping panels
-      holder.innerHTML = chartHtml(m);
-      if (tableOpen) holder.querySelector("details").open = true;
+      redrawChart(m);
       const side = m.side();
       document.getElementById("mix-title").textContent = side.title;
       document.getElementById("ov-side").innerHTML = side.html;

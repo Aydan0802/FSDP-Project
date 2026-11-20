@@ -49,3 +49,16 @@
 #ov-chart .chart-table summary:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
 #ov-chart .chart-table .table-wrap { margin-top: .75rem; }
 @media (prefers-reduced-motion: reduce) { #ov-chart .chart-table summary { transition: none; } #ov-chart .chart-table summary:hover, #ov-chart .chart-table summary:active { transform: none; } }
+
+/* Lines: the bars stay as invisible hover columns and the line is drawn over them */
+#ov-chart .chart-scale { grid-column: 1; grid-row: 1; }
+#ov-chart .bars { grid-column: 2; grid-row: 1; }
+#ov-chart .bar-days { grid-column: 2; grid-row: 2; }
+.ov-lines { grid-column: 2; grid-row: 1; position: relative; margin-bottom: 2px; pointer-events: none; }
+.ov-lines svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ov-lines polyline { fill: none; stroke: var(--red-dark); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.ov-pt { position: absolute; width: .875rem; height: .875rem; border-radius: 50%; background: var(--red-dark); border: 2px solid var(--surface); transform: translate(-50%, 50%); }
+.ov-pt.is-today { width: 1.125rem; height: 1.125rem; }
+.ov-line-mode .bar { background: transparent; border-radius: 0; width: 100%; }
+.ov-line-mode .bar:hover, .ov-line-mode .bar:focus-visible { filter: none; background: rgba(0, 0, 0, .06); }
+.ov-line-mode .bar-value, .ov-line-mode .bar-tip { bottom: calc(var(--v) + 14px); }
