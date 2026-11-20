@@ -91,17 +91,17 @@ Run it with `python -m http.server` in this folder, then open http://localhost:8
 
 ## How to translate your screen
 
-The language picker (English / 中文 / Bahasa Melayu) is in the top bar, and in the menu on phones. Most screens
+The language picker (English / 中文 / Bahasa Melayu / தமிழ்) is in the top bar, and in the menu on phones. Most screens
 already switch; a screen stays in English until its owner does this. Everything stays in **your own files**:
 
 ```js
 // 1. js/data/your-feature.js: add your words, with keys that start with your feature's short name
-const PAUSE_VERIFY_DATA = { /* ...your data... */ text: { en: { "pv.title": "Pause and check" }, zh: { "pv.title": "先停一停，确认一下" }, ms: { "pv.title": "Berhenti dan semak" } } };
+const PAUSE_VERIFY_DATA = { /* ...your data... */ text: { en: { "pv.title": "Pause and check" }, zh: { "pv.title": "先停一停，确认一下" }, ms: { "pv.title": "Berhenti dan semak" }, ta: { "pv.title": "நிறுத்தி, சரிபாருங்கள்" } } };
 // 2. js/features/your-feature.js, at the top of your (function () { ... })();
 addTranslations(PAUSE_VERIFY_DATA.text);
 // 3. In your HTML, use t() instead of the words:   <h1 tabindex="-1">${t("pv.title")}</h1>
 ```
 
-A word missing in Chinese or Malay shows in English, with a warning in the console. Blanks work too:
+A word missing in Chinese, Malay or Tamil shows in English, with a warning in the console. Blanks work too:
 `t("common.callOcbcNumber", { phone: OCBC_PHONE })`. Copy `js/data/freeze.js` and `js/features/freeze.js` for a full example.
-The Chinese and Malay need checking by a native speaker before real customers see them.
+The Chinese, Malay and Tamil need checking by a native speaker before real customers see them.

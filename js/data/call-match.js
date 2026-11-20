@@ -2,8 +2,8 @@
 
 // Made-up data for: Is the bank really calling? (the screen).
 // Owner: Yan Lin
-// text: this screen's words in English, Chinese and Malay (see "How to translate your screen"
-// in TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// text: this screen's words in English, Chinese, Malay and Tamil (see "How to translate your screen"
+// in TEAM-FILES.md). The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const CALL_MATCH_DATA = {
   // The "Try:" buttons: one number OCBC really called from, and one it didn't
@@ -96,6 +96,35 @@ const CALL_MATCH_DATA = {
       "cm.no.text": "Penipu boleh buat apa-apa nombor muncul di telefon anda. Letak telefon dan telefon OCBC sendiri.",
       "cm.no.callerCheck": "Semak sama ada pemanggil itu orang sebenar",
       "cm.no.report": "Laporkan nombor ini"
+    },
+    ta: {
+      "cm.no.1": "மோசடிக்காரர்கள் உங்கள் கைபேசியில் எந்த எண்ணையும் காட்ட முடியும்.",
+      "cm.no.2": "இப்போதே அழைப்பைத் துண்டியுங்கள்.",
+      "cm.no.3": "உங்கள் அட்டையில் உள்ள எண்ணில் நீங்களே OCBC-ஐ அழையுங்கள்.",
+      "cm.checking.title": "இந்த எண்ணைச் சரிபார்க்கிறோம்…",
+      "cm.checking.step1": "எண்ணைத் தேடுகிறோம்",
+      "cm.checking.step2": "OCBC உங்களுக்குச் செய்த அழைப்புகளுடன் ஒப்பிடுகிறோம்",
+      "cm.checking.step3": "உங்கள் பதிலைத் தயார் செய்கிறோம்",
+      "cm.title": "உண்மையில் வங்கிதான் அழைக்கிறதா?",
+      "cm.lead": "உங்களை அழைத்த எண்ணைத் தட்டச்சு செய்யுங்கள். OCBC-யின் உண்மையான அழைப்புகளுடன் சரிபார்ப்போம்.",
+      "cm.numberLabel": "உங்களை அழைத்த எண்",
+      "cm.placeholder": "எடுத்துக்காட்டு: 6363 3333",
+      "cm.try": "முயலுங்கள்:",
+      "cm.check": "இந்த எண்ணைச் சரிபார்",
+      "cm.err.number": "உங்களை அழைத்த 8 இலக்க எண்ணைத் தட்டச்சு செய்யுங்கள்.",
+      "cm.yes.tag": "OCBC உங்களை அழைத்தது",
+      "cm.yes.title": "ஆம், இது உண்மையான OCBC அழைப்பு",
+      "cm.officer": "அதிகாரி",
+      "cm.team": "குழு",
+      "cm.when": "எப்போது",
+      "cm.about": "எதைப் பற்றி",
+      "cm.yes.warning": "OCBC ஒருபோதும் உங்கள் OTP-ஐக் கேட்காது, பணத்தை மாற்றச் சொல்லாது. அப்படிக் கேட்டால், அழைப்பைத் துண்டியுங்கள்.",
+      "cm.again": "வேறு எண்ணைச் சரிபார்",
+      "cm.no.tag": "பதிவு இல்லை",
+      "cm.no.title": "OCBC இந்த எண்ணிலிருந்து உங்களை அழைக்கவில்லை",
+      "cm.no.text": "மோசடிக்காரர்கள் உங்கள் கைபேசியில் எந்த எண்ணையும் காட்ட முடியும். அழைப்பைத் துண்டித்து, நீங்களே OCBC-ஐ அழையுங்கள்.",
+      "cm.no.callerCheck": "அழைப்பவர் உண்மையான நபரா என்று சரிபார்",
+      "cm.no.report": "இந்த எண்ணைப் புகாரளி"
     }
   }
 };

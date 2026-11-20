@@ -8,7 +8,7 @@
 // results) is at the top of this file, in DATA.
 
 (function () {
-  addTranslations(PAUSE_VERIFY_DATA.text);  // this screen's English, Chinese and Malay words
+  addTranslations(PAUSE_VERIFY_DATA.text);  // this screen's English, Chinese, Malay and Tamil words
 
   // ---------- Made-up data ----------
   const DATA = {

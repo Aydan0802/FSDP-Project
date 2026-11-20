@@ -10,7 +10,7 @@
 (function () {
   const data = PASSPHRASE_DATA;
   const esc = escapeHtml;
-  addTranslations(data.text);    // this screen's English, Chinese and Malay words
+  addTranslations(data.text);    // this screen's English, Chinese, Malay and Tamil words
 
   function relationshipLabel(value) {
     const r = data.relationships.find(item => item.value === value);

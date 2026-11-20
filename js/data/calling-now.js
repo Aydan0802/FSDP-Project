@@ -2,8 +2,8 @@
 
 // Made-up data for: Someone is calling me now (the stress flow).
 // Owner: SHARED (whole team)
-// text: the screen's words in English, Chinese and Malay (see "How to translate your screen" in
-// TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// text: the screen's words in English, Chinese, Malay and Tamil (see "How to translate your screen" in
+// TEAM-FILES.md). The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const CALLING_NOW_DATA = {
   text: {
@@ -75,6 +75,29 @@ const CALLING_NOW_DATA = {
       "cn.safe.title": "Wang anda selamat.",
       "cn.safe.text": "Jika anda mahu semak dengan bank, telefon OCBC sendiri. Gunakan nombor di belakang kad anda. Jangan sekali-kali telefon semula nombor yang telefon anda tadi.",
       "cn.safe.tell": "Beritahu bank tentang panggilan ini"
+    },
+    ta: {
+      "cn.safe.1": "வங்கியிடம் சரிபார்க்க வேண்டுமா? நீங்களே OCBC-ஐ அழையுங்கள்.",
+      "cn.safe.2": "உங்கள் அட்டையின் பின்புறம் உள்ள எண்ணைப் பயன்படுத்துங்கள்.",
+      "cn.safe.3": "உங்களை அழைத்த எண்ணைத் திருப்பி அழைக்காதீர்கள்.",
+      "cn.leave": "முகப்புக்குத் திரும்பு",
+      "cn.stepOf": "படி {step} / 2",
+      "cn.calm": "நீங்கள் சரியானதைச் செய்கிறீர்கள்",
+      "cn.hangUp.title": "இப்போதே அழைப்பைத் துண்டியுங்கள்.",
+      "cn.hangUp.text": "துண்டிப்பது பாதுகாப்பானது. உண்மையான வங்கி அதிகாரி வருத்தப்பட மாட்டார்.",
+      "cn.rule.code": "எந்தக் குறியீட்டையும் பகிர வேண்டாம்.",
+      "cn.rule.money": "எந்தப் பணத்தையும் அனுப்ப வேண்டாம்.",
+      "cn.hungUp": "நான் துண்டித்துவிட்டேன்",
+      "cn.checkFirst": "முதலில் யார் அழைக்கிறார் என்று சரிபார்",
+      "cn.q.title": "நீங்கள் குறியீடு கொடுத்தீர்களா அல்லது பணம் அனுப்பினீர்களா?",
+      "cn.q.text": "அப்படிச் செய்திருந்தாலும் பரவாயில்லை. நாங்கள் இன்னும் உதவ முடியும்.",
+      "cn.q.no": "இல்லை, செய்யவில்லை",
+      "cn.q.yes": "ஆம், செய்தேன்",
+      "cn.q.unsure": "எனக்கு உறுதியாகத் தெரியவில்லை",
+      "cn.back": "பின்செல்",
+      "cn.safe.title": "உங்கள் பணம் பாதுகாப்பாக உள்ளது.",
+      "cn.safe.text": "வங்கியிடம் சரிபார்க்க விரும்பினால், நீங்களே OCBC-ஐ அழையுங்கள். உங்கள் அட்டையின் பின்புறம் உள்ள எண்ணைப் பயன்படுத்துங்கள். உங்களை அழைத்த எண்ணைத் திருப்பி அழைக்காதீர்கள்.",
+      "cn.safe.tell": "இந்த அழைப்பைப் பற்றி வங்கியிடம் சொல்லுங்கள்"
     }
   }
 };

@@ -2,7 +2,7 @@
 
 // The words the message checker uses in its summary, in each language.
 // Owner: Aydan. Used by detector/checker.js.
-// English first. Chinese (zh) and Malay (ms) are added after English works; any wording
+// English first. Chinese (zh), Malay (ms) and Tamil (ta) are added after English works; any wording
 // that is missing falls back to English. A teammate who speaks the language should check it.
 // {type} and {tip} are filled in by checker.js.
 
@@ -122,6 +122,46 @@ const WORDS = {
       askFamily: "Tanya ahli keluarga sebelum bertindak.",
       call1799: "Tidak pasti? Hubungi Talian ScamShield 1799.",
       stillCareful: "Nampak okay, tetapi jangan beri kod atau wang kepada orang yang anda tidak kenal."
+    }
+  },
+
+  // Tamil. Only the result words for now: the red-flag rules themselves are English, Chinese and
+  // Malay, so a Tamil message is still checked with those (and gets the "rough guess" note).
+  // Needs a teammate or family member who reads Tamil to check it.
+  ta: {
+    typeNames: {
+      impersonation: "வங்கி, அரசாங்கம் அல்லது குடும்பம் போல நீங்கள் நம்பும் ஒருவராக நடிக்கும் மோசடி",
+      phishing: "உங்கள் விவரங்களைத் திருடச் செய்யப்பட்ட செய்தி",
+      parcel: "போலி விநியோகச் செய்தி",
+      job: "வேலை மோசடி",
+      investment: "முதலீட்டு மோசடி",
+      love: "காதல் மோசடி"
+    },
+    tips: {
+      impersonation: "உண்மையான வங்கி அல்லது அரசாங்க அதிகாரி உங்கள் OTP, PIN அல்லது பணத்தைச் செய்தி மூலம் ஒருபோதும் கேட்க மாட்டார்.",
+      phishing: "எந்த இணைப்பையும் தொட வேண்டாம், எந்த விவரத்தையும் தட்டச்சு செய்ய வேண்டாம். நிறுவனத்தின் சொந்தச் செயலி அல்லது இணையத்தளம் மூலம் தொடர்புகொள்ளுங்கள்.",
+      parcel: "விநியோக நிறுவனங்கள் இப்படிப்பட்ட இணைப்புகள் மூலம் கட்டணம் கேட்பதில்லை. அவர்களின் சொந்தச் செயலியில் உங்கள் பார்சலைச் சரிபாருங்கள்.",
+      job: "உண்மையான வேலைகள் தொடங்கப் பணம் கேட்பதில்லை; எளிய இணைய வேலைகளுக்கு யாரும் பெரிய தொகை தருவதில்லை.",
+      investment: "எந்த உண்மையான முதலீடும் உத்தரவாத லாபத்தை வாக்களிக்க முடியாது. பணம் எதையும் மாற்ற வேண்டாம்.",
+      love: "இணையத்தில் மட்டுமே சந்தித்த ஒருவருக்கு ஒருபோதும் பணம் அனுப்ப வேண்டாம். முதலில் உங்கள் குடும்பத்தினரிடம் பேசுங்கள்."
+    },
+    high: "இது {type} போலத் தெரிகிறது. {tip}",
+    medium: "இந்தச் செய்தியில் சில எச்சரிக்கை அறிகுறிகள் உள்ளன. இது இந்த வகையாக இருக்கலாம்: {type}. {tip}",
+    lowWithFlags: "சிறிய எச்சரிக்கை அறிகுறிகள் மட்டுமே கிடைத்தன. பெரும்பாலும் பிரச்சினை இல்லை, ஆனால் இணைப்பைத் தொடும் முன் அல்லது பதில் அனுப்பும் முன் சரிபாருங்கள்.",
+    lowNoFlags: "இந்தச் செய்தியில் எச்சரிக்கை அறிகுறிகள் இல்லை. அது பாதுகாப்பானது என்று இது நிரூபிக்காது: ஏதாவது சரியில்லை என்று தோன்றினால், உங்களுக்கு ஏற்கெனவே தெரிந்த எண்ணில் அந்த நபரைத் தொடர்புகொள்ளுங்கள்.",
+    notSupported: "இந்த மொழியில் உள்ள செய்திகளை இன்னும் நன்றாகச் சரிபார்க்க முடியாது, எனவே இந்த முடிவு ஒரு தோராயமான கணிப்பு.",
+    empty: "சரிபார்க்க இன்னும் செய்தி இல்லை. முதலில் செய்தியை ஒட்டுங்கள் அல்லது தட்டச்சு செய்யுங்கள்.",
+    steps: {
+      noClick: "இணைப்பைத் தொட வேண்டாம்.",
+      noCode: "உங்கள் OTP, கடவுச்சொல் அல்லது அட்டை விவரங்களை ஒருபோதும் பகிர வேண்டாம்.",
+      noPay: "எந்தப் பணத்தையும் செலுத்தவோ மாற்றவோ வேண்டாம்.",
+      noInstall: "அவர்கள் அனுப்பும் எந்தச் செயலியையும் நிறுவ வேண்டாம்.",
+      checkOldNumber: "எதையும் செய்யும் முன், உங்களிடம் ஏற்கெனவே உள்ள எண்ணில் அந்த நபரை அழையுங்கள்.",
+      verifyOfficial: "அதிகாரப்பூர்வ இணையத்தளம் அல்லது உங்கள் அட்டையில் உள்ள எண் மூலம் நீங்களே அந்த நிறுவனத்தைத் தொடர்புகொள்ளுங்கள்.",
+      stopReplying: "அழைப்பைத் துண்டியுங்கள் அல்லது பதில் அனுப்புவதை நிறுத்துங்கள். உண்மையான அதிகாரிகள் வருத்தப்பட மாட்டார்கள்.",
+      askFamily: "எதையும் செய்யும் முன் ஒரு குடும்ப உறுப்பினரிடம் கேளுங்கள்.",
+      call1799: "உறுதியில்லையா? ScamShield உதவி எண் 1799-ஐ அழையுங்கள்.",
+      stillCareful: "சரியாகத் தெரிகிறது, ஆனால் உங்களுக்குத் தெரியாதவர்களுக்குக் குறியீடுகளையோ பணத்தையோ ஒருபோதும் தர வேண்டாம்."
     }
   }
 };

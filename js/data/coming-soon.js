@@ -4,9 +4,9 @@
 // Owner: Aydan
 // The menu items that aren't part of this prototype. js/features/coming-soon.js makes one
 // "Coming soon" screen for each. role says who may open it (see js/core/access.js).
-// title and text are translation keys; the words in English, Chinese and Malay are in text below
+// title and text are translation keys; the words in English, Chinese, Malay and Tamil are in text below
 // (see "How to translate your screen" in TEAM-FILES.md).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 // Note: staff screens always show English (t() in js/core/i18n.js), so the staff pages' Chinese
 // and Malay are only used if that rule changes.
 
@@ -61,6 +61,20 @@ const COMING_SOON_DATA = {
       "soon.scamTypes.text": "Jenis penipuan yang dilaporkan, dan berapa kerap.",
       "soon.settings.title": "Tetapan",
       "soon.settings.text": "Akaun kakitangan dan tetapan amaran anda."
+    },
+    ta: {
+      "soon.withText": "விரைவில் வருகிறது. {text}",
+      "soon.backOverview": "மேலோட்டத்திற்குத் திரும்பு",
+      "soon.myReports.title": "என் புகார்கள்",
+      "soon.myReports.text": "நீங்கள் புகாரளித்த மோசடிகளையும் அவற்றுக்கு வங்கி என்ன செய்தது என்பதையும் பாருங்கள்.",
+      "soon.help.title": "உதவி",
+      "soon.help.text": "பொதுவான கேள்விகளுக்கான பதில்களும் வங்கியைத் தொடர்புகொள்ளும் வழியும்.",
+      "soon.trends.title": "போக்குகள்",
+      "soon.trends.text": "வாரங்கள், மாதங்களில் மோசடிப் புகார்கள் எப்படி மாறுகின்றன.",
+      "soon.scamTypes.title": "மோசடி வகைகள்",
+      "soon.scamTypes.text": "புகாரளிக்கப்படும் மோசடி வகைகளும் அவை எவ்வளவு அடிக்கடி நடக்கின்றன என்பதும்.",
+      "soon.settings.title": "அமைப்புகள்",
+      "soon.settings.text": "உங்கள் ஊழியர் கணக்கும் எச்சரிக்கை அமைப்புகளும்."
     }
   }
 };

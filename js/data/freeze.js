@@ -2,8 +2,8 @@
 
 // Made-up data for: Freeze my accounts.
 // Owner: Jose
-// text: this screen's words in English, Chinese and Malay (see js/core/i18n.js).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// text: this screen's words in English, Chinese, Malay and Tamil (see js/core/i18n.js).
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const FREEZE_DATA = {
   // The key to press on OCBC's hotline to reach the team that freezes accounts (the preview's wording)
@@ -63,6 +63,23 @@ const FREEZE_DATA = {
       "fr.item.app": "Tiada sesiapa boleh log masuk ke aplikasi bank anda.",
       "fr.writeDown": "Tulis apa yang berlaku",
       "fr.demo": "Demo sahaja: tiada apa yang benar-benar dibekukan. Dibekukan pada {time} dalam demo ini."
+    },
+    ta: {
+      "fr.phone.label": "உங்கள் கைபேசி எண்",
+      "fr.phone.hint": "எந்தக் கணக்குகளை முடக்க வேண்டும் என்று தெரிந்துகொள்ள. நீங்கள் உள்நுழைய வேண்டியதில்லை.",
+      "fr.phone.err": "உங்கள் 8 இலக்கக் கைபேசி எண்ணைத் தட்டச்சு செய்யுங்கள், எ.கா. 9123 4567.",
+      "fr.calm": "அமைதியாக இருங்கள். முதலில் இதைச் செய்யுங்கள்.",
+      "fr.title": "உங்கள் கணக்குகளை இப்போதே முடக்குங்கள்.",
+      "fr.why": "இது மேலும் பணம் போவதைத் தடுக்கும். பின்னர் வங்கியுடன் சேர்ந்து முடக்கத்தை நீக்கலாம்.",
+      "fr.button": "என் கணக்குகளை முடக்கு",
+      "fr.orCall": "அல்லது OCBC {phone}-ஐ அழைத்து {key}-ஐ அழுத்துங்கள்",
+      "fr.done.title": "உங்கள் கணக்குகள் முடக்கப்பட்டுள்ளன.",
+      "fr.done.text": "அடுத்து: OCBC-ஐ {phone}-இல் அழைத்து {key}-ஐ அழுத்துங்கள். என்ன நடந்தது என்று சொல்லுங்கள்.",
+      "fr.item.payments": "பணப் பரிமாற்றங்களும் PayNow கட்டணங்களும் நிறுத்தப்பட்டன.",
+      "fr.item.cards": "உங்கள் அட்டைகளைப் பயன்படுத்த முடியாது.",
+      "fr.item.app": "உங்கள் வங்கிச் செயலியில் யாரும் உள்நுழைய முடியாது.",
+      "fr.writeDown": "என்ன நடந்தது என்று எழுதி வையுங்கள்",
+      "fr.demo": "மாதிரி மட்டும்: உண்மையில் எதுவும் முடக்கப்படவில்லை. இந்த மாதிரியில் {time}-க்கு முடக்கப்பட்டது."
     }
   }
 };

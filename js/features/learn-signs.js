@@ -6,7 +6,7 @@
 
 (function () {
   const data = LEARN_SIGNS_DATA;
-  addTranslations(data.text);   // this screen's English, Chinese and Malay words
+  addTranslations(data.text);   // this screen's English, Chinese, Malay and Tamil words
 
   function myState() {
     if (!appState.learnSigns) appState.learnSigns = { picked: "" };

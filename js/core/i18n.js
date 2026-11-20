@@ -1,17 +1,18 @@
 "use strict";
 
-// Pause & Prove: languages (English, 中文, Bahasa Melayu).
+// Pause & Prove: languages (English, 中文, Bahasa Melayu, தமிழ்).
 // Owner: Jose. Shared by everyone: any screen can call t().
 //
-// Our users are seniors in Singapore, and many read Chinese or Malay more easily than English.
+// Our users are seniors in Singapore, and many read Chinese, Malay or Tamil more easily than English.
+// These are Singapore's four official languages.
 // Every piece of text a customer sees has a short key, for example "menu.home". t("menu.home")
 // gives back that text in the language the customer picked.
 //
-// IMPORTANT: the Chinese and Malay below were drafted with AI help. A native speaker must check
-// them before this is shown to real customers.
+// IMPORTANT: the Chinese, Malay and Tamil below were drafted with AI help. A native speaker must
+// check them before this is shown to real customers.
 //
 // How to translate your own screen (also in TEAM-FILES.md):
-//   1. In your data file, add  text: { en: { "pv.title": "Pause" }, zh: { ... }, ms: { ... } }  to your _DATA.
+//   1. In your data file, add  text: { en: { "pv.title": "Pause" }, zh: { ... }, ms: { ... }, ta: { ... } }  to your _DATA.
 //   2. At the top of your feature file:  addTranslations(PAUSE_VERIFY_DATA.text);
 //   3. In your HTML:  <h1 tabindex="-1">${t("pv.title")}</h1>
 // Start your keys with a short name for your feature ("pv.", "rp.") so they never clash.
@@ -20,7 +21,8 @@
 const LANGUAGES = {
   en: { name: "English", locale: "en-SG" },
   zh: { name: "中文", locale: "zh-SG" },
-  ms: { name: "Bahasa Melayu", locale: "ms-MY" }
+  ms: { name: "Bahasa Melayu", locale: "ms-MY" },
+  ta: { name: "தமிழ்", locale: "ta-SG" }
 };
 
 // The localStorage key for the saved choice. It is separate from appState on purpose:
@@ -201,6 +203,63 @@ const I18N = {
     "result.uncertain": "Ada beberapa tanda",
     "result.unsure": "Tidak pasti",
     "result.real": "Mungkin benar"
+  },
+  ta: {
+    "nav.back": "பின்செல்",
+    "nav.main": "முதன்மைப் பட்டியல்",
+    "nav.tabs": "விரைவுப் பட்டியல்",
+    "tab.home": "முகப்பு",
+    "tab.check": "சரிபார்",
+    "tab.helpNow": "உதவி",
+    "tab.learn": "கற்க",
+    "tab.menu": "பட்டியல்",
+    "side.close": "பட்டியலை மூடு",
+    "side.urgent": "இப்போது ஒருவர் என்னை அழைக்கிறார்",
+    "side.group.now": "இப்போதே உதவி வேண்டுமா?",
+    "side.group.check": "செயல்படும் முன் சரிபாருங்கள்",
+    "side.group.ready": "தயாராக இருங்கள்",
+    "side.freeze": "என் கணக்குகளை முடக்கு",
+    "side.analyser": "செய்தி அல்லது அழைப்பைச் சரிபார்",
+    "side.callMatch": "உண்மையில் வங்கிதான் அழைக்கிறதா?",
+    "side.callerCheck": "அழைப்பவர் உண்மையான நபரா?",
+    "side.riskScorer": "பணப் பரிமாற்றத்தைச் சரிபார்",
+    "side.passphrase": "குடும்ப ரகசியச் சொல்",
+    "side.learnSigns": "அறிகுறிகளை அறிக",
+    "side.report": "மோசடியைப் புகாரளி",
+    "side.display": "மொழியும் எழுத்து அளவும்",
+    "side.signedInAs": "{name} ஆக உள்நுழைந்துள்ளீர்கள்",
+    "side.signedIn": "நீங்கள் உள்நுழைந்துள்ளீர்கள்",
+    "side.signInHint": "உங்கள் பயனர் அடையாளம், கைபேசி எண் அல்லது பெயருடன் கடவுச்சொல் அல்லது PIN பயன்படுத்துங்கள்.",
+    "lang.label": "மொழி",
+    "skip": "முதன்மை உள்ளடக்கத்திற்குச் செல்",
+    "demo.title": "மாணவர் முன்மாதிரி.",
+    "demo.text": "இது உண்மையான OCBC சேவை அல்ல. எல்லாத் தரவும் கற்பனையானவை.",
+    "nav.customer": "வாடிக்கையாளர் பட்டியல்",
+    "menu.home": "முகப்பு",
+    "menu.myReports": "என் புகார்கள்",
+    "menu.help": "உதவி",
+    "header.readAloud": "உரக்கப் படி",
+    "header.textSize": "எழுத்து அளவு",
+    "header.signOut": "வெளியேறு",
+    "header.signIn": "உள்நுழை",
+    "header.signedOut": "நீங்கள் வெளியேறிவிட்டீர்கள்.",
+    "lock.tag": "உள்நுழைய வேண்டும்",
+    "lang.autoPicked": "உங்கள் கைபேசி தமிழில் உள்ளது, எனவே இங்கும் தமிழில் காட்டுகிறோம். மேலே மொழியை மாற்றலாம்.",
+    "textSize.normal": "வழக்கமான எழுத்து",
+    "textSize.large": "பெரிய எழுத்து",
+    "textSize.larger": "மிகப் பெரிய எழுத்து",
+    "callBar.question": "உண்மையான நபரிடம் பேச வேண்டுமா?",
+    "callBar.call": "OCBC-ஐ அழை",
+    "common.callOcbcNumber": "OCBC-ஐ அழை {phone}",
+    "common.backHome": "முகப்புக்குத் திரும்பு",
+    "read.noVoice": "மன்னிக்கவும், இந்தக் கருவியில் தமிழ்க் குரல் இல்லை. ஆங்கிலத்தில் படிக்கிறோம்.",
+    "read.stop": "நிறுத்து",
+    "read.stopReading": "படிப்பதை நிறுத்து",
+    "result.likely": "AI உருவாக்கியது போல் தெரிகிறது",
+    "result.partial": "ஒரு பகுதி AI உருவாக்கியது",
+    "result.uncertain": "சில அறிகுறிகள்",
+    "result.unsure": "உறுதியில்லை",
+    "result.real": "உண்மையானதாக இருக்கலாம்"
   }
 };
 
@@ -220,13 +279,14 @@ function loadLanguage() {
   return deviceLanguage() || "en";
 }
 
-// "zh" or "ms" if the device's preferred language is Chinese or Malay, otherwise "".
+// "zh", "ms" or "ta" if the device's preferred language is Chinese, Malay or Tamil, otherwise "".
 // navigator.languages is the browser's list, most preferred first, e.g. ["zh-SG", "en"].
 function deviceLanguage() {
   if (typeof navigator === "undefined" || !navigator.languages) return "";
   const first = String(navigator.languages[0] || "").toLowerCase();
   if (first.startsWith("zh")) return "zh";
   if (first.startsWith("ms")) return "ms";
+  if (first.startsWith("ta")) return "ta";
   return "";
 }
 
@@ -274,7 +334,7 @@ function t(key, values = {}) {
   return text.replace(/\{(\w+)\}/g, (blank, name) => (name in values ? values[name] : blank));
 }
 
-// Adds a feature's own words to the dictionary: strings is { en: {...}, zh: {...}, ms: {...} }.
+// Adds a feature's own words to the dictionary: strings is { en: {...}, zh: {...}, ms: {...}, ta: {...} }.
 // Each feature calls this from its own file, so nobody has to edit this shared file.
 function addTranslations(strings) {
   Object.keys(strings).forEach(lang => {
@@ -307,7 +367,7 @@ function setLanguage(lang) {
 
 // ---------- The language picker (put in the customer header by helpers.js) ----------
 
-// One drop-down instead of three buttons, so the header has less to read.
+// One drop-down instead of four buttons, so the header has less to read.
 // It is a real <select>: phones open their own big, easy list, and it works
 // with Tab and the arrow keys without any extra code. The globe is the sign for "language" that
 // people know even when they can't read the words. Each name is written in its own language,

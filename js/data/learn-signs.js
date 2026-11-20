@@ -2,9 +2,9 @@
 
 // Made-up data for: Learn the signs.
 // Owner: Jiliana
-// The words are translation keys; the English, Chinese and Malay are in text below
+// The words are translation keys; the English, Chinese, Malay and Tamil are in text below
 // (see "How to translate your screen" in TEAM-FILES.md).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const LEARN_SIGNS_DATA = {
   // The four signs of a scam call: [icon, title, explanation]
@@ -103,6 +103,30 @@ const LEARN_SIGNS_DATA = {
       "ls.quiz.wrongStaff": "Sesiapa pun boleh reka nombor kakitangan, jadi ia tidak membuktikan apa-apa. Letak telefon dan telefon polis atau bank sendiri.",
       "ls.goodToKnow": "Perlu tahu",
       "ls.tip": "Pegawai bank sebenar tidak akan sekali-kali suruh anda pindahkan wang ke \"akaun selamat\", atau minta kata laluan sekali guna (OTP) anda."
+    },
+    ta: {
+      "ls.title": "மோசடி அழைப்பின் 4 அறிகுறிகள்",
+      "ls.lead": "இவற்றில் ஒன்றைக் கவனித்தாலும், அழைப்பைத் துண்டியுங்கள்.",
+      "ls.sign.rush.title": "அவர்கள் உங்களை அவசரப்படுத்துகிறார்கள்",
+      "ls.sign.rush.text": "\"இப்போதே செய்ய வேண்டும், இல்லையென்றால் உங்கள் கணக்கு மூடப்படும்.\" உண்மையான வங்கிகள் உங்களுக்கு நேரம் தரும்.",
+      "ls.sign.otp.title": "உங்கள் OTP அல்லது PIN-ஐக் கேட்கிறார்கள்",
+      "ls.sign.otp.text": "OCBC இவற்றை ஒருபோதும் கேட்காது. தொலைபேசி, SMS அல்லது மின்னஞ்சல் எதிலும் கேட்காது.",
+      "ls.sign.safeAccount.title": "பணத்தை ஒரு \"பாதுகாப்பான கணக்குக்கு\" மாற்றச் சொல்கிறார்கள்",
+      "ls.sign.safeAccount.text": "அப்படி ஒன்று கிடையாது. இது எப்போதும் மோசடிதான்.",
+      "ls.sign.secret.title": "இதை ரகசியமாக வைக்கச் சொல்கிறார்கள்",
+      "ls.sign.secret.text": "நீங்கள் குடும்பத்தினரிடமோ வங்கியிடமோ கேட்பதை மோசடிக்காரர்கள் விரும்புவதில்லை.",
+      "ls.tryOne": "ஒன்றை முயலுங்கள்",
+      "ls.quiz.question": "ஒருவர் தான் காவல்துறையைச் சேர்ந்தவர் என்று சொல்கிறார். உங்கள் பணத்தைப் பாதுகாக்க இப்போதே அதை மாற்ற வேண்டும் என்கிறார். நீங்கள் என்ன செய்வீர்கள்?",
+      "ls.quiz.a": "பணம் பாதுகாப்பாக இருக்க விரைவாக மாற்றுவேன்",
+      "ls.quiz.b": "அழைப்பைத் துண்டித்து, நானே காவல்துறையையோ வங்கியையோ அழைப்பேன்",
+      "ls.quiz.c": "அழைப்பவரின் ஊழியர் எண்ணைக் கேட்டுவிட்டுத் தொடர்வேன்",
+      "ls.correct": "சரி",
+      "ls.notQuite": "சரியில்லை",
+      "ls.quiz.right": "எப்போதும் அழைப்பைத் துண்டித்து, நீங்களே கண்டுபிடித்த எண்ணில் திருப்பி அழையுங்கள்.",
+      "ls.quiz.wrong": "காவல்துறையும் வங்கியும் உங்களைப் பணத்தை மாற்றச் சொல்லவே மாட்டார்கள். அழைப்பைத் துண்டித்து, நீங்களே அவர்களை அழையுங்கள்.",
+      "ls.quiz.wrongStaff": "யார் வேண்டுமானாலும் ஒரு ஊழியர் எண்ணைச் சொல்லலாம், அதனால் அது எதையும் நிரூபிக்காது. அழைப்பைத் துண்டித்து, நீங்களே காவல்துறையையோ வங்கியையோ அழையுங்கள்.",
+      "ls.goodToKnow": "தெரிந்துகொள்வது நல்லது",
+      "ls.tip": "உண்மையான வங்கி அதிகாரி பணத்தை ஒரு \"பாதுகாப்பான கணக்குக்கு\" மாற்றச் சொல்லவோ, உங்கள் ஒருமுறைக் கடவுச்சொல்லை (OTP) பகிரச் சொல்லவோ மாட்டார்."
     }
   }
 };

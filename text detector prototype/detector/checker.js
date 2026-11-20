@@ -12,7 +12,7 @@
 //     summary     one or two plain sentences
 //     flags       [{ phrase, reason }]: each phrase is copied exactly from the message
 //     steps       "what to do now", matched to the flags (from KakiGuard)
-//     lang        "en" | "zh" | "ms": the language we think the message is in (extra, for the screen)
+//     lang        "en" | "zh" | "ms" | "ta": the language we think the message is in (extra, for the screen)
 //     score       the risk points added up (extra, for testing and the evaluation)
 //
 // How it works, in four steps:
@@ -66,6 +66,10 @@
     if (chinese >= 2) return "zh";
     const malay = new Set((text.match(MALAY_WORDS) || []).map(w => w.toLowerCase()));
     if (malay.size >= 2) return "ms";
+    // Tamil script. There are no Tamil rules yet, so this makes the result say it is a rough guess
+    // instead of quietly checking a Tamil message with the English rules.
+    const tamil = (text.match(/[\u0B80-\u0BFF]/g) || []).length;
+    if (tamil >= 4) return "ta";
     return "en";
   }
 
@@ -166,7 +170,7 @@
   }
 
   // ---------- Steps 3 and 4: points, risk, kind of scam, how sure ----------
-  // options.lang ("en" | "zh" | "ms"): the language to write the summary, reasons and steps in,
+  // options.lang ("en" | "zh" | "ms" | "ta"): the language to write the summary, reasons and steps in,
   // for example the language the customer picked on the website. Without it, they are written in
   // the message's own language. It never changes what is detected, only the words.
   function checkMessage(input, options = {}) {
@@ -224,7 +228,7 @@
         .replace("{type}", typeNames[type] || WORDS.en.typeNames[type])
         .replace("{tip}", tips[type] || WORDS.en.tips[type]);
     }
-    if (!SUPPORTED.has(lang)) summary = WORDS.en.notSupported + " " + summary;
+    if (!SUPPORTED.has(lang)) summary = say("notSupported") + " " + summary;
 
     // "rule" is extra: the screen only needs phrase and reason; the evaluation counts rules
     const flags = kept.slice(0, MAX_FLAGS).map(k => ({
