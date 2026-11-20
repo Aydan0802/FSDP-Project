@@ -1,37 +1,51 @@
-/* Feature: Overview additions (staff). #staff
+/* Feature: Overview (staff). #staff
    Owner: Wei Ye
-   Styles for the "Today in context" panel only (js/features/triage-overview.js).
-   Class names start with "ov-". Load this after triage-console.css. */
+   Styles for the four clickable panels and the chart they control (js/features/triage-overview.js).
+   Everything else on the Overview keeps the styles in triage-console.css. Load this after it. */
 
-.ov-context { margin-bottom: 1.5rem; }
-.ov-sub { margin-top: 0; }
+/* The four panels are buttons: an outline and a shadow so they look pressable, a lift on hover and a
+   press-down on click. The picked one is filled dark red, the others are white. */
+.ov-kpis li { display: flex; }
+.ov-kpi {
+  flex: 1; width: 100%; min-width: 0; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  border: 2px solid var(--field-border);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .14), 0 8px 16px rgba(0, 0, 0, .10);
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+}
+.ov-kpi:hover { transform: translateY(-2px); border-color: var(--text); box-shadow: 0 5px 0 rgba(0, 0, 0, .16), 0 12px 20px rgba(0, 0, 0, .12); }
+.ov-kpi:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .14), 0 3px 6px rgba(0, 0, 0, .10); }
+.ov-kpi:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+.ov-kpi[aria-pressed="true"] { background: var(--red-dark); color: var(--white); border-color: var(--red-dark); }
+.ov-kpi[aria-pressed="true"] .kpi-note { color: var(--white); }
+@media (prefers-reduced-motion: reduce) { .ov-kpi { transition: none; } .ov-kpi:hover, .ov-kpi:active { transform: none; } }
 
-.ov-cards { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
-.ov-card { display: flex; flex-direction: column; gap: .375rem; min-width: 0; padding: 1rem 1.125rem; background: var(--surface-2); border-radius: var(--radius); }
-.ov-label { margin: 0; font-size: 1rem; font-weight: 700; color: var(--muted); }
-.ov-value { margin: 0; font-size: 2rem; font-weight: 800; line-height: 1.1; }
-.ov-unit { font-size: 1rem; font-weight: 700; color: var(--muted); }
-.ov-text { margin: 0; }
+/* The chart's day and week names: weekday over date, or date over month */
+.ov-days { font-size: .8125rem; }
+.ov-days li { display: grid; line-height: 1.2; }
+.ov-short { display: none; }
 
-/* A tiny line of the last 12 months, at the bottom of the card, with a title and its two ends written out */
-.ov-trend { display: grid; gap: .25rem; margin-top: auto; padding-top: .5rem; }
-.ov-trend-title { font-size: .875rem; font-weight: 700; color: var(--muted); }
-.ov-trend-ends { display: flex; justify-content: space-between; gap: .5rem; font-size: .875rem; color: var(--muted); }
-.ov-trend-ends > span:last-child { font-weight: 700; color: var(--text); }
-/* The frame: a left edge, a floor, and faint lines at the top, middle and bottom so the graph has a visible area */
-.ov-spark { position: relative; display: block; height: 3.5rem; margin: 0; padding: 0 .5rem 0 0;
-  border-left: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
-  background:
-    linear-gradient(var(--border), var(--border)) top / 100% 1px no-repeat,
-    linear-gradient(var(--border), var(--border)) center / 100% 1px no-repeat; }
-.ov-spark svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.ov-spark polyline { fill: none; stroke: var(--red-dark); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.ov-dot { position: absolute; right: .5rem; width: .75rem; height: .75rem; border-radius: 50%; background: var(--red-dark); transform: translate(50%, -50%); }
+@media (max-width: 47.99rem) {
+  .ov-days { font-size: .6875rem; }
+  .ov-long { display: none; }
+  .ov-short { display: inline; }
+}
 
-/* Today next to a usual day: two bars, today's in solid red and the usual one in slate */
-.ov-bars { display: grid; gap: .5rem; margin-top: auto; padding-top: .5rem; }
-.ov-barrow { display: grid; gap: .25rem; }
-.ov-barname { font-size: .875rem; font-weight: 700; }
-.ov-bar { display: block; height: .75rem; background: var(--border); border-radius: 999px; overflow: hidden; }
-.ov-bar > span { display: block; height: 100%; background: var(--red-dark); border-radius: 999px; }
-.ov-bar--usual > span { background: var(--bar-2); }
+/* The hovered bar's label sits above its neighbours, not behind them */
+#ov-chart .bar-col:hover, #ov-chart .bar-col:focus-within { position: relative; z-index: 5; }
+
+/* "Show as a table" looks like a button: outline, shadow, press-down */
+#ov-chart .chart-table summary {
+  display: inline-flex; align-items: center; gap: .5rem; padding: 0 1.25rem; list-style: none;
+  background: var(--surface); color: var(--text); font-weight: 700;
+  border: 2px solid var(--field-border); border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .14), 0 6px 12px rgba(0, 0, 0, .08);
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+}
+#ov-chart .chart-table summary::-webkit-details-marker { display: none; }
+#ov-chart .chart-table summary::after { content: "\25BE"; transition: transform .15s; }
+#ov-chart .chart-table[open] summary::after { transform: rotate(180deg); }
+#ov-chart .chart-table summary:hover { transform: translateY(-2px); border-color: var(--text); box-shadow: 0 5px 0 rgba(0, 0, 0, .16), 0 10px 16px rgba(0, 0, 0, .10); }
+#ov-chart .chart-table summary:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .14); }
+#ov-chart .chart-table summary:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+#ov-chart .chart-table .table-wrap { margin-top: .75rem; }
+@media (prefers-reduced-motion: reduce) { #ov-chart .chart-table summary { transition: none; } #ov-chart .chart-table summary:hover, #ov-chart .chart-table summary:active { transform: none; } }

@@ -1,132 +1,212 @@
 "use strict";
 
-// Feature: Overview additions (staff). #staff
+// Feature: Overview (staff). #staff
 // Owner: Wei Ye
-// Adds one panel, "Today in context", between the four numbers and the charts. A number like
-// "14 new reports today" can't say whether it is a lot, so each card compares today with the longer
-// history (OVERVIEW_CONTEXT in js/data/triage-overview.js) in one plain sentence.
+// Four panels at the top, each with a header, today's number and the average in small grey text.
+// Clicking a panel switches the chart under it, and the breakdown box beside it, to that panel's numbers.
 // registerRoute() keeps the last screen registered under a name, so this file takes the Overview
-// that triage-console.js registered and registers it again with the panel added. It must load after
-// triage-console.js. If the data or the Overview isn't there, the Overview stays as it was.
+// that triage-console.js registered and registers it again with the panels, chart and breakdown box replaced.
+// It must load after triage-console.js. If anything it needs is missing, the Overview stays as it was.
 // Totals only, like the rest of the staff side.
 
 (function () {
-  if (typeof OVERVIEW_CONTEXT === "undefined" || typeof routes === "undefined" || !routes.staff) return;
+  if (typeof OVERVIEW_DATA === "undefined" || typeof CASE_INSIGHTS_DATA === "undefined" ||
+      typeof routes === "undefined" || !routes.staff) return;
 
-  const C = OVERVIEW_CONTEXT;
-  const last = C.months.length - 1;
   const base = routes.staff;   // the Overview as triage-console.js made it
+  const D = CASE_INSIGHTS_DATA.daily;
+  const W = CASE_INSIGHTS_DATA.weekly;
 
   function esc(text) {
     return String(text).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[ch]));
   }
 
-  // A tiny line of the last 12 months with its first and last values written under it. The line
-  // only decorates: the sentence above says the same thing. "unit" goes after the numbers (e.g. "%").
-  function sparkHtml(values, unit) {
-    const low = Math.min(...values);
-    const span = (Math.max(...values) - low) || 1;
-    const y = v => 92 - ((v - low) / span) * 84;   // keeps the line a little inside the frame
-    const points = values.map((v, i) => `${((i / (values.length - 1)) * 100).toFixed(2)},${y(v).toFixed(2)}`).join(" ");
-    return `<span class="ov-trend">
-        <span class="ov-trend-title">Last ${values.length} months</span>
-        <span class="ov-spark" aria-hidden="true">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false"><polyline points="${points}"></polyline></svg>
-          <span class="ov-dot" style="top: ${y(values[values.length - 1])}%"></span>
-        </span>
-        <span class="ov-trend-ends"><span>${esc(C.months[0])}: ${values[0]}${unit || ""}</span><span>${esc(C.months[last])}: ${values[values.length - 1]}${unit || ""}</span></span>
-      </span>`;
+  // The four panels. The last number in each list is today (or this week).
+  // Change "label", or point "values" at other numbers, to change a panel.
+  const METRICS = [
+    { key: "reports-day", label: "Reports today", per: "day", noun: "reports",
+      title: "Reports each day, last 14 days", values: D.report, labels: D.labels, side: () => resultsSide("today") },
+    { key: "reports-week", label: "Reports this week", per: "week", noun: "reports",
+      title: "Reports each week, last 8 weeks", values: W.report, labels: W.labels, side: () => resultsSide("week") },
+    { key: "checks-day", label: "Checks used today", per: "day", noun: "checks",
+      title: "Checks used each day, last 14 days", values: OVERVIEW_DATA.checksPerDay, labels: D.labels, side: toolsSide },
+    { key: "flags-day", label: "Flagged activity today", per: "day", noun: "flagged",
+      title: "Flagged activity each day, last 14 days", values: D.auto.map((_, i) => D.auto[i] + D.pause[i] + D.report[i]), labels: D.labels, side: flaggedSide }
+  ].filter(m => m.values.length === m.labels.length && m.values.every(Number.isFinite));
+
+  if (!METRICS.length) return;
+
+  // ---------- The box next to the chart: a breakdown of the number on the picked panel ----------
+
+  // One bar per row. "name" is the words or badge at the left; the bars are all one colour, so the
+  // name says what each row is.
+  function rowsHtml(rows, note) {
+    const total = rows.reduce((sum, r) => sum + r.count, 0);
+    const most = Math.max(...rows.map(r => r.count), 1);
+    return `<ul class="mix">
+        ${rows.map(r => `<li>
+            <span class="mix-label">${r.name}</span>
+            <span class="mix-track" aria-hidden="true"><span class="mix-fill" style="--w: ${(r.count / most) * 100}%"></span></span>
+            <span class="mix-n">${r.count}</span>
+          </li>`).join("")}
+      </ul>
+      <p class="mix-total">${total} ${note}</p>`;
   }
 
-  // Today next to a usual day of the same name (for example today's reports next to a usual
-  // Tuesday), as two bars. The numbers are written beside them, so the bars are only decoration.
-  function todayCard() {
-    const today = TRIAGE_CONSOLE_DATA.days[TRIAGE_CONSOLE_DATA.days.length - 1];
-    const row = C.usualDay[today.day];
-    if (!row) return "";
-    const usual = row.reports;
-    const diff = Math.round(((today.count - usual) / usual) * 100);
-    const same = Math.abs(diff) <= 10;
-    const sentence = same
-      ? `About the same as a usual ${row.name}.`
-      : `<span class="delta ${diff > 0 ? "delta--bad" : "delta--good"}"><span aria-hidden="true">${diff > 0 ? "▲" : "▼"} </span>${Math.abs(diff)}% ${diff > 0 ? "busier" : "quieter"}</span> than a usual ${row.name}.`;
-    const most = Math.max(today.count, usual);
-    return `<li class="ov-card">
-        <h3 class="ov-label">Today compared with a usual ${esc(row.name)}</h3>
-        <p class="ov-value">${today.count} <span class="ov-unit">reports</span></p>
-        <p class="ov-text">${sentence} A usual ${esc(row.name)} has about ${Math.round(usual)}, over the last ${C.weeks} weeks.</p>
-        <span class="ov-bars">
-          <span class="ov-barrow"><span class="ov-barname">Today: ${today.count}</span>
-            <span class="ov-bar" aria-hidden="true"><span style="width: ${(today.count / most) * 100}%"></span></span></span>
-          <span class="ov-barrow"><span class="ov-barname">Usual ${esc(today.day)}: ${Math.round(usual)}</span>
-            <span class="ov-bar ov-bar--usual" aria-hidden="true"><span style="width: ${(usual / most) * 100}%"></span></span></span>
-        </span>
-      </li>`;
+  // How the reports were rated (badges say which result each bar is)
+  function resultsSide(when) {
+    const r = OVERVIEW_DATA.reportResults[when];
+    const rows = Object.keys(r).map(key => ({ name: badge(key), count: r[key] }));
+    return { title: when === "today" ? "Results today" : "Results this week",
+      html: rowsHtml(rows, `reports ${when === "today" ? "today" : "this week"}. Results are warning signs, not proof.`) };
   }
 
-  // How much the app was used today. This is the "out of how many?" behind today's report count.
-  function usageCard() {
-    const u = C.usage;
-    if (!u) return "";
-    const total = u.pauseChecks + u.voiceChecks;
-    const diff = Math.round(((total - u.usualChecks) / u.usualChecks) * 100);
-    const same = Math.abs(diff) <= 10;
-    // More use is not "bad", so this card uses plain words and no red or green.
-    const sentence = same
-      ? "About the same as a usual day."
-      : `<span class="delta"><span aria-hidden="true">${diff > 0 ? "▲" : "▼"} </span>${Math.abs(diff)}% ${diff > 0 ? "more" : "fewer"}</span> than a usual day (about ${u.usualChecks}).`;
-    return `<li class="ov-card">
-        <h3 class="ov-label">Checks used today</h3>
-        <p class="ov-value">${total} <span class="ov-unit">checks</span></p>
-        <p class="ov-text">${u.pauseChecks} pause checks and ${u.voiceChecks} voice checks. ${sentence}</p>
-      </li>`;
+  function toolsSide() {
+    return { title: "Checks used today, by tool",
+      html: rowsHtml(OVERVIEW_DATA.checksByTool.map(t => ({ name: esc(t.label), count: t.count })), "checks today.") };
   }
 
-  // The last full month against the 12 before it
-  function monthCard() {
-    const totals = C.flagsPerMonth;
-    const peak = Math.max(...totals);
-    const change = Math.round(((totals[last] - totals[last - 1]) / totals[last - 1]) * 100);
-    const lead = totals[last] === peak ? "The busiest month of the last 12" : `${totals[last]} is below the busiest month (${peak})`;
-    return `<li class="ov-card">
-        <h3 class="ov-label">Flagged activity in ${C.months[last]}</h3>
-        <p class="ov-value">${totals[last]} <span class="ov-unit">flags</span></p>
-        <p class="ov-text">${lead}. <span class="delta ${change > 0 ? "delta--bad" : "delta--good"}"><span aria-hidden="true">${change > 0 ? "▲" : "▼"} </span>${change > 0 ? "Up" : "Down"} ${Math.abs(change)}%</span> on ${C.months[last - 1]}.</p>
-        ${sparkHtml(totals)}
-      </li>`;
+  // The three ways something gets flagged. Customer reports are one of them, which is why this
+  // number is bigger than "Reports today".
+  function flaggedSide() {
+    const labels = (typeof CASE_QUEUE_DATA !== "undefined" && CASE_QUEUE_DATA.sources) || {};
+    const rows = ["auto", "pause", "report"].map(k => ({ name: esc((labels[k] && labels[k].label) || k), count: D[k][D[k].length - 1] }));
+    return { title: "Flagged today, by how it was raised",
+      html: rowsHtml(rows, "flagged today. A customer report is one of the three ways something gets flagged.") };
   }
 
-  // Are customers cancelling after the pause? The best sign the moment of friction is useful.
-  function cancelCard() {
-    const now = C.cancelledPct[last];
-    const then = C.cancelledPct[last - 1];
-    const diff = now - then;
-    return `<li class="ov-card">
-        <h3 class="ov-label">Cancelled after the pause</h3>
-        <p class="ov-value">${now}<span class="ov-unit">%</span></p>
-        <p class="ov-text">Of paused transfers in ${C.months[last]}, the share customers cancelled themselves. ${diff === 0 ? `Same as ${C.months[last - 1]}.` : `<span class="delta ${diff > 0 ? "delta--good" : "delta--bad"}"><span aria-hidden="true">${diff > 0 ? "▲" : "▼"} </span>${diff > 0 ? "Up" : "Down"} ${Math.abs(diff)} points</span> on ${C.months[last - 1]}.`}</p>
-        ${sparkHtml(C.cancelledPct, "%")}
-      </li>`;
+  function sideSectionHtml(m) {
+    const side = m.side();
+    return `<section class="panel panel-mix" aria-labelledby="mix-title">
+          <h2 id="mix-title">${esc(side.title)}</h2>
+          <div id="ov-side">${side.html}</div>
+        </section>`;
   }
 
-  function contextHtml() {
-    const cards = [todayCard(), usageCard(), monthCard(), cancelCard()].join("");
+  // The panel that is showing, kept for this visit so coming back from a case shows the same chart
+  function state() {
+    if (!appState.overview) appState.overview = { metric: METRICS[0].key };
+    return appState.overview;
+  }
+  function current() { return METRICS.find(m => m.key === state().metric) || METRICS[0]; }
+
+  // The average of the days (or weeks) before the last one
+  function average(m) {
+    const before = m.values.slice(0, -1);
+    const avg = before.reduce((a, b) => a + b, 0) / before.length;
+    return avg < 10 ? Math.round(avg * 10) / 10 : Math.round(avg);
+  }
+
+  // ---------- The four panels ----------
+
+  function panelsHtml() {
+    const now = current();
+    return `<ul class="kpis ov-kpis">
+        ${METRICS.map(m => `<li>
+            <button type="button" class="kpi ov-kpi" data-metric="${m.key}" aria-pressed="${m === now}">
+              <span class="kpi-label">${esc(m.label)}</span>
+              <span class="kpi-value">${m.values[m.values.length - 1]}</span>
+              <span class="kpi-note">Average: ${average(m)}</span>
+            </button>
+          </li>`).join("")}
+      </ul>`;
+  }
+
+  // ---------- The chart ----------
+
+  // A scale with three equal steps that leaves room above the tallest bar
+  function scaleTop(max) {
+    const steps = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 500, 1000];
+    const need = (Math.max(max, 1) * 1.15) / 3;
+    return (steps.find(s => s >= need) || Math.ceil(need)) * 3;
+  }
+
+  function columnName(m, l, i) {
+    const isLast = i === m.values.length - 1;
+    if (m.per === "week") return isLast ? "This week" : `Week of ${l.date} ${l.month}`;
+    return `${l.day} ${l.date} ${l.month}${isLast ? " (today)" : ""}`;
+  }
+
+  // One colour of bars (one series, so no legend: the heading names it).
+  // Hover or keyboard focus shows a bar's number; the latest number is always shown.
+  function chartHtml(m) {
+    const last = m.values.length - 1;
+    const top = scaleTop(Math.max(...m.values));
+    const days = m.per === "day";
     return `
-      <section class="panel ov-context" aria-labelledby="ov-ctx-title" data-read>
-        <div class="panel-head">
-          <h2 id="ov-ctx-title">Today in context</h2>
+      <div class="chart">
+        <div class="chart-scale" aria-hidden="true">
+          ${[1, 2 / 3, 1 / 3, 0].map(f => `<span style="--y: ${1 - f}">${Math.round(top * f)}</span>`).join("")}
         </div>
-        <p class="muted ov-sub">How today compares with the last 12 months, so a number is easier to judge.</p>
-        <ul class="ov-cards">${cards}</ul>
-      </section>`;
+        <ol class="bars">
+          ${m.values.map((v, i) => `<li class="bar-col${i === last ? " is-today" : ""}">
+              <span class="bar" style="--h: ${(v / top) * 100}%" role="img" tabindex="0" aria-label="${esc(columnName(m, m.labels[i], i))}: ${v} ${m.noun}">
+                ${i === last ? `<span class="bar-value" aria-hidden="true">${v}</span>` : ""}
+                <span class="bar-tip" aria-hidden="true">${esc(columnName(m, m.labels[i], i))}: ${v}</span>
+              </span>
+            </li>`).join("")}
+        </ol>
+        <span></span>
+        <ol class="bar-days ov-days" aria-hidden="true">
+          ${m.labels.map((l, i) => `<li${i === last ? ' class="is-today"' : ""}>${
+            i === last && !days ? "This week"
+              : days ? `<span class="ov-long">${esc(l.day)}</span><span class="ov-short">${esc(l.day.charAt(0))}</span><span>${esc(l.date)}</span>`
+              : `<span>${esc(l.date)}</span><span>${esc(l.month)}</span>`}</li>`).join("")}
+        </ol>
+      </div>
+      <details class="chart-table">
+        <summary>Show as a table</summary>
+        <table class="data-table">
+          <thead><tr><th scope="col">${days ? "Day" : "Week"}</th><th scope="col">${esc(m.label.replace(/ (today|this week)$/, ""))}</th></tr></thead>
+          <tbody>${m.values.map((v, i) => `<tr><td>${esc(columnName(m, m.labels[i], i))}</td><td>${v}</td></tr>`).join("")}</tbody>
+        </table>
+      </details>`;
   }
 
-  // Puts the panel just above the charts. If the Overview's layout ever changes and the marker
-  // isn't found, the panel goes at the end instead of the Overview breaking.
-  const MARKER = '<div class="staff-grid">';
-  function withContext(html) {
-    return html.includes(MARKER) ? html.replace(MARKER, contextHtml() + MARKER) : html + contextHtml();
+  function chartSectionHtml() {
+    const m = current();
+    return `<section class="panel panel-chart" aria-labelledby="chart-title">
+          <h2 id="chart-title">${esc(m.title)}</h2>
+          <p class="visually-hidden" id="ov-status" role="status"></p>
+          <div id="ov-chart">${chartHtml(m)}</div>
+        </section>`;
   }
 
-  registerRoute(Object.assign({}, base, { render: param => withContext(base.render(param)) }));
+  // ---------- The screen ----------
+
+  // Swap the panels and the chart in the Overview triage-console.js made. If either one can't be
+  // found (the original was changed), leave the Overview exactly as it was.
+  function overviewHtml(param) {
+    const html = base.render(param);
+    const kpis = /<ul class="kpis">[\s\S]*?<\/ul>/;
+    const chart = /<section class="panel panel-chart"[\s\S]*?<\/section>/;
+    const mix = /<section class="panel panel-mix"[\s\S]*?<\/section>/;
+    if (!kpis.test(html) || !chart.test(html) || !mix.test(html)) return html;
+    return html.replace(kpis, () => panelsHtml()).replace(chart, () => chartSectionHtml()).replace(mix, () => sideSectionHtml(current()));
+  }
+
+  function afterRender(param) {
+    if (base.afterRender) base.afterRender(param);
+    const panels = document.querySelector(".ov-kpis");
+    if (!panels) return;
+    // One listener for the four panels. Only the chart and the box are redrawn, so keyboard focus stays on the panel.
+    panels.addEventListener("click", event => {
+      const button = event.target.closest(".ov-kpi");
+      if (!button) return;
+      state().metric = button.dataset.metric;
+      const m = current();
+      panels.querySelectorAll(".ov-kpi").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
+      document.getElementById("chart-title").textContent = m.title;
+      const holder = document.getElementById("ov-chart");
+      const tableOpen = !!holder.querySelector("details[open]");   // keep "Show as a table" open when swapping panels
+      holder.innerHTML = chartHtml(m);
+      if (tableOpen) holder.querySelector("details").open = true;
+      const side = m.side();
+      document.getElementById("mix-title").textContent = side.title;
+      document.getElementById("ov-side").innerHTML = side.html;
+      document.getElementById("ov-status").textContent = `Chart now shows: ${m.title}.`;
+    });
+  }
+
+  registerRoute(Object.assign({}, base, { render: overviewHtml, afterRender }));
 })();
