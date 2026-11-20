@@ -17,6 +17,7 @@ const { createAuthRouter } = require("./auth.js");   // sign in (Wei Ye)
 const { passphraseRoutes } = require("./passphrases.js");   // Family passphrase (Jiliana)
 const { createMemoryRecords, refFor } = require("./records.js");   // saved cases, reports, freezes (Jose)
 const { reportRoutes } = require("./reports.js");   // Report a scam + Freeze my accounts (Jose)
+const { chatRoutes } = require("./chat.js");   // AI helper chat (Jose)
 
 const SITE_ROOT = path.join(__dirname, "..");
 
@@ -82,7 +83,10 @@ function createApp(options = {}) {
   app.use("/api", reportRoutes(records, { staffOnly }));
 
 // Family passphrase: hashed safe words (server/passphrases.js)   
-  app.use("/api/passphrases", passphraseRoutes());  
+  app.use("/api/passphrases", passphraseRoutes());
+
+  // AI helper chat: POST /api/chat (see chat.js)
+  app.use("/api/chat", chatRoutes());
 
   // Unknown API addresses get JSON, not the web page
   app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
