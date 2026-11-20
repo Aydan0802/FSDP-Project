@@ -203,11 +203,11 @@
 
   // ---------- What this screen remembers (appState.triageQueue) ----------
 
-  // The search, filters, sort and daily/weekly choice. Coming back from a case, the list still
+  // The search, filters, sort, daily/weekly choice, chosen panel and summary length. Coming back from a case, the list still
   // shows the same search. #reset clears it.
   function view() {
     if (!appState.triageQueue) {
-      appState.triageQueue = { source: "all", level: "all", sort: "newest", search: "", period: "daily", chartMode: "stacked" };
+      appState.triageQueue = { source: "all", level: "all", sort: "newest", search: "", period: "daily", chartMode: "line", metric: "flags", summary: "short" };
     }
     return appState.triageQueue;
   }
@@ -332,6 +332,35 @@
   const STACK = ["auto", "pause", "report"];
   const SHORT = { auto: "Auto", pause: "Pause", report: "Reports" };   // short table headings for narrow screens
 
+  // The four panels at the top. Pressing one changes the chart under it. "parts" are the lines the
+  // chart draws (the sources of a flag); the other two panels draw one line from I.trend.
+  // "say" is how one value reads out loud, "axis" how it is written on the scale.
+  const METRICS = {
+    flags: { title: "Flagged activity over time", parts: ["auto", "pause", "report"], say: n => `${n} flags`, axis: n => String(n) },
+    paused: { title: "Paused transfers over time", parts: ["auto", "pause"], say: n => `${n} paused transfers`, axis: n => String(n) },
+    cancelled: { title: "Cancelled by customers over time", label: "Cancelled by customers", trend: "cancelRate",
+      say: n => `${n}% of paused transfers cancelled`, axis: n => n + "%" },
+    sent: { title: "Money already sent over time", label: "Money already sent", trend: "sent",
+      say: n => `${formatMoney(n)} already sent`, axis: n => (n >= 1000 ? "$" + n / 1000 + "k" : "$" + n) }
+  };
+
+  function currentMetric() { return METRICS[view().metric] || METRICS.flags; }
+
+  // The lines of the chart for one panel and period: a label, a style name and a number for every day or week
+  function linesOf(m, p) {
+    if (m.parts) return m.parts.map(k => ({ key: k, label: q.sources[k].label, short: SHORT[k], values: p.series[k] }));
+    return [{ key: "one", label: m.label, short: m.label, values: I.trend[p.unit === "day" ? "daily" : "weekly"][m.trend] }];
+  }
+
+  // A scale that ends on a round number just above the biggest value, in three even steps
+  function scaleTop(max) {
+    const raw = (max * 1.12) / 3;
+    if (raw <= 10) return Math.max(1, Math.ceil(raw)) * 3;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 1.2, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 10].find(n => n * pow >= raw) * pow;
+    return step * 3;
+  }
+
   function totalAt(series, i) { return series.auto[i] + series.pause[i] + series.report[i]; }
   function pausedAt(series, i) { return series.auto[i] + series.pause[i]; }
   function sumOf(obj) { return Object.keys(obj).reduce((sum, key) => sum + obj[key], 0); }
@@ -358,40 +387,69 @@
     const rate = share(out.now.cancelled, paused);
     const rateBefore = share(out.before.cancelled, pausedBefore);
     const items = [
-      { label: "Flagged activity", value: totalAt(s, last), note: changeHtml(totalAt(s, last), totalAt(s, last - 1), p) },
-      { label: "Paused transfers", value: pausedAt(s, last), note: changeHtml(pausedAt(s, last), pausedAt(s, last - 1), p) },
-      { label: "Cancelled by customers", value: rate + "%", note: `${formatMoney(cash.kept.now)} kept safe. ${rateBefore}% ${p.before}.` },
-      { label: "Money already sent", value: formatMoney(cash.sent.now.amount), alert: cash.sent.now.count > 0,
+      { metric: "flags", label: "Flagged activity", value: totalAt(s, last), note: changeHtml(totalAt(s, last), totalAt(s, last - 1), p) },
+      { metric: "paused", label: "Paused transfers", value: pausedAt(s, last), note: changeHtml(pausedAt(s, last), pausedAt(s, last - 1), p) },
+      { metric: "cancelled", label: "Cancelled by customers", value: rate + "%", note: `${formatMoney(cash.kept.now)} kept safe. ${rateBefore}% ${p.before}.` },
+      { metric: "sent", label: "Money already sent", value: formatMoney(cash.sent.now.amount), alert: cash.sent.now.count > 0,
         note: `${cash.sent.now.count} ${cash.sent.now.count === 1 ? "case" : "cases"}. ${formatMoney(cash.sent.before.amount)} ${p.before}.` }
     ];
-    return `<ul class="kpis ins-kpis" data-read>${items.map(k => `<li class="kpi${k.alert ? " kpi--alert" : ""}">
+    // Each panel is a button: pressing it changes the chart below (see insightsAfterRender)
+    return `<ul class="kpis ins-kpis ov-kpis" data-read>${items.map(k => `<li><button type="button" class="kpi ov-kpi${k.alert ? " kpi--alert" : ""}" data-metric="${k.metric}" aria-pressed="${view().metric === k.metric}">
         <span class="kpi-label">${k.label}</span>
         <span class="kpi-value">${k.value}</span>
         <span class="kpi-note">${k.note}</span>
-      </li>`).join("")}</ul>`;
+      </button></li>`).join("")}</ul>`;
   }
 
-  // Plain sentences worked out from the numbers, so nobody has to read the charts to get the point
-  function glanceHtml(p) {
+  // The summary comes in two lengths. Short: the three things staff need to know. Detailed: every
+  // sentence. The choice is remembered (view().summary) and the buttons only redraw the text.
+  function summaryLines(p, detailed) {
     const s = p.series;
     const last = s.labels.length - 1;
-    const out = I.outcomes[p.unit === "day" ? "daily" : "weekly"];
+    const key = p.unit === "day" ? "daily" : "weekly";
+    const out = I.outcomes[key];
+    const cash = I.money[key].sent.now;
     const now = totalAt(s, last);
     const before = totalAt(s, last - 1);
     const change = before ? Math.round(((now - before) / before) * 100) : 0;
+    const direction = change === 0 ? "the same as" : (change > 0 ? "up " + change + "% on" : "down " + Math.abs(change) + "% on");
+    const watch = I.receivers.filter(r => r.reports >= 3);
+
+    if (!detailed) {
+      return [
+        { icon: "chart", html: `<strong>${now} flags ${p.now}</strong>, ${direction} ${p.before}.` },
+        cash.count > 0
+          ? { icon: "warning", html: `<strong>${formatMoney(cash.amount)} already sent</strong> in ${cash.count} ${cash.count === 1 ? "case" : "cases"}, before anything could be paused.` }
+          : { icon: "check", html: `<strong>No money was sent</strong> before a pause ${p.now}.` },
+        { icon: "question", html: `<strong>${watch.length} receiving accounts</strong> have each been reported 3 or more times.` }
+      ];
+    }
     const busy = I.timeOfDay.slice().sort((a, b) => b.count - a.count);
     const week = I.timeOfDay.reduce((sum, t) => sum + t.count, 0);
-    const watch = I.receivers.filter(r => r.reports >= 3);
-    const lines = [
-      `Flagged activity is ${change === 0 ? "the same as" : (change > 0 ? "up " + change + "% on" : "down " + Math.abs(change) + "% on")} ${p.before} (${now} compared with ${before}).`,
+    return [
+      `Flagged activity is ${direction} ${p.before} (${now} compared with ${before}).`,
       `Most flags happen between ${busy[0].label.replace(" to ", " and ")} (${share(busy[0].count, week)}%), then between ${busy[1].label.replace(" to ", " and ")} (${share(busy[1].count, week)}%).`,
       `Customers cancelled ${share(out.now.cancelled, sumOf(out.now))}% of paused transfers ${p.now}, compared with ${share(out.before.cancelled, sumOf(out.before))}% ${p.before}.`,
       `${watch.length} receiving accounts have each been reported 3 or more times. They were involved in ${watch.reduce((sum, r) => sum + r.cases, 0)} flags in the last 7 days.`
-    ];
+    ].map(text => ({ icon: "chart", html: esc(text) }));
+  }
+
+  function summaryBodyHtml(p) {
+    const detailed = view().summary === "detailed";
+    return `<ul class="ins-glance${detailed ? "" : " ins-glance--short"}">${summaryLines(p, detailed).map(l => `<li>${icon(l.icon)}<span>${l.html}</span></li>`).join("")}</ul>`;
+  }
+
+  function glanceHtml(p) {
+    const v = view();
     return `
       <section class="panel" aria-labelledby="glance-title" data-read>
-        <h2 id="glance-title">Summary</h2>
-        <ul class="ins-glance">${lines.map(l => `<li>${icon("chart")}<span>${esc(l)}</span></li>`).join("")}</ul>
+        <div class="ins-glance-head">
+          <h2 id="glance-title">Summary</h2>
+          <div class="ins-modes" role="group" aria-label="Summary length">
+            ${[["short", "Short"], ["detailed", "Detailed"]].map(([key, label]) => `<button type="button" class="chip" data-summary="${key}" aria-pressed="${v.summary === key}">${label}</button>`).join("")}
+          </div>
+        </div>
+        <div id="ins-summary-body">${summaryBodyHtml(p)}</div>
       </section>`;
   }
 
@@ -410,9 +468,9 @@
   // thing in words (its aria-label), and the table underneath has the same numbers, so the chart is
   // never the only way to read it.
   const MODES = [
+    { key: "line", label: "Lines", note: "Each line is one way a flag is raised, with a point for every {unit}." },
     { key: "stacked", label: "Stacked", note: "Each bar is one {unit}, split by who raised the flag." },
-    { key: "side", label: "Side by side", note: "Each group is one {unit}, with one bar for each way a flag is raised." },
-    { key: "line", label: "Lines", note: "Each line is one way a flag is raised, with a point for every {unit}." }
+    { key: "side", label: "Side by side", note: "Each group is one {unit}, with one bar for each way a flag is raised." }
   ];
 
   // The chart's heading area: the mode switch, then the chart itself (redrawn when the mode changes)
@@ -420,7 +478,7 @@
     const v = view();
     return `
       <section class="panel" aria-labelledby="trend-title" data-read>
-        <h2 id="trend-title">Flagged activity over time</h2>
+        <h2 id="trend-title">${currentMetric().title}</h2>
         <div class="ins-modes-row">
           <span id="ins-mode-label" class="ins-period-label">Chart style</span>
           <div class="ins-modes" role="group" aria-labelledby="ins-mode-label">
@@ -439,35 +497,40 @@
   }
 
   // What a screen reader hears for one column, and what a mouse hover shows
-  function columnText(p, i) {
-    const s = p.series;
-    const l = s.labels[i];
-    return `${l.day} ${l.date} ${l.month}: ${totalAt(s, i)} flags. ${STACK.map(k => s[k][i] + " " + q.sources[k].label.toLowerCase()).join(", ")}.`;
+  function columnText(p, i, m, lines) {
+    const l = p.series.labels[i];
+    const total = lines.reduce((sum, line) => sum + line.values[i], 0);
+    const parts = lines.length > 1 ? " " + lines.map(line => line.values[i] + " " + line.label.toLowerCase()).join(", ") + "." : "";
+    return `${l.day} ${l.date} ${l.month}: ${m.say(total)}.${parts}`;
   }
 
   function chartAreaHtml(p) {
     const mode = MODES.find(m => m.key === view().chartMode) || MODES[0];
+    const m = currentMetric();
+    const lines = linesOf(m, p);
+    const many = lines.length > 1;
     const s = p.series;
     const n = s.labels.length;
     const last = n - 1;
-    const totals = s.labels.map((_, i) => totalAt(s, i));
+    const totals = s.labels.map((_, i) => lines.reduce((sum, l) => sum + l.values[i], 0));
     // Stacked bars need room for the total, the others only for the biggest single number
-    const biggestOne = Math.max(...STACK.map(k => Math.max(...s[k])));
-    const top = mode.key === "stacked" ? Math.ceil(Math.max(...totals) / 15) * 15 : Math.ceil(biggestOne / 3) * 3;
+    const biggestOne = Math.max(...lines.map(l => Math.max(...l.values)));
+    const top = scaleTop(mode.key === "stacked" ? Math.max(...totals) : biggestOne);
+    const note = many ? mode.note : (mode.key === "line" ? "The line has a point for every {unit}." : "Each bar is one {unit}.");
 
     // The columns (one per day or week). Stacked and side by side draw bars inside them. Lines use
     // them as invisible, keyboard-friendly "hot spots" and draw the lines on top.
     const cols = s.labels.map((l, i) => {
-      const text = esc(columnText(p, i));
+      const text = esc(columnText(p, i, m, lines));
       let inner;
       if (mode.key === "stacked") {
-        inner = `<span class="ins-total" aria-hidden="true">${totals[i]}</span>
+        inner = `<span class="ins-total" aria-hidden="true">${esc(valueText(m, totals[i]))}</span>
           <span class="ins-stack" role="img" tabindex="0" aria-label="${text}" title="${text}">
-            ${STACK.map(k => `<span class="seg seg--${k}" style="flex: ${s[k][i]} 1 0"></span>`).join("")}
+            ${lines.map(ln => `<span class="seg seg--${ln.key}" style="flex: ${ln.values[i]} 1 0"></span>`).join("")}
           </span>`;
       } else if (mode.key === "side") {
         inner = `<span class="ins-group" role="img" tabindex="0" aria-label="${text}" title="${text}">
-            ${STACK.map(k => `<span class="gbar seg--${k}" style="--h: ${(s[k][i] / top) * 100}%">${i === last ? `<span class="gval" aria-hidden="true">${s[k][i]}</span>` : ""}</span>`).join("")}
+            ${lines.map(ln => `<span class="gbar seg--${ln.key}" style="--h: ${(ln.values[i] / top) * 100}%">${i === last ? `<span class="gval" aria-hidden="true">${esc(valueText(m, ln.values[i]))}</span>` : ""}</span>`).join("")}
           </span>`;
       } else {
         inner = `<span class="ins-hit" role="img" tabindex="0" aria-label="${text}" title="${text}"></span>`;
@@ -482,21 +545,21 @@
       const x = i => ((i + 0.5) / n) * 100;
       overlay = `
         <svg class="ins-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          ${STACK.map(k => `<polyline class="ln ln--${k}" points="${s[k].map((v, i) => x(i).toFixed(2) + "," + (100 - (v / top) * 100).toFixed(2)).join(" ")}"></polyline>`).join("")}
+          ${lines.map(ln => `<polyline class="ln ln--${ln.key}" points="${ln.values.map((v, i) => x(i).toFixed(2) + "," + (100 - (v / top) * 100).toFixed(2)).join(" ")}"></polyline>`).join("")}
         </svg>
-        ${STACK.map(k => s[k].map((v, i) => `<span class="pt pt--${k}" aria-hidden="true" style="left: ${x(i)}%; bottom: ${(v / top) * 100}%"></span>`).join("")).join("")}
-        ${STACK.map(k => `<span class="pt-val" aria-hidden="true" style="left: ${x(last)}%; bottom: ${(s[k][last] / top) * 100}%">${s[k][last]}</span>`).join("")}`;
+        ${lines.map(ln => ln.values.map((v, i) => `<span class="pt pt--${ln.key}" aria-hidden="true" style="left: ${x(i)}%; bottom: ${(v / top) * 100}%"></span>`).join("")).join("")}
+        ${lines.map(ln => `<span class="pt-val${valueText(m, ln.values[last]).length > 3 ? " pt-val--above" : ""}" aria-hidden="true" style="left: ${x(last)}%; bottom: ${(ln.values[last] / top) * 100}%">${esc(valueText(m, ln.values[last]))}</span>`).join("")}`;
     }
 
     const legend = mode.key === "line"
-      ? STACK.map(k => `<li><span class="ins-key ins-key--${k}" aria-hidden="true"><span class="pt pt--${k}"></span></span>${q.sources[k].label}</li>`).join("")
-      : STACK.map(k => `<li><span class="swatch seg--${k}" aria-hidden="true"></span>${q.sources[k].label}</li>`).join("");
+      ? lines.map(ln => `<li><span class="ins-key ins-key--${ln.key}" aria-hidden="true"><span class="pt pt--${ln.key}"></span></span>${esc(ln.label)}</li>`).join("")
+      : lines.map(ln => `<li><span class="swatch seg--${ln.key}" aria-hidden="true"></span>${esc(ln.label)}</li>`).join("");
 
     return `
-      <p class="muted">${p.span}, ${spanText(p)}. ${mode.note.replace("{unit}", p.unit)}</p>
+      <p class="muted">${p.span}, ${spanText(p)}. ${note.replace("{unit}", p.unit)}</p>
       <div class="ins-chart">
         <div class="ins-scale" aria-hidden="true">
-          ${[1, 2 / 3, 1 / 3, 0].map(f => `<span style="--y: ${f}">${Math.round(top * f)}</span>`).join("")}
+          ${[1, 2 / 3, 1 / 3, 0].map(f => `<span style="--y: ${f}">${m.axis(Math.round(top * f))}</span>`).join("")}
         </div>
         <div class="ins-plot">
           <ol class="ins-cols${mode.key === "line" ? " ins-cols--line" : ""}">${cols}</ol>
@@ -512,11 +575,16 @@
         <summary>Show as a table</summary>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th scope="col">${p.unit === "day" ? "Day" : "Week starting"}</th>${STACK.map(k => `<th scope="col"><span class="th-full">${q.sources[k].label}</span><span class="th-short">${SHORT[k]}</span></th>`).join("")}<th scope="col">Total</th></tr></thead>
-            <tbody>${s.labels.map((l, i) => `<tr><th scope="row">${esc(p.unit === "day" ? l.day + " " + l.date + " " + l.month : l.date + " " + l.month)}</th>${STACK.map(k => `<td>${s[k][i]}</td>`).join("")}<td>${totals[i]}</td></tr>`).join("")}</tbody>
+            <thead><tr><th scope="col">${p.unit === "day" ? "Day" : "Week starting"}</th>${lines.map(ln => `<th scope="col"><span class="th-full">${esc(ln.label)}</span><span class="th-short">${esc(ln.short)}</span></th>`).join("")}${many ? '<th scope="col">Total</th>' : ""}</tr></thead>
+            <tbody>${s.labels.map((l, i) => `<tr><th scope="row">${esc(p.unit === "day" ? l.day + " " + l.date + " " + l.month : l.date + " " + l.month)}</th>${lines.map(ln => `<td>${esc(valueText(m, ln.values[i]))}</td>`).join("")}${many ? `<td>${totals[i]}</td>` : ""}</tr>`).join("")}</tbody>
           </table>
         </div>
       </details>`;
+  }
+
+  // One value written for the chart and table: 38 flags stay "38", a rate gets "%", money gets "$"
+  function valueText(m, n) {
+    return m.trend === "cancelRate" ? n + "%" : (m.trend === "sent" ? formatMoney(n) : String(n));
   }
 
   // A list of bars: a label, a bar, and the number. One shape used by three panels.
@@ -739,19 +807,49 @@
       if (!btn) return;
       v.period = btn.dataset.period;
       buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.period === v.period)));
+      const tableOpen = tableIsOpen();
       document.getElementById("ins-body").innerHTML = insightsBodyHtml();
+      reopenTable(tableOpen);
       document.getElementById("ins-status").textContent = `Now showing ${PERIODS[v.period].label.toLowerCase()} totals.`;
     });
 
-    // The chart style buttons are redrawn with the chart, so listen on #ins-body, which stays.
+    // The chart style buttons, the panels and the summary buttons are all inside #ins-body, which
+    // stays put, so one listener there catches them. Only the part that changed is redrawn, and an
+    // open "Show as a table" stays open.
     document.getElementById("ins-body").addEventListener("click", event => {
-      const btn = event.target.closest("[data-mode]");
-      if (!btn) return;
-      v.chartMode = btn.dataset.mode;
-      document.querySelectorAll("#ins-body [data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === v.chartMode)));
-      document.getElementById("ins-chart-area").innerHTML = chartAreaHtml(PERIODS[v.period] || PERIODS.daily);
-      document.getElementById("ins-status").textContent = `Chart style: ${MODES.find(m => m.key === v.chartMode).label.toLowerCase()}.`;
+      const p = PERIODS[v.period] || PERIODS.daily;
+      const status = document.getElementById("ins-status");
+      const mode = event.target.closest("[data-mode]");
+      const panel = event.target.closest("[data-metric]");
+      const summary = event.target.closest("[data-summary]");
+      if (mode) {
+        v.chartMode = mode.dataset.mode;
+        document.querySelectorAll("#ins-body [data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === v.chartMode)));
+        const open = tableIsOpen();
+        document.getElementById("ins-chart-area").innerHTML = chartAreaHtml(p);
+        reopenTable(open);
+        status.textContent = `Chart style: ${MODES.find(m => m.key === v.chartMode).label.toLowerCase()}.`;
+      } else if (panel) {
+        v.metric = panel.dataset.metric;
+        document.querySelectorAll("#ins-body [data-metric]").forEach(b => b.setAttribute("aria-pressed", String(b === panel)));
+        const open = tableIsOpen();
+        document.getElementById("trend-title").textContent = currentMetric().title;
+        document.getElementById("ins-chart-area").innerHTML = chartAreaHtml(p);
+        reopenTable(open);
+        status.textContent = `Chart now shows: ${currentMetric().title}.`;
+      } else if (summary) {
+        v.summary = summary.dataset.summary;
+        document.querySelectorAll("#ins-body [data-summary]").forEach(b => b.setAttribute("aria-pressed", String(b === summary)));
+        document.getElementById("ins-summary-body").innerHTML = summaryBodyHtml(p);
+        status.textContent = `Summary: ${v.summary === "short" ? "short" : "detailed"}.`;
+      }
     });
+  }
+
+  function tableIsOpen() { return !!document.querySelector("#ins-chart-area details[open]"); }
+  function reopenTable(open) {
+    const details = document.querySelector("#ins-chart-area details");
+    if (open && details) details.open = true;
   }
 
   // Cases tab: search and menus. Only the table is redrawn when something changes, so the

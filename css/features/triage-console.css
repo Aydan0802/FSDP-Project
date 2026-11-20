@@ -438,3 +438,26 @@
 /* Big numbers shrink to fit their card (so "$21,300" never spills out of a narrow card) */
 .ins-kpis .kpi { container-type: inline-size; }
 .ins-kpis .kpi-value { font-size: clamp(1.5rem, 19cqi, 2.5rem); overflow-wrap: anywhere; }
+
+/* ---------- Flagged activity: pressable panels, summary length, the two new line styles ---------- */
+
+/* The four panels reuse the pressable look from triage-overview.css. The red "money sent" panel is only
+   filled when picked, like the others, and keeps its red top edge so it still stands out. */
+.ins-kpis .ov-kpi.kpi--alert:not([aria-pressed="true"]) { background: var(--surface); color: var(--text); border-top: 4px solid var(--accent); }
+.ins-kpis .ov-kpi.kpi--alert:not([aria-pressed="true"]) .kpi-note { color: var(--muted); }
+
+/* Summary: the title with the Short / Detailed buttons on the right (under it on a phone) */
+.ins-glance-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .75rem; }
+.ins-glance-head h2 { margin: 0; }
+.ins-glance--short { gap: 1rem; font-size: 1.1875rem; }
+.ins-glance--short .icon { width: 1.5rem; height: 1.5rem; }
+
+/* One-line charts (Cancelled by customers, Money already sent) */
+.seg--one { background: var(--red-dark); }
+.ln--one { stroke: var(--red-dark); }
+.pt--one { background: var(--red-dark); border-radius: 50%; }
+/* A long last value (like $21,300) sits above its point so it never runs off the card */
+.pt-val--above { margin-left: 0; transform: translate(-50%, -.75rem); }
+
+/* On the filled (picked) panel the up/down words turn white so they stay readable */
+.ins-kpis .ov-kpi[aria-pressed="true"] .delta { color: var(--white); }
