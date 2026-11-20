@@ -178,6 +178,8 @@ function wordAt(charIndex) {
 // Chinese is written without spaces, so one "word" here can be a whole phrase. Each Chinese
 // character is a syllable and takes much longer to say than one English letter, so it gets
 // more time (about 4 characters a second), or the highlight would race ahead of the voice.
+// Tamil writes each syllable as a letter plus a vowel sign (க + ா = கா), so we count only the
+// letters, not the vowel signs, and give each about the time of one spoken syllable.
 function startWordTimer(rate) {
   let i = 0;
   function step() {
@@ -185,15 +187,18 @@ function startWordTimer(rate) {
     markWord(i);
     const word = readWords[i].span.textContent;
     const chinese = (word.match(/[一-鿿]/g) || []).length;
+    const tamil = (word.match(/[\u0B80-\u0BFF]/g) || []).length;
+    const tamilSigns = (word.match(/[\u0BBE-\u0BCD\u0BD7]/g) || []).length;   // vowel signs and the dot (்)
+    const other = word.length - chinese - tamil;
     const pause = /[.,?!:;。，？！：；]$/.test(word) ? 260 : 0;
     i += 1;
-    readFallbackTimer = setTimeout(step, (180 + (word.length - chinese) * 55 + chinese * 230 + pause) / rate);
+    readFallbackTimer = setTimeout(step, (180 + other * 55 + chinese * 230 + (tamil - tamilSigns) * 120 + pause) / rate);
   }
   step();
 }
 
 // The voices we would like for each language, best first (see LANGUAGES in i18n.js)
-const VOICE_LANGS = { en: ["en-SG", "en-GB"], zh: ["zh-CN", "zh-SG"], ms: ["ms-MY"] };
+const VOICE_LANGS = { en: ["en-SG", "en-GB"], zh: ["zh-CN", "zh-SG"], ms: ["ms-MY"], ta: ["ta-SG", "ta-IN", "ta-LK"] };
 
 // Finds a voice for one language. Some phones write "zh_CN" instead of "zh-CN", so we tidy that first.
 // On-device voices are preferred: they are the ones most likely to report each word as it is

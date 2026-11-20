@@ -46,6 +46,8 @@ const ICONS = {
   // thing" pill, and a clock
   image: '<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M20.5 16l-5-5-9 8.5"/>',
   chat: '<path d="M4 5h16v11H9.5L5 20v-4H4z"/><path d="M8 9h8M8 12.5h5"/>',
+  // A chat bubble with a sparkle in it: the usual sign for an AI helper
+  aiChat: '<path d="M4 5h16v11H9.5L5 20v-4H4z"/><path d="M12 6.75l1 2.75 2.75 1-2.75 1-1 2.75-1-2.75-2.75-1 2.75-1z"/>',
   upload: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4.5 14.5V20h15v-5.5"/>',
   chevron: '<path d="M9.5 5.5 16 12l-6.5 6.5"/>',
   back: '<path d="M14.5 5.5 8 12l6.5 6.5"/>',
@@ -113,19 +115,21 @@ function brandHtml(href, tag = "") {
 // signing in; guests see a small lock next to it.
 
 // The 5 buttons of the bottom bar (phone) and the rail (tablet). "Help now" is the red one in
-// the middle: help for someone on a scam call is always one tap away.
+// the middle: help for someone on a scam call is always one tap away. "Transfer" is there
+// because paying someone is what people do most; "Learn the signs" is on Home and in the menu.
 const TAB_MENU = [
   { route: "customer", icon: "home", labelKey: "tab.home" },
   { route: "analyser", icon: "search", labelKey: "tab.check" },
   { route: "calling-now", icon: "phone", labelKey: "tab.helpNow", urgent: true },
-  { route: "learn-signs", icon: "book", labelKey: "tab.learn" },
+  { route: "risk-scorer", icon: "transfer", labelKey: "tab.transfer" },
   { action: "open-menu", icon: "menu", labelKey: "tab.menu" }
 ];
 
 // Everything, in groups, for the sidebar
 const SIDE_MENU = [
   { groupKey: "side.group.now", items: [
-    { route: "freeze", icon: "lock", labelKey: "side.freeze" }
+    { route: "freeze", icon: "lock", labelKey: "side.freeze" },
+    { route: "helper", icon: "chat", labelKey: "hp.menu" }   // Jose: js/features/chatbot.js
   ] },
   { groupKey: "side.group.check", items: [
     { route: "customer", icon: "home", labelKey: "menu.home" },
@@ -158,6 +162,7 @@ function lockTagHtml() {
 const STAFF_MENU = [
   { route: "staff", icon: "chart", label: "Overview" },
   { route: "staff-queue", icon: "list", label: "Case queue", count: 9 },
+  { route: "staff-reports", icon: "document", label: "Reports & freezes" },   // Jose: js/features/staff-reports.js
   { route: "staff-trends", icon: "wave", label: "Trends" },
   { route: "staff-scam-types", icon: "flag", label: "Scam types" },
   { route: "staff-settings", icon: "settings", label: "Settings" }
@@ -237,6 +242,13 @@ function sidebarHtml(here) {
     <div class="scrim" data-action="close-menu" aria-hidden="true"></div>`;
 }
 
+// The "AI helper" pill at the bottom right of every customer screen (Jose: js/features/chatbot.js,
+// styled in chatbot.css). Not on the chat screen itself, and not if the chat isn't loaded.
+function helperButtonHtml(here) {
+  if (typeof HELPER_DATA === "undefined" || here === "helper") return "";
+  return `<a class="hp-fab" href="#helper"><span class="hp-fab-icon">${icon("aiChat")}</span><span>${t("hp.fab")}</span></a>`;
+}
+
 // A customer screen: the sidebar, a slim bar along the top (Menu button on phones, language,
 // read aloud, text size, sign in), the content, and the bottom bar / rail. Guests (not signed in) see "Sign in" where
 // signed-in customers see "Sign out". current is kept for the screens that pass it, but the
@@ -262,6 +274,7 @@ function customerPageHtml(current, content) {
           </div>
         </header>
         <main class="cust-main" tabindex="-1">${content}</main>
+        ${helperButtonHtml(here)}
       </div>
       ${tabBarHtml(here)}
     </div>`;

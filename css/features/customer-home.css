@@ -1,17 +1,18 @@
-/* Feature: Customer home ("Need help right now?" card, tool tiles, recent checks).
+/* Feature: Customer home ("Need help right now?" card, the check tile, tool groups, recent checks).
    Owner: Yan Lin
    Uses the Clarity variables only. */
 
-.hello { margin-bottom: 1.5rem; }
-.hello h1 { margin-bottom: .25rem; font-size: 2.25rem; }
-.hello-sub { margin: 0; color: var(--muted); font-size: 1.25rem; }
+.hello { margin-bottom: 1rem; }
+.hello h1 { margin-bottom: 0; font-size: 2.25rem; }
 
-/* ---------- The welcome with its drawing ---------- */
+/* ---------- The welcome with its drawing ----------
+   Short on purpose: a greeting and one line, so the red card shows without scrolling on a phone */
 .hello--hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; }
-.hello--hero h1 { font-size: 1.875rem; }
-@media (min-width: 40rem) { .hello--hero h1 { font-size: 2.375rem; } }
-.hero-art { width: 5.75rem; height: auto; overflow: visible; }
-@media (min-width: 40rem) { .hero-art { width: 12.5rem; } }
+.hello--hero .eyebrow { margin-bottom: .125rem; }
+.hello--hero h1 { font-size: 1.75rem; }
+@media (min-width: 40rem) { .hello--hero h1 { font-size: 2.25rem; } }
+.hero-art { width: 4.5rem; height: auto; overflow: visible; }
+@media (min-width: 40rem) { .hero-art { width: 9rem; } }
 
 /* The drawing's parts, in Clarity colours */
 .ha-blob { fill: var(--red-tint); }
@@ -82,15 +83,11 @@
 .call-line { margin: 1.125rem 0 0; font-weight: 600; }
 .call-line a { color: var(--white); font-weight: 800; white-space: nowrap; }
 
-/* ---------- Tool tiles: icon in a soft red square, red border on hover ---------- */
+/* ---------- The one big "Check" tile: icon in a soft red square, red border ---------- */
 
-.tools-section { margin-top: 2.25rem; }
-.tools-section h2 { margin-bottom: .25rem; }
-.tools-sub { margin-bottom: .875rem; color: var(--muted); }
-.tools-section h2 + .tools { margin-top: .75rem; }
-.tools { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
-.tools li { display: flex; }
-.tools .tool-wide, .tools .tool-span { grid-column: 1 / -1; }
+.tools-section { margin-top: 2rem; }
+.tools-section h2 { margin-bottom: .75rem; }
+.tools-sub { margin: -.375rem 0 .75rem; color: var(--muted); }
 .tool {
   display: flex; align-items: center; gap: 1rem; width: 100%; min-height: 88px; padding: 1.125rem;
   background: var(--surface); color: var(--text); text-align: left; text-decoration: none;
@@ -98,7 +95,7 @@
   transition: border-color .15s, transform .15s, box-shadow .15s;
 }
 .tool:hover { border-color: var(--red); transform: translateY(-2px); box-shadow: 0 2px 4px rgba(54, 59, 64, .06), 0 14px 32px rgba(54, 59, 64, .12); }
-.tool-wide .tool { border-color: var(--red); }
+.tool--main { border-color: var(--red); }
 .tool-icon {
   display: grid; place-items: center; flex: none; width: 3.25rem; height: 3.25rem;
   border-radius: 14px; background: var(--red-tint); color: var(--red-dark);
@@ -110,44 +107,36 @@
 .tool-arrow { color: var(--text); transition: transform .15s; }
 .tool:hover .tool-arrow { transform: translateX(3px); }
 .tool:active { transform: scale(.98); }
-.tool-text .lock-tag { display: inline-flex; }
 
-/* ---------- "Your safety checklist" (signed-in customers) ----------
-   A progress bar that fills when the screen opens, ticks for the steps done, and one button for
-   the next step. */
-.checklist {
-  margin-top: 2rem; padding: 1.25rem 1.5rem 1.5rem;
-  background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+/* ---------- The tool groups: plain lists, one line per tool ----------
+   Like a phone's Settings list: easy to scan, every row a big tap target (at least 64px tall). */
+
+.more-list { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+.more-list li + li { border-top: 1px solid var(--border); }
+.more-link {
+  display: flex; align-items: center; gap: .875rem; min-height: 64px; padding: .75rem 1.125rem;
+  color: var(--text); text-decoration: none; font-size: 1.125rem; font-weight: 700; line-height: 1.3;
+  transition: background-color .15s;
 }
-.checklist-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
-.checklist-head h2 { margin: 0; font-size: 1.25rem; }
-.checklist-count { margin: 0; color: var(--red-dark); font-weight: 800; }
-.checklist-bar { height: .75rem; margin: .75rem 0 1rem; overflow: hidden; border-radius: 999px; background: var(--slate-tint); }
-.checklist-bar span {
-  display: block; height: 100%; border-radius: inherit; background: var(--red);
-  transform: scaleX(var(--p)); transform-origin: left; animation: home-fill .8s .15s cubic-bezier(.2, .7, .2, 1) both;
+.more-link:hover { background: var(--red-tint); }
+.more-link:active { background: var(--red-tint); }
+.more-icon {
+  display: grid; place-items: center; flex: none; width: 2.5rem; height: 2.5rem;
+  border-radius: 12px; background: var(--red-tint); color: var(--red-dark);
 }
-@keyframes home-fill { from { transform: scaleX(0); } }
-.checklist-steps { display: grid; gap: .5rem; }
-.checklist-steps li { display: flex; align-items: center; gap: .625rem; color: var(--muted); font-weight: 600; }
-.checklist-steps li.is-done { color: var(--text); }
-.checklist-mark {
-  display: grid; place-items: center; flex: none; width: 1.75rem; height: 1.75rem;
-  border: 2px solid var(--divider); border-radius: 50%;
-}
-.is-done .checklist-mark { border-color: var(--red-dark); background: var(--red-dark); color: var(--white); }
-.checklist-mark .icon { width: 1.25rem; height: 1.25rem; }
-.checklist-mark .icon circle { display: none; }   /* just the tick inside the filled circle */
-.checklist-next { margin-top: 1rem; }
-.checklist-all { display: flex; align-items: center; gap: .75rem; margin: 1rem 0 0; font-weight: 700; }
-.checklist-all .done-mark { flex: none; margin: 0; width: 3rem; height: 3rem; }
-.checklist-all .done-mark .icon { width: 1.5rem; height: 1.5rem; }
+.more-icon .icon { width: 1.375rem; height: 1.375rem; }
+.more-text { flex: 1; min-width: 0; }
+.more-link .menu-lock .icon { width: 1.125rem; height: 1.125rem; }
+.more-arrow { flex: none; color: var(--muted); }
+.lock-note .menu-lock { vertical-align: -.125rem; margin: 0 .125rem 0 0; }
+.tool--main + .more-list { margin-top: .75rem; }   /* "Check a transfer first" under the big Check tile */
 
 /* Touch screens have no real hover: a tapped tile should not stay lifted */
 @media (hover: none) {
   .tool:hover, .big-choice:hover { transform: none; box-shadow: var(--shadow); }
   .tool:hover .tool-arrow, .big-choice:hover .big-choice-arrow { transform: none; }
-  .tool-wide .tool:hover { box-shadow: var(--shadow); }
+  .tool--main:hover { box-shadow: var(--shadow); }
+  .more-link:hover { background: none; }
 }
 
 /* On a phone, a little less padding in the red card, so the big choices' words have room */

@@ -1,6 +1,6 @@
 # Verify the Caller: the database (Supabase)
 
-The database only holds **sign-in**: an ID and a scrambled (hashed) password, for customers and for bank staff. No customer details, no real biometrics, nothing else.
+The database holds **sign-in**: an ID and a scrambled (hashed) password, for customers and for bank staff. It also holds the risk cases, scam reports and freeze requests (see [below](#risk-cases-scam-reports-and-freeze-requests-jose)). No real biometrics.
 
 | Table | Who | Columns |
 |---|---|---|
@@ -63,6 +63,20 @@ The data lives in Supabase's cloud, so everyone can use the **same** database. N
 4. A teammate with no `.env` still works: the server falls back to the six demo accounts in memory.
 
 If the key leaks (for example, committed by mistake): Supabase, **Project Settings, API Keys**, create a new secret key, delete the old one, and tell the team to update their `.env`.
+
+## Risk cases, scam reports and freeze requests (Jose)
+
+Three more tables, so these features work for real instead of only in the demo. Same rules as the sign-in tables: Row Level Security on, only the server's secret key can use them.
+
+| Table | Filled by | Read by | Shown as |
+|---|---|---|---|
+| `risk_cases` | Check a transfer, when the result is High | Staff console | `TR-0001` |
+| `scam_reports` | Report a scam | Staff › Reports & freezes | `SR-0001` |
+| `freeze_requests` | Freeze my accounts | Staff › Reports & freezes | `FR-0001` |
+
+Set them up once: **SQL Editor, New query**, paste all of `jose-tables.sql`, **Run**. The last line should show three rows, all `true`. The server uses the same `SUPABASE_URL` and `SUPABASE_SECRET_KEY`; `npm start` then says **Cases, reports and freezes are saved in Supabase**. Without them, these are kept in memory and vanish when the server stops.
+
+On Vercel, the same two values must be set in the project's **Environment Variables**, or the live site keeps them in memory (and on Vercel, memory is wiped often).
 
 ## Troubleshooting
 

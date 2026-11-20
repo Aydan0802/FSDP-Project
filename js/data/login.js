@@ -8,8 +8,8 @@
 // bottom of the customer one.
 // Sign-in is checked by the server (server/auth.js: Supabase, or its built-in demo accounts when
 // Supabase isn't set up). "Fill in for me" types one of those demo accounts.
-// text: the customer screen's words in English, Chinese and Malay (see "How to translate your
-// screen" in TEAM-FILES.md). The Chinese and Malay are AI-drafted and still need a native
+// text: the customer screen's words in English, Chinese, Malay and Tamil (see "How to translate your
+// screen" in TEAM-FILES.md). The Chinese, Malay and Tamil are AI-drafted and still need a native
 // speaker to check them. The staff screen is English only, like the rest of the staff side.
 
 const LOGIN_DATA = {
@@ -216,6 +216,66 @@ const LOGIN_DATA = {
       "login.msg.customerOnly": "Halaman itu untuk pelanggan. Sila log masuk sebagai pelanggan.",
       "login.msg.staffFirst": "Sila log masuk sebagai kakitangan bank dahulu.",
       "login.msg.staffOnly": "Halaman itu untuk kakitangan bank sahaja. Sila log masuk sebagai kakitangan bank."
+    },
+    ta: {
+      "login.err.wrong": "அந்த அடையாளம் அல்லது கடவுச்சொல் சரியில்லை. மீண்டும் முயலுங்கள்.",
+      "login.err.locked": "பல முறை தவறாக முயன்றீர்கள். {minutes} நிமிடங்கள் காத்திருந்து மீண்டும் முயலுங்கள்.",
+      "login.err.server": "இப்போது உள்நுழைவுச் சேவையகத்தை அடைய முடியவில்லை. சிறிது நேரத்தில் மீண்டும் முயலுங்கள்.",
+      "login.err.database": "இப்போது உள்நுழைவு வேலை செய்யவில்லை. பிறகு மீண்டும் முயலுங்கள்.",
+      "login.demoMode": "மாதிரி முறை: இங்கே உள்நுழைவுச் சேவையகம் இயங்கவில்லை, எனவே எந்த விவரங்களும் வேலை செய்யும்.",
+      "header.signUp": "பதிவு செய்",
+      "login.newHere": "புதியவரா?",
+      "login.createLink": "வாடிக்கையாளர் கணக்கை உருவாக்கு",
+      "signup.title": "கணக்கை உருவாக்கு",
+      "signup.sub": "வாடிக்கையாளர்களுக்கு. ஒரு அடையாளத்தையும் கடவுச்சொல்லையும் தேர்ந்தெடுங்கள்.",
+      "signup.userId": "பயனர் அடையாளத்தைத் தேர்ந்தெடுங்கள்",
+      "signup.idHint": "4 முதல் 30 எழுத்துகள்: ஆங்கில எழுத்துகள், எண்கள், புள்ளிகள், கோடுகள் அல்லது அடிக்கோடுகள். உங்கள் கைபேசி எண்ணும் பயன்படும்.",
+      "signup.password": "கடவுச்சொல்லைத் தேர்ந்தெடுங்கள்",
+      "signup.pwHint": "குறைந்தது 8 எழுத்துகள். உங்களுக்கு மட்டுமே தோன்றக்கூடிய ஒன்று.",
+      "signup.password2": "கடவுச்சொல்லை மீண்டும் தட்டச்சு செய்யுங்கள்",
+      "signup.submit": "கணக்கை உருவாக்கு",
+      "signup.haveAccount": "ஏற்கெனவே கணக்கு உள்ளதா?",
+      "signup.signInLink": "உள்நுழை",
+      "signup.note": "முன்மாதிரி மட்டும். வேறு எங்கும் பயன்படுத்தும் கடவுச்சொல்லைப் பயன்படுத்த வேண்டாம்.",
+      "signup.err.empty": "மூன்று பெட்டிகளையும் நிரப்புங்கள்.",
+      "signup.err.id": "அந்த அடையாளம் விதிகளுக்குப் பொருந்தவில்லை: 4 முதல் 30 ஆங்கில எழுத்துகள், எண்கள், புள்ளிகள், கோடுகள் அல்லது அடிக்கோடுகள், எழுத்து அல்லது எண்ணில் தொடங்க வேண்டும்.",
+      "signup.err.short": "அந்தக் கடவுச்சொல் மிகவும் சிறியது. குறைந்தது 8 எழுத்துகளைப் பயன்படுத்துங்கள்.",
+      "signup.err.mismatch": "இரண்டு கடவுச்சொற்களும் ஒன்றாக இல்லை.",
+      "signup.err.sameAsId": "உங்கள் கடவுச்சொல்லில் உங்கள் அடையாளம் இருக்கக்கூடாது.",
+      "signup.err.common": "அந்தக் கடவுச்சொல்லை ஊகிப்பது மிகவும் எளிது. வேறு ஒன்றை முயலுங்கள்.",
+      "signup.err.taken": "அந்த அடையாளத்தைப் பயன்படுத்த முடியாது. வேறு ஒன்றைத் தேர்ந்தெடுங்கள்.",
+      "signup.err.tooMany": "இந்தக் கணினியிலிருந்து பல புதிய கணக்குகள் உருவாக்கப்பட்டுள்ளன. பிறகு மீண்டும் முயலுங்கள்.",
+      "login.about": "Pause & Prove பற்றி",
+      "login.kicker": "உங்கள் வங்கியின் மோசடி எதிர்ப்பு உதவி",
+      "login.tagline": "நிறுத்துங்கள். அழைப்பவரைச் சரிபாருங்கள்.",
+      "login.taglineEnd": "பாதுகாப்பாக இருங்கள்.",
+      "login.title": "உள்நுழை",
+      "login.sub": "உங்கள் பயனர் அடையாளம், கைபேசி எண் அல்லது பெயருடன் கடவுச்சொல் அல்லது PIN பயன்படுத்துங்கள்.",
+      "login.id": "பயனர் அடையாளம், கைபேசி எண் அல்லது பெயர்",
+      "login.idHint": "நீங்கள் பதிவு செய்தபோது பயன்படுத்தியதைப் பயன்படுத்துங்கள்.",
+      "login.secret": "கடவுச்சொல் அல்லது PIN",
+      "login.secretHint": "உங்கள் கடவுச்சொல், அல்லது உங்கள் 6 இலக்க PIN.",
+      "login.show": "காட்டு",
+      "login.hide": "மறை",
+      "login.secretHidden": " கடவுச்சொல் அல்லது PIN",
+      "login.submit": "உள்நுழை",
+      "login.demoFill": "எனக்காக நிரப்பு (மாதிரி)",
+      "login.note": "மாதிரி மட்டும்: எந்த விவரங்களும் வேலை செய்யும். உண்மையான கடவுச்சொல்லையோ PIN-ஐயோ இங்கே தட்டச்சு செய்ய வேண்டாம். எதுவும் சேமிக்கப்படுவதோ அனுப்பப்படுவதோ இல்லை.",
+      "login.err.empty": "உங்கள் பயனர் அடையாளம், கைபேசி எண் அல்லது பெயரையும், கடவுச்சொல் அல்லது PIN-ஐயும் தட்டச்சு செய்யுங்கள்.",
+      "login.err.id": "உங்கள் பயனர் அடையாளம், கைபேசி எண் அல்லது பெயரைத் தட்டச்சு செய்யுங்கள்.",
+      "login.err.secret": "உங்கள் கடவுச்சொல் அல்லது PIN-ஐத் தட்டச்சு செய்யுங்கள்.",
+      "login.welcome": "வருக, {name}.",
+      "login.welcomeNoName": "நீங்கள் உள்நுழைந்துள்ளீர்கள்.",
+      "login.hurry.title": "அவசரமா?",
+      "login.hurry.text": "அவசர உதவிக்கு நீங்கள் உள்நுழைய வேண்டியதில்லை.",
+      "login.hurry.calling": "இப்போது ஒருவர் என்னை அழைக்கிறார்",
+      "login.hurry.bank": "உண்மையில் வங்கிதான் அழைக்கிறதா?",
+      "login.staffQ": "வங்கி ஊழியரா?",
+      "login.staffLink": "ஊழியர் உள்நுழைவு",
+      "login.msg.signInFirst": "இதைப் பயன்படுத்த உள்நுழையுங்கள். ஒரு நொடிதான் ஆகும்.",
+      "login.msg.customerOnly": "அந்தப் பக்கம் வாடிக்கையாளர்களுக்கானது. வாடிக்கையாளராக உள்நுழையுங்கள்.",
+      "login.msg.staffFirst": "முதலில் வங்கி ஊழியராக உள்நுழையுங்கள்.",
+      "login.msg.staffOnly": "அந்தப் பக்கம் வங்கி ஊழியர்களுக்கு மட்டும். வங்கி ஊழியராக உள்நுழையுங்கள்."
     }
   }
 };

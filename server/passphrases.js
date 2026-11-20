@@ -12,8 +12,9 @@
 //   DELETE /api/passphrases/:id        removes one
 //
 // Never sent back to the browser: the salt and the hash. Never logged: the word.
-// Storage: Supabase table "passphrases" when SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set,
-// otherwise memory (lost when the server stops), so the demo and tests work without keys.
+// Storage: Supabase table "passphrases" when SUPABASE_URL and SUPABASE_SECRET_KEY (or the older
+// SUPABASE_SERVICE_ROLE_KEY) are set, otherwise memory (lost when the server stops), so the demo and
+// tests work without keys.
 
 const crypto = require("crypto");
 const express = require("express");
@@ -53,16 +54,33 @@ async function checkWord(word, saltBase64, hashBase64) {
 
 const PUBLIC_COLUMNS = "id, name, relationship, created_at";
 
-function supabaseStore(url, key) {
-  const { createClient } = require("@supabase/supabase-js");
-  const db = createClient(url, key, { auth: { persistSession: false } });
-  const table = () => db.from("passphrases");
-  const unwrap = ({ data, error }) => { if (error) throw error; return data; };
+// Talks to Supabase's REST address with plain fetch, like the sign-in store (db/user-store.js), so
+// it works with the same SUPABASE_SECRET_KEY (the newer sb_secret_ keys too) and needs nothing extra
+// installed. Each filter is "column=eq.value", which is how Supabase's REST address says "where =".
+function supabaseStore(url, key, fetchImpl = fetch) {
+  const address = `${url.replace(/\/+$/, "")}/rest/v1/passphrases`;
+  const headers = { apikey: key, "Content-Type": "application/json", Accept: "application/json" };
+  if (/^eyJ/.test(key)) headers.Authorization = "Bearer " + key;   // older keys also go here
+  const columns = PUBLIC_COLUMNS.replace(/\s/g, "");
+  const is = value => encodeURIComponent(`eq.${value}`);
+
+  async function send(query, options = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);   // don't wait forever
+    try {
+      const res = await fetchImpl(address + query, { ...options, headers: { ...headers, ...options.headers }, signal: controller.signal });
+      if (!res.ok) throw new Error(`Supabase answered ${res.status} for passphrases`);   // never the word
+      return res.status === 204 ? null : res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return {
-    list: async userId => unwrap(await table().select(PUBLIC_COLUMNS).eq("user_id", userId).order("created_at")),
-    add: async row => unwrap(await table().insert(row).select(PUBLIC_COLUMNS).single()),
-    secret: async (userId, id) => unwrap(await table().select("salt, hash").eq("user_id", userId).eq("id", id).maybeSingle()),
-    remove: async (userId, id) => { unwrap(await table().delete().eq("user_id", userId).eq("id", id)); }
+    list: async userId => send(`?select=${columns}&user_id=${is(userId)}&order=created_at`),
+    add: async row => (await send(`?select=${columns}`, { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) }))[0],
+    secret: async (userId, id) => (await send(`?select=salt,hash&user_id=${is(userId)}&id=${is(id)}`))[0] || null,
+    remove: async (userId, id) => { await send(`?user_id=${is(userId)}&id=${is(id)}`, { method: "DELETE" }); }
   };
 }
 
@@ -101,7 +119,7 @@ async function whoIsAsking(req) {
 
 function passphraseRoutes() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   const store = url && key ? supabaseStore(url, key) : memoryStore();
   const tries = new Map();   // "user:id" -> { count, resetAt }
   const router = express.Router();

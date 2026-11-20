@@ -18,7 +18,7 @@
 
 (function () {
   const data = LOGIN_DATA;
-  addTranslations(data.text);   // the customer screens' English, Chinese and Malay words
+  addTranslations(data.text);   // the customer screens' English, Chinese, Malay and Tamil words
 
   // ---------- Talking to the sign-in server ----------
 

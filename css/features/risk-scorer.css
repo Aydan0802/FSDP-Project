@@ -1,12 +1,10 @@
-/* Feature: Transfer risk scorer (pick a transfer, the risk result, sent or cancelled).
+/* Feature: Transfer money with a risk check (the form, review, receipt, the risk result).
    Owner: Jose
    Styles for this feature only. Uses the Clarity variables (var(--red), var(--surface) ...),
    never new colour codes. Every band shows an icon and words as well as a colour. */
 
 .rs-screen .panel { margin-bottom: 1rem; }
 .rs-screen .verdict h1 { font-size: 1.75rem; overflow-wrap: anywhere; }
-.rs-picked:not(:empty) { margin-top: 1.25rem; }
-.rs-story { color: var(--muted); }
 
 /* ---------- The score ---------- */
 
@@ -48,3 +46,115 @@
 .rs-rule { display: block; color: var(--muted); font-size: .875rem; font-weight: 400; }
 
 .rs-source { margin-top: 1rem; font-size: .9375rem; }
+
+/* ---------- Transfer money: the form ---------- */
+
+/* The account the money comes from, like the top of a bank's transfer screen */
+.rs-from {
+  display: grid; gap: .125rem; margin-top: 1rem; padding: 1rem 1.125rem;
+  border-radius: var(--radius-lg); background: var(--surface-2);
+}
+.rs-from-label { color: var(--muted); font-size: .9375rem; font-weight: 700; }
+.rs-from-name { font-size: 1.25rem; font-weight: 800; }
+.rs-from-num { color: var(--muted); font-variant-numeric: tabular-nums; }
+.rs-balance {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .25rem 1rem;
+  margin-top: .625rem; padding-top: .625rem; border-top: 1px solid var(--border);
+}
+.rs-balance strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+
+.rs-sub { margin: 0 0 .625rem; font-size: 1.0625rem; color: var(--muted); }
+
+/* Saved payees: a big row each, with a round picture of their initials */
+.rs-payees { display: grid; gap: .5rem; margin: 0 0 1.5rem; }
+.rs-payee {
+  display: flex; align-items: center; gap: .875rem; width: 100%; min-height: 64px; padding: .625rem .875rem;
+  border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.rs-payee:hover { border-color: var(--red); }
+.rs-payee[aria-pressed="true"] { border-color: var(--red); background: var(--red-tint); }
+.rs-avatar {
+  display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border-radius: 50%;
+  background: var(--slate-tint); color: var(--charcoal); font-weight: 800; font-size: 1rem;
+}
+.rs-payee[aria-pressed="true"] .rs-avatar { background: var(--red); color: var(--white); }
+.rs-payee-text { display: grid; flex: 1; min-width: 0; }
+.rs-payee-text span { color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rs-payee > .icon { flex: none; color: var(--muted); }
+
+/* Mobile number / Account number: two big tabs side by side */
+.rs-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .25rem; margin: 0 0 1.25rem; padding: .25rem;
+  border-radius: 999px; background: var(--surface-2);
+}
+.rs-tab {
+  min-height: 48px; padding: .25rem .5rem; border: 2px solid transparent; border-radius: 999px;
+  background: none; color: var(--muted); font: inherit; font-size: 1rem; font-weight: 700; line-height: 1.2; cursor: pointer;
+}
+.rs-tab[aria-pressed="true"] { background: var(--surface); color: var(--text); border-color: var(--field-border); }
+
+/* A box with "+65" or "SGD" in front of it */
+.rs-input-group {
+  display: flex; align-items: stretch; overflow: hidden;
+  border: 2px solid var(--field-border); border-radius: var(--radius); background: var(--surface);
+}
+.rs-input-group:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.rs-input-group:has([aria-invalid="true"]) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.rs-prefix {
+  display: grid; place-items: center; flex: none; padding: 0 .875rem;
+  background: var(--surface-2); color: var(--muted); font-weight: 700; border-right: 2px solid var(--border);
+}
+.field .rs-input-group input { flex: 1; min-width: 0; min-height: 52px; border: 0; border-radius: 0; box-shadow: none; }
+.field .rs-input-group input:focus-visible { outline: none; }   /* the whole box shows the focus ring instead */
+.rs-amount input { font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* The PayNow name, so the customer can check who they are paying */
+.rs-name-check:not(:empty) { margin: -.5rem 0 1.25rem; }
+.rs-name-card {
+  display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem;
+  border: 2px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-2);
+}
+.rs-name-card > .icon { flex: none; width: 1.75rem; height: 1.75rem; color: var(--muted); }
+.rs-name-card--saved { border-color: var(--green); background: var(--green-tint); }
+.rs-name-card--saved > .icon { color: var(--green-dark); }
+.rs-name-label { display: block; color: var(--muted); font-size: .9375rem; font-weight: 700; }
+.rs-name-card strong { display: block; font-size: 1.25rem; letter-spacing: .03em; overflow-wrap: anywhere; }
+.rs-tag {
+  display: inline-block; margin-top: .25rem; padding: .05rem .625rem; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); font-size: .875rem; font-weight: 700;
+}
+.rs-name-tip { display: flex; gap: .5rem; align-items: flex-start; margin: .625rem 0 0; color: var(--amber-dark); font-weight: 700; }
+.rs-name-tip .icon { flex: none; margin-top: .15rem; }
+
+.rs-form .btn-primary { margin-top: .25rem; }
+
+.rs-demo { margin: 0 0 1rem; padding: .25rem 1.25rem; border-radius: var(--radius-lg); background: var(--surface); }
+.rs-demo summary { cursor: pointer; font-weight: 700; min-height: 48px; display: flex; align-items: center; }
+.rs-demo .points { font-size: 1rem; }
+
+/* ---------- Review and receipt ---------- */
+
+.rs-big-amount {
+  margin: .25rem 0 1rem; font-family: var(--font-head); font-size: 2.5rem; font-weight: 800;
+  line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+}
+.rs-rows { margin: 0 0 1.25rem; border-top: 1px solid var(--border); }
+.rs-rows > div { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--border); }
+.rs-rows dt { flex: 0 1 auto; color: var(--muted); }
+.rs-rows dd { margin: 0; min-width: 0; text-align: right; font-weight: 700; overflow-wrap: anywhere; }
+.rs-rows dd > span:not(.rs-tag) { display: block; color: var(--muted); font-size: 1rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.rs-ref { flex: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.rs-safe-note {
+  display: flex; gap: .625rem; align-items: flex-start; margin: 0; padding: .875rem 1rem;
+  border-radius: var(--radius-lg); background: var(--surface-2);
+}
+.rs-safe-note .icon { flex: none; margin-top: .15rem; color: var(--red-dark); }
+
+.rs-done-ok { background: var(--green-tint); color: var(--green-dark); }
+.rs-done-ok::after { box-shadow: 0 0 0 0 var(--green); animation-name: rs-ring-green; }   /* the pop ring in green, not red */
+@keyframes rs-ring-green { to { box-shadow: 0 0 0 1.25rem var(--green); opacity: 0; } }
+.rs-safety { display: flex; gap: .5rem; align-items: center; margin: 0; color: var(--green-dark); font-weight: 700; }
+.rs-safety .icon { flex: none; }
+.rs-receipt .rs-all { margin-top: .5rem; }

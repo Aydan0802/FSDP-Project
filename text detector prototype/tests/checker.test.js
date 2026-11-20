@@ -125,6 +125,7 @@ test("language is detected", () => {
   assert.equal(detectLanguage("今晚七点回家吃饭"), "zh");
   assert.equal(detectLanguage("Saya balik rumah pukul 7 malam ini"), "ms");
   assert.equal(detectLanguage("Hi Dan, Ada is coming too"), "en");   // names that are also Malay words
+  assert.equal(detectLanguage("உங்கள் கணக்கு முடக்கப்படும்"), "ta");   // Tamil: no rules yet, so marked as a rough guess
 });
 
 test("summaries and reasons come in the message's language", () => {

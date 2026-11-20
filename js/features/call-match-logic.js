@@ -8,7 +8,7 @@
 // has to be reachable from another file. Keep any helper functions you add inside matchCall,
 // or give them names starting with "callMatch", so they can't clash with a teammate's file.
 
-// The calls' team, time and about in English, Chinese and Malay, for screens that show them
+// The calls' team, time and about in English, Chinese, Malay and Tamil, for screens that show them
 addTranslations(CALL_MATCH_LOGIC_DATA.text);
 
 // Singapore numbers in any writing ("+65 6363 3333", "6363-3333", "006563633333") become

@@ -2,20 +2,24 @@
 
 // Feature: Freeze my accounts. #freeze
 // Owner: Jose
-// One big button stops all payments (in the demo, nothing really happens), then the customer
-// is told to call OCBC and press 8. A "Call OCBC" bar stays at the bottom of the screen.
+// One big button sends a freeze request to the bank (POST /api/freeze, server/reports.js), then the
+// customer is told to call OCBC and press 8. A "Call OCBC" bar stays at the bottom of the screen.
+// The request is saved and bank staff see it under Staff > Reports & freezes, but no real account
+// is frozen: this is a prototype, so the screen still says "Demo only". If the server can't be
+// reached, the screen still moves on (a senior must never be stuck here), just without a number.
 // Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
 //
 // What it remembers (appState.freeze, cleared by #reset):
 //   frozen     true once the customer has pressed the button. It stays frozen for this visit.
 //   frozenAt   the time it was frozen, e.g. "14:05"
+//   ref        the request number from the server, e.g. "FR-0003" ("" if the server wasn't reached)
 
 (function () {
   const data = FREEZE_DATA;
   addTranslations(data.text);
 
   function myState() {
-    if (!appState.freeze) appState.freeze = { frozen: false, frozenAt: "" };
+    if (!appState.freeze) appState.freeze = { frozen: false, frozenAt: "", ref: "" };
     return appState.freeze;
   }
 
@@ -54,6 +58,7 @@
         <div class="done-mark">${icon("lock")}</div>
         <h1 tabindex="-1">${t("fr.done.title")}</h1>
         <p>${t("fr.done.text", { phone: OCBC_PHONE, key: data.hotlineKey })}</p>
+        ${state.ref ? `<p>${t("fr.ref", { ref: `<strong>${escapeHtml(state.ref)}</strong>` })}</p>` : ""}
         <ul class="reasons">
           ${data.frozenItems.map(key => `<li>${icon("lock")}<span>${t(key)}</span></li>`).join("")}
         </ul>
@@ -64,6 +69,27 @@
         </div>
       </section>
       <p class="note">${t("fr.demo", { time: state.frozenAt })}</p>`;
+  }
+
+  // Sends the freeze request. Gives back { ref, frozenAt }, or null if the server can't be reached.
+  // Gives up after 5 seconds: freezing is urgent, so the screen never waits longer than that.
+  // DEMO ONLY: X-User-Id tells the server who is signed in, like the family passphrase screen.
+  async function sendFreeze(mobile) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch("/api/freeze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-User-Id": appState.userId || "" },
+        body: JSON.stringify({ mobile }),
+        signal: controller.signal
+      });
+      return res.ok ? await res.json() : null;
+    } catch (err) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   function screenHtml() {
@@ -81,9 +107,10 @@
         phone.value = digits.length > 4 ? `${digits.slice(0, 4)} ${digits.slice(4)}` : digits;
       });
     }
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
+      let digits = "";
       if (phone) {
-        const digits = phone.value.replace(/\D/g, "");
+        digits = phone.value.replace(/\D/g, "");
         if (!/^[89]\d{7}$/.test(digits)) {
           phone.setAttribute("aria-invalid", "true");
           document.getElementById("fr-phone-error").textContent = t("fr.phone.err");
@@ -92,9 +119,13 @@
         }
         signIn("customer", digits);   // signed in by mobile number only, so they can carry on
       }
+      button.disabled = true;   // so a worried tap-tap-tap sends only one request
+      const saved = await sendFreeze(digits);
       const state = myState();
       state.frozen = true;
-      state.frozenAt = new Date().toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", hour12: false });
+      state.ref = saved ? saved.ref : "";
+      const when = saved ? new Date(saved.frozenAt) : new Date();
+      state.frozenAt = when.toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit", hour12: false });
       redrawScreen();   // the "frozen" screen, with focus on its heading
     });
   }

@@ -2,8 +2,8 @@
 
 // Made-up data for: Report a scam.
 // Owner: Jose
-// text: this screen's words in English, Chinese and Malay (see js/core/i18n.js).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// text: this screen's words in English, Chinese, Malay and Tamil (see js/core/i18n.js).
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const REPORT_DATA = {
   // "What happened?" choices. #report/call, #report/message and #report/sent pick one in advance.
@@ -13,7 +13,7 @@ const REPORT_DATA = {
   // "Did you lose money?" choices, words under "rp.lost.<id>". "yes" shows the amount box.
   lost: [{ id: "yes" }, { id: "no" }, { id: "unsure" }],
 
-  refPrefix: "SR-26-",   // report numbers look like SR-26-48213
+  refPrefix: "SR-26-",   // made-up numbers, only when the server can't be reached, look like SR-26-48213
 
   // Other places to report to (real Singapore numbers)
   police: { phone: "1800 255 0000", tel: "tel:18002550000" },
@@ -37,6 +37,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "Freeze my accounts first",
       "rp.more": "Anything else? (optional)",
       "rp.send": "Send to OCBC",
+      "rp.sending": "Sending…",
       "rp.err.what": "Please choose what happened.",
       "rp.err.lost": "Please choose if you lost money.",
       "rp.err.amount": "Please type the amount as a number, for example 500.",
@@ -63,6 +64,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "先冻结我的户口",
       "rp.more": "还有其他要说的吗？（可以不填）",
       "rp.send": "发送给 OCBC",
+      "rp.sending": "正在发送…",
       "rp.err.what": "请选择发生了什么事。",
       "rp.err.lost": "请选择你有没有损失钱。",
       "rp.err.amount": "请用数字写金额，例如 500。",
@@ -89,6 +91,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "Bekukan akaun saya dahulu",
       "rp.more": "Ada apa-apa lagi? (tidak wajib)",
       "rp.send": "Hantar kepada OCBC",
+      "rp.sending": "Sedang dihantar…",
       "rp.err.what": "Sila pilih apa yang berlaku.",
       "rp.err.lost": "Sila pilih sama ada anda kehilangan wang.",
       "rp.err.amount": "Sila taip jumlah sebagai nombor, contohnya 500.",
@@ -97,6 +100,33 @@ const REPORT_DATA = {
       "rp.sent.officer": "Pegawai OCBC akan menyemaknya. Jika mereka telefon anda, mereka tidak akan sekali-kali minta OTP anda.",
       "rp.sent.alsoTell": "Anda juga boleh beritahu polis: {police}, atau Talian Bantuan ScamShield: {scamShield}.",
       "rp.sent.demo": "Demo sahaja: laporan ini tidak benar-benar dihantar."
+    },
+    ta: {
+      "rp.title": "மோசடியைப் புகாரளி",
+      "rp.lead": "என்ன நடந்தது என்று சொல்லுங்கள். சுருக்கமான பதில்கள் போதும்.",
+      "rp.what.title": "என்ன நடந்தது?",
+      "rp.what.call": "ஒரு தொலைபேசி அழைப்பு",
+      "rp.what.message": "ஒரு செய்தி",
+      "rp.what.sent": "நான் பணம் அனுப்பினேன்",
+      "rp.what.other": "வேறு ஏதோ",
+      "rp.contact": "அவர்களின் தொலைபேசி எண் அல்லது இணைப்பு (இருந்தால்)",
+      "rp.lost.title": "நீங்கள் பணத்தை இழந்தீர்களா?",
+      "rp.lost.yes": "ஆம்",
+      "rp.lost.no": "இல்லை",
+      "rp.lost.unsure": "உறுதியில்லை",
+      "rp.amount": "ஏறக்குறைய எவ்வளவு? (S$)",
+      "rp.freezeFirst": "முதலில் என் கணக்குகளை முடக்கு",
+      "rp.more": "வேறு ஏதாவது? (விருப்பத்தேர்வு)",
+      "rp.send": "OCBC-க்கு அனுப்பு",
+      "rp.sending": "அனுப்புகிறோம்…",
+      "rp.err.what": "என்ன நடந்தது என்று தேர்ந்தெடுங்கள்.",
+      "rp.err.lost": "நீங்கள் பணத்தை இழந்தீர்களா என்று தேர்ந்தெடுங்கள்.",
+      "rp.err.amount": "தொகையை எண்ணாகத் தட்டச்சு செய்யுங்கள், எ.கா. 500.",
+      "rp.sent.title": "உங்கள் புகார் அனுப்பப்பட்டது",
+      "rp.sent.refIs": "உங்கள் புகார் எண்",
+      "rp.sent.officer": "ஒரு OCBC அதிகாரி இதைப் பார்ப்பார். அவர் உங்களை அழைத்தால், உங்கள் OTP-ஐ ஒருபோதும் கேட்க மாட்டார்.",
+      "rp.sent.alsoTell": "காவல்துறையிடமும் சொல்லலாம்: {police}, அல்லது ScamShield உதவி எண்: {scamShield}.",
+      "rp.sent.demo": "மாதிரி மட்டும்: இந்தப் புகார் உண்மையில் அனுப்பப்படவில்லை."
     }
   }
 };

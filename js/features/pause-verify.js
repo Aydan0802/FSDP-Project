@@ -8,7 +8,7 @@
 // results) is at the top of this file, in DATA.
 
 (function () {
-  addTranslations(PAUSE_VERIFY_DATA.text);  // this screen's English, Chinese and Malay words
+  addTranslations(PAUSE_VERIFY_DATA.text);  // this screen's English, Chinese, Malay and Tamil words
 
   // ---------- Made-up data ----------
   const DATA = {
@@ -180,11 +180,14 @@
   // The transfer that was stopped and why. 
   function stoppedTransfer() {
     const last = appState.riskScorer && appState.riskScorer.lastResult;
+    // Jose's Transfer money screen keeps the transfer the customer typed (last.transfer).
+    // Older results only had the id of one of his sample transfers.
     const sample = last && RISK_SCORER_DATA.samples.find(s => s.id === last.sampleId);
-    if (!sample || last.band === "low" || !last.reasons.length) {
+    const transfer = last && (last.transfer || (sample && sample.transfer));
+    if (!transfer || last.band === "low" || !last.reasons.length) {
       return { amount: DATA.sampleTransfer.amount, reasons: DATA.sampleTransfer.reasons.map(key => t(key)) };
     }
-    const amount = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 0 }).format(sample.transfer.amount);
+    const amount = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 2 }).format(transfer.amount);
     const reasons = last.signals.slice(0, last.reasons.length).map(s => t(`rs.signal.${s.id}.reason`));
     return { amount: `S$${amount}`, reasons };
   }

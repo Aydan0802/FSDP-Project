@@ -5,7 +5,7 @@
    (sign in, customer home, staff overview) were moved into that screen's css/features file. */
 
 :root {
-  --font-body: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "Plus Jakarta Sans", "Noto Sans Tamil", "Segoe UI", "Nirmala UI", Arial, sans-serif;
   --bg: #F3F5F7;
   --border: #E1E6EA;
   --field-border: #6B7A84;   /* 4.4:1 on white: enough for outlines, which need 3:1 */
@@ -17,6 +17,8 @@
 }
 
 h1, h2, .brand-name { font-weight: 800; letter-spacing: -.02em; }
+/* Tamil letters join into one shape (க + ் = க்): squeezing them together makes them hard to read */
+:lang(ta) h1, :lang(ta) h2 { letter-spacing: 0; }
 
 /* ---------- Headers and menus (customer and staff) ---------- */
 

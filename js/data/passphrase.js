@@ -3,9 +3,9 @@
 // Made-up data for: Family passphrase.
 // Owner: Jiliana
 // No safe words here: they are only ever stored hashed, on the server (server/passphrases.js).
-// The words are translation keys; the English, Chinese and Malay are in text below
+// The words are translation keys; the English, Chinese, Malay and Tamil are in text below
 // (see "How to translate your screen" in TEAM-FILES.md).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const PASSPHRASE_DATA = {
   // The choices for "How are they related to you?". value is what the server saves (always the
@@ -167,6 +167,54 @@ const PASSPHRASE_DATA = {
       "pp.savedTitle": "Disimpan",
       "pp.savedText": "<strong>{name}</strong> ada dalam senarai anda di atas. Kata rahsia mereka dikacau, jadi ia tidak boleh ditunjukkan lagi.",
       "pp.cantSave": "Kami tidak dapat menyimpannya. Sila cuba lagi."
+    },
+    ta: {
+      "pp.title": "குடும்ப ரகசியச் சொல்",
+      "pp.lead": "குடும்பத்தினர் என்று சொல்லிக்கொண்டு யாராவது அழைத்துப் பணம் கேட்கிறார்களா? உங்கள் ரகசியச் சொல்லைக் கேளுங்கள், பிறகு அதை இங்கே சரிபாருங்கள்.",
+      "pp.promise": "<strong>உங்கள் ரகசியச் சொல் சேமிக்கப்படும் முன் மாற்றி மறைக்கப்படுகிறது.</strong> வங்கி உட்பட யாராலும் அதைத் திரும்பப் படிக்க முடியாது. யாராவது அதைக் கேட்டால், அது மோசடி.",
+      "pp.listTitle": "உங்கள் குடும்பம்",
+      "pp.loadError": "உங்கள் பட்டியலை ஏற்ற முடியவில்லை. பிறகு மீண்டும் முயலுங்கள்.",
+      "pp.loading": "ஏற்றுகிறோம்…",
+      "pp.empty": "இன்னும் யாரும் சேர்க்கப்படவில்லை. கீழே ஒரு குடும்ப உறுப்பினரைச் சேருங்கள்.",
+      "pp.new": "புதியது",
+      "pp.savedOn": "{relationship} · ரகசியச் சொல் {date} அன்று சேமிக்கப்பட்டது",
+      "pp.checkWord": "அழைப்பவரின் சொல்லைச் சரிபார்",
+      "pp.remove": "நீக்கு",
+      "pp.checkLabel": "அழைப்பவர் என்ன சொல்லைச் சொன்னார்?",
+      "pp.check": "சரிபார்",
+      "pp.addTitle": "குடும்ப உறுப்பினரைச் சேர்",
+      "pp.name": "அவர்களின் பெயர்",
+      "pp.rel": "அவர்கள் உங்களுக்கு என்ன உறவு?",
+      "pp.choose": "ஒன்றைத் தேர்ந்தெடுங்கள்",
+      "pp.rel.son": "மகன்",
+      "pp.rel.daughter": "மகள்",
+      "pp.rel.grandson": "பேரன்",
+      "pp.rel.granddaughter": "பேத்தி",
+      "pp.rel.spouse": "கணவர் அல்லது மனைவி",
+      "pp.rel.sibling": "சகோதரர் அல்லது சகோதரி",
+      "pp.rel.friend": "நண்பர்",
+      "pp.rel.other": "வேறு ஒருவர்",
+      "pp.word": "நீங்கள் இருவரும் ஒப்புக்கொண்ட ரகசியச் சொல்",
+      "pp.wordHint": "உங்கள் குடும்பத்துக்கு மட்டுமே தெரிந்த இரண்டு அல்லது மூன்று சொற்களைத் தேர்ந்தெடுங்கள், எ.கா. பிடித்த உணவும் ஓர் இடமும்.",
+      "pp.show": "காட்டு",
+      "pp.hide": "மறை",
+      "pp.safeWord": "ரகசியச் சொல்",
+      "pp.save": "சேமி",
+      "pp.match": "<strong>பொருந்துகிறது.</strong> இருந்தாலும், ஓர் அழைப்புக்காக மட்டும் ஒருபோதும் பணம் அனுப்பாதீர்கள்.",
+      "pp.noMatch": "<strong>பொருந்தவில்லை.</strong> அழைப்பைத் துண்டித்து, உங்களிடம் ஏற்கெனவே உள்ள எண்ணில் {name}-ஐத் திருப்பி அழையுங்கள்.",
+      "pp.triesLeftOne": "இன்னும் 1 முயற்சி உள்ளது.",
+      "pp.triesLeft": "இன்னும் {n} முயற்சிகள் உள்ளன.",
+      "pp.typeWord": "அழைப்பவர் சொன்ன சொல்லைத் தட்டச்சு செய்யுங்கள்.",
+      "pp.tooMany": "<strong>அதிக முயற்சிகள்.</strong> {minutes} நிமிடங்கள் காத்திருங்கள், அல்லது நீங்களே {name}-ஐத் திருப்பி அழையுங்கள்.",
+      "pp.cantCheck": "இப்போது சரிபார்க்க முடியவில்லை. நீங்களே {name}-ஐத் திருப்பி அழையுங்கள்.",
+      "pp.removed": "{name} நீக்கப்பட்டார்",
+      "pp.cantRemove": "நீக்க முடியவில்லை. மீண்டும் முயலுங்கள்.",
+      "pp.err.name": "அவர்களின் பெயரைத் தட்டச்சு செய்யுங்கள்.",
+      "pp.err.rel": "அவர்கள் உங்களுக்கு என்ன உறவு என்று தேர்ந்தெடுங்கள்.",
+      "pp.err.word": "குறைந்தது {n} எழுத்துகள் கொண்ட ரகசியச் சொல்லைத் தட்டச்சு செய்யுங்கள்.",
+      "pp.savedTitle": "சேமிக்கப்பட்டது",
+      "pp.savedText": "<strong>{name}</strong> மேலே உள்ள உங்கள் பட்டியலில் இருக்கிறார். அவர்களின் ரகசியச் சொல் மறைக்கப்பட்டுள்ளதால், மீண்டும் காட்ட முடியாது.",
+      "pp.cantSave": "சேமிக்க முடியவில்லை. மீண்டும் முயலுங்கள்."
     }
   }
 };

@@ -168,7 +168,7 @@ powershell -ExecutionPolicy Bypass -File app\start_booth.ps1
 
 | Part | Command (from the repo root) | What it covers |
 |---|---|---|
-| Server | `cd server && npm install && npm test` | Risk scorer, API, sign-in, languages (the translation test catches missing Chinese or Malay words) |
+| Server | `cd server && npm install && npm test` | Risk scorer, API, sign-in, languages (the translation test catches missing Chinese, Malay or Tamil words) |
 | Text detector | `cd "text detector prototype" && npm test` | The red-flag rules in all three languages |
 | Image AI label check | `cd "image detector prototype" && node --test "tests/*.test.js"` | Reading labels from JPEG, PNG and WebP, the verdict rules, "never real" |
 | Voice detector | `cd "voice detector prototype" && ..\.venv\Scripts\python -m pytest tests` | The detector, calibration and API |
@@ -187,9 +187,9 @@ Each detector also has an evaluation you can rerun. See its README for the comma
 
 - On phones, the **Menu** button (top left, and in the bottom bar) opens the menu. **Language, text size (A / A+ / A++) and Read aloud** are the first things in it. Tablets and desktops have them in the top bar.
 - Results always use an icon and words, never colour alone. Every screen has one heading for screen readers.
-- **English / 中文 / Bahasa Melayu**: the choice applies straight away and is remembered on the device. Read aloud uses a voice in the chosen language, or English if the device has none.
-- Translated: every customer screen except Is the caller a real person? and Family passphrase. The staff console is English only.
-- The Chinese and Malay were drafted with AI help and still need a native speaker to check them. To translate a screen, see "How to translate your screen" in [TEAM-FILES.md](TEAM-FILES.md).
+- **English / 中文 / Bahasa Melayu / தமிழ்** (Singapore's four official languages): the choice applies straight away and is remembered on the device. Read aloud uses a voice in the chosen language, or English if the device has none.
+- Translated: every customer screen. The staff console is English only.
+- The Chinese, Malay and Tamil were drafted with AI help and still need a native speaker to check them. The message checker's red-flag rules are English, Chinese and Malay only, so a Tamil message gets its result in Tamil but is marked as a rough guess. To translate a screen, see "How to translate your screen" in [TEAM-FILES.md](TEAM-FILES.md).
 
 ## Privacy and safety
 
@@ -217,7 +217,7 @@ These are prototypes, with these limits:
 | `index.html` | The one page. It links every file below. |
 | `css/` | `base.css` and `clarity.css` (shared), and `features/` (one file per feature) |
 | `js/core/` | Shared code: router, state, helpers, accessibility, languages, who may open what |
-| `js/data/` | Made-up data and the words (in three languages) for each feature |
+| `js/data/` | Made-up data and the words (in four languages) for each feature |
 | `js/features/` | One file per feature, each inside its own `(function () { ... })();` |
 | `server/` | Express server: sign-in, risk API, passphrase API, and their tests |
 | `database/` | Supabase setup (sign-in tables) |

@@ -29,6 +29,8 @@ test("setLanguage() switches what t() gives back", () => {
   assert.equal(t("menu.home"), "主页");
   setLanguage("ms");
   assert.equal(t("menu.home"), "Utama");
+  setLanguage("ta");
+  assert.equal(t("menu.home"), "முகப்பு");
 });
 
 test("a language we don't offer is ignored", () => {
@@ -85,7 +87,21 @@ test("the call match words match the calls matchCall() returns", () => {
 });
 
 // The shared words plus every screen's words
-const ALL = [{ name: "shared (i18n.js)", text: { en: I18N.en, zh: I18N.zh, ms: I18N.ms } }, ...teamTexts()];
+const ALL = [{ name: "shared (i18n.js)", text: { en: I18N.en, zh: I18N.zh, ms: I18N.ms, ta: I18N.ta } }, ...teamTexts()];
+
+// The blanks ({name}, {phone} ...) and the bold parts (<strong>) must survive translation, or a
+// screen would show "{name}" or lose its bold warning in one language only
+test("every translation keeps the same blanks and bold parts as the English", () => {
+  const blanks = text => (text.match(/\{\w+\}|<\/?strong>/g) || []).sort().join(" ");
+  for (const { name, text } of ALL) {
+    for (const lang of ["zh", "ms", "ta"]) {
+      for (const key of Object.keys(text.en)) {
+        if (key.startsWith("test.") || !(key in text[lang])) continue;
+        assert.equal(blanks(text[lang][key]), blanks(text.en[key]), `${name}: ${lang} "${key}"`);
+      }
+    }
+  }
+});
 
 test("the badge words match RESULTS in helpers.js", () => {
   const helpers = fs.readFileSync(path.join(DATA_DIR, "..", "core", "helpers.js"), "utf8");
@@ -104,9 +120,9 @@ test("no two screens use the same key", () => {
   }
 });
 
-test("every English word has a Chinese and a Malay version", () => {
+test("every English word has a Chinese, a Malay and a Tamil version", () => {
   for (const { name, text } of ALL) {
-    for (const lang of ["zh", "ms"]) {
+    for (const lang of ["zh", "ms", "ta"]) {
       const missing = Object.keys(text.en).filter(key => !key.startsWith("test.") && !(key in text[lang]));
       assert.deepEqual(missing, [], `${name}: missing in ${lang}`);
     }

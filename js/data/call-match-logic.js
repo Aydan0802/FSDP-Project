@@ -12,7 +12,7 @@
 //   about    what the call was about
 // team, time and about stay in English here (matchCall() returns them unchanged). A screen that
 // shows them to a customer looks up t("cml.call.<id>.team") etc. instead.
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const CALL_MATCH_LOGIC_DATA = {
   outboundCalls: [
@@ -44,6 +44,14 @@ const CALL_MATCH_LOGIC_DATA = {
       "cml.call.deposit.team": "Deposit",
       "cml.call.deposit.time": "Semalam, 3:40 petang",
       "cml.call.deposit.about": "pembaharuan deposit tetap anda"
+    },
+    ta: {
+      "cml.call.card.team": "அட்டைச் சேவைகள்",
+      "cml.call.card.time": "இன்று, காலை 10:05",
+      "cml.call.card.about": "உங்கள் புதிய டெபிட் அட்டை",
+      "cml.call.deposit.team": "வைப்புத்தொகை",
+      "cml.call.deposit.time": "நேற்று, மாலை 3:40",
+      "cml.call.deposit.about": "உங்கள் நிலை வைப்புத்தொகை புதுப்பித்தல்"
     }
   }
 };

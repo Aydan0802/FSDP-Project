@@ -5,9 +5,9 @@
 // Put this feature's made-up data inside PAUSE_VERIFY_DATA, for example
 // PAUSE_VERIFY_DATA.examples = [ ... ]. Keep to this one name, so it can't clash with a teammate's file.
 //
-// text: the screen's words in English, Chinese and Malay (see "How to translate your screen" in
+// text: the screen's words in English, Chinese, Malay and Tamil (see "How to translate your screen" in
 // TEAM-FILES.md). DATA in js/features/pause-verify.js holds these keys instead of the words.
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const PAUSE_VERIFY_DATA = {
   text: {
@@ -184,6 +184,64 @@ const PAUSE_VERIFY_DATA = {
       "pv.restart": "Mulakan demo semula",
       "pv.breakOver": "Rehat kopi anda sudah tamat. Ambil masa untuk buat keputusan.",
       "pv.breakOverLive": "Rehat kopi anda sudah tamat. Anda boleh buat keputusan sekarang."
+    },
+    ta: {
+      "pv.sample.newPerson": "இந்த நபருக்கு நீங்கள் இதற்கு முன் பணம் அனுப்பியதில்லை.",
+      "pv.sample.bigAmount": "S$8,000 என்பது நீங்கள் வழக்கமாக அனுப்புவதைவிட மிக அதிகம்.",
+      "pv.q.phone": "இப்போது யாராவது உங்களுடன் தொலைபேசியில் பேசிக்கொண்டிருக்கிறார்களா?",
+      "pv.q.phone.playback": "இப்போது ஒருவர் உங்களுடன் தொலைபேசியில் பேசிக்கொண்டிருக்கிறார்.",
+      "pv.q.heard": "யாராவது இவற்றில் ஏதாவது உங்களிடம் சொன்னார்களா?",
+      "pv.q.heard.hint": "தொலைபேசியிலோ செய்தியிலோ நீங்கள் கேட்ட ஒவ்வொன்றையும் தொடுங்கள். எதையும் கேட்கவில்லை என்றால், 'அடுத்து' அழுத்துங்கள்.",
+      "pv.line.danger": "உங்கள் கணக்கு ஆபத்தில் உள்ளது",
+      "pv.line.safeAccount": "உங்கள் பணத்தை ஒரு பாதுகாப்பான கணக்குக்கு மாற்றுங்கள்",
+      "pv.line.secret": "யாரிடமும் சொல்லாதீர்கள், வங்கியிடம்கூட",
+      "pv.line.now": "நீங்கள் இப்போதே செய்ய வேண்டும்",
+      "pv.q.met": "நீங்கள் பணம் அனுப்பும் நபரை நேரில் சந்தித்திருக்கிறீர்களா?",
+      "pv.q.met.playback": "இந்த நபரை நீங்கள் நேரில் சந்தித்ததே இல்லை.",
+      "pv.choice.yes": "ஆம்",
+      "pv.choice.no": "இல்லை",
+      "pv.choice.unsure": "உறுதியில்லை",
+      "pv.outcome.scam.label": "மோசடி போல் தெரிகிறது",
+      "pv.outcome.scam.title": "இது மோசடி போல் தெரிகிறது",
+      "pv.outcome.scam.text": "இவை மோசடியின் மிகப் பெரிய அறிகுறிகள். உண்மையான வங்கி அதிகாரி ரகசியம் காக்கச் சொல்லவோ, பணத்தை ஒரு \"பாதுகாப்பான கணக்குக்கு\" மாற்றச் சொல்லவோ மாட்டார்.",
+      "pv.outcome.careful.label": "கவனமாக இருங்கள்",
+      "pv.outcome.careful.title": "தயவுசெய்து கவனமாக இருங்கள்",
+      "pv.outcome.careful.text": "இது மோசடியின் ஓர் அறிகுறி. பணம் அனுப்பும் முன் நீங்கள் நம்பும் ஒருவரிடம் கேளுங்கள்.",
+      "pv.outcome.clear.label": "எச்சரிக்கை அறிகுறிகள் இல்லை",
+      "pv.outcome.clear.title": "எந்த எச்சரிக்கை அறிகுறியும் கிடைக்கவில்லை",
+      "pv.outcome.clear.text": "உங்கள் பதில்களில் மோசடியின் அறிகுறி எதுவும் இல்லை. இன்னும் ஏதாவது சரியில்லை என்று தோன்றினால், ரத்து செய்வது பரவாயில்லை.",
+      "pv.toldYou": "ஒருவர் உங்களிடம் சொன்னார்: \"{line}\".",
+      "pv.pill": "பணப் பரிமாற்றம் நிறுத்திவைக்கப்பட்டது",
+      "pv.title": "கொஞ்சம் பொறுங்கள், ஒரு கோப்பி இடைவேளை எடுப்போம்",
+      "pv.timeLabel": "உங்கள் கோப்பி இடைவேளை முடிந்து நீங்கள் முடிவெடுக்கும் வரை",
+      "pv.safe": "உங்கள் பணம் பாதுகாப்பாக உங்கள் கணக்கிலேயே உள்ளது.",
+      "pv.coach": "இங்கே என்ன பதில் சொல்ல வேண்டும் என்று யாராவது சொல்லிக்கொடுத்தால், அது மோசடி. உண்மையான வங்கி அதிகாரி அப்படிச் செய்ய மாட்டார்.",
+      "pv.why": "உங்கள் {amount} பணப் பரிமாற்றத்தை ஏன் நிறுத்தினோம்",
+      "pv.askCount": "நீங்கள் காத்திருக்கும்போது {count} சிறிய கேள்விகளைக் கேட்போம்.",
+      "pv.okayAsk": "சரி, கேளுங்கள்",
+      "pv.cancel": "இந்தப் பணப் பரிமாற்றத்தை ரத்து செய்",
+      "pv.next": "அடுத்து",
+      "pv.count": "கேள்வி {number} / {total}",
+      "pv.back": "பின்செல்",
+      "pv.waitNote": "கோப்பி இடைவேளை முடிந்ததும் தொடரலாம்.",
+      "pv.toldUs": "நீங்கள் எங்களிடம் சொன்னது",
+      "pv.whatNow": "இப்போது என்ன செய்வது",
+      "pv.hangUp": "அழைப்பைத் துண்டியுங்கள். பரவாயில்லை, உண்மையான வங்கி அதிகாரி வருத்தப்பட மாட்டார்.",
+      "pv.callMatch": "உண்மையில் வங்கிதான் அழைக்கிறதா என்று சரிபார்",
+      "pv.passphrase": "என் குடும்ப ரகசியச் சொல்லைக் கேள்",
+      "pv.report": "இந்த மோசடியைப் புகாரளி",
+      "pv.continueSure": "நான் உறுதியாக இருக்கிறேன், பணப் பரிமாற்றத்தைத் தொடர்",
+      "pv.continue": "பணப் பரிமாற்றத்தைத் தொடர்",
+      "pv.done.cancelledTag": "ரத்து செய்யப்பட்டது",
+      "pv.done.sentTag": "அனுப்பப்பட்டது",
+      "pv.done.cancelledTitle": "உங்கள் பணப் பரிமாற்றம் ரத்து செய்யப்பட்டது",
+      "pv.done.sentTitle": "உங்கள் பணப் பரிமாற்றம் சென்றுகொண்டிருக்கிறது",
+      "pv.done.cancelledText": "உங்கள் கணக்கிலிருந்து எந்தப் பணமும் போகவில்லை. யாராவது இன்னும் உங்களை வற்புறுத்தினால், அழைப்பைத் துண்டித்து வங்கியிடம் சொல்லுங்கள்.",
+      "pv.done.sentText": "இது ஒரு மாதிரி, எனவே உண்மையான பணம் எதுவும் அனுப்பப்படவில்லை.",
+      "pv.reportScam": "மோசடியைப் புகாரளி",
+      "pv.restart": "மாதிரியை மீண்டும் தொடங்கு",
+      "pv.breakOver": "உங்கள் கோப்பி இடைவேளை முடிந்தது. நிதானமாக முடிவெடுங்கள்.",
+      "pv.breakOverLive": "உங்கள் கோப்பி இடைவேளை முடிந்தது. இப்போது நீங்கள் முடிவெடுக்கலாம்."
     }
   }
 };

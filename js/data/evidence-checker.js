@@ -7,9 +7,9 @@
 // The screen that shows them is the "Check anything" screen (js/features/analyser.js).
 //
 // Languages: every label, step, title and reason below is a translation key, not the words.
-// The words in English, Chinese and Malay are in text at the bottom, and the screen shows them
+// The words in English, Chinese, Malay and Tamil are in text at the bottom, and the screen shows them
 // with t() (see "How to translate your screen" in TEAM-FILES.md).
-// The Chinese and Malay are AI-drafted and still need a native speaker to check them.
+// The Chinese, Malay and Tamil are AI-drafted and still need a native speaker to check them.
 
 const EVIDENCE_CHECKER_DATA = {
   // The two kinds of file this checker handles: what to call them, their icon, and the three
@@ -324,6 +324,71 @@ const EVIDENCE_CHECKER_DATA = {
       "ev.img.notProof": "Ini menunjukkan cara gambar dibuat, bukan sama ada mesej itu penipuan.",
       "ev.img.step1": "Jangan percaya apa yang ditunjukkan gambar ini sehingga anda menyemaknya dengan cara lain.",
       "ev.img.step2": "Jika ia berkaitan wang anda, telefon OCBC sendiri di 1800 363 3333."
+    },
+    ta: {
+      "ev.kind.screenshot": "திரைப்பிடிப்பு அல்லது புகைப்படம்",
+      "ev.kind.screenshot.step1": "படத்தில் உள்ள சொற்களைப் படிக்கிறோம்",
+      "ev.kind.screenshot.step2": "கோப்பினுள் AI குறிகளைத் தேடுகிறோம்",
+      "ev.kind.screenshot.step3": "இணைப்புகளையும் சின்னங்களையும் சரிபார்க்கிறோம்",
+      "ev.kind.document": "கடிதம் அல்லது ஆவணம்",
+      "ev.kind.document.step1": "ஆவணத்தைப் படிக்கிறோம்",
+      "ev.kind.document.step2": "கடிதத் தலைப்பையும் கையொப்பத்தையும் சரிபார்க்கிறோம்",
+      "ev.kind.document.step3": "தொலைபேசி எண்களையும் இணைப்புகளையும் சரிபார்க்கிறோம்",
+      "ev.screenshot.title": "இந்தப் படம் மாற்றப்பட்டிருக்கலாம்",
+      "ev.screenshot.reason1": "தொகைக்கு அருகில் உள்ள எண்கள் வேறு எழுத்துருவில் உள்ளன.",
+      "ev.screenshot.reason2": "OCBC சின்னம் மங்கலாகவும் தவறான சிவப்பு நிறத்திலும் உள்ளது.",
+      "ev.screenshot.reason3": "அதில் உள்ள இணைப்பு ocbc.com-க்கு அல்ல, ocbc-secure-sg.example-க்குச் செல்கிறது.",
+      "ev.screenshot.step1": "இந்தப் படத்துக்காகப் பணம் அனுப்ப வேண்டாம்.",
+      "ev.screenshot.step2": "அதில் உள்ள எந்த இணைப்பையும் தொட வேண்டாம், எந்த எண்ணையும் அழைக்க வேண்டாம்.",
+      "ev.screenshot.step3": "OCBC செயலியில் நீங்களே உங்கள் கணக்கைச் சரிபாருங்கள்.",
+      "ev.document.title": "இந்தக் கடிதத்தில் கவனமாக இருங்கள்",
+      "ev.document.reason1": "கடிதத் தலைப்பு சாதாரணமாகத் தெரிகிறது.",
+      "ev.document.reason2": "ஆனால் அதில் உள்ள தொலைபேசி எண் OCBC எண் அல்ல.",
+      "ev.document.reason3": "WhatsApp மூலம் பதில் அனுப்பச் சொல்கிறது. OCBC கடிதங்கள் அப்படிச் சொல்லாது.",
+      "ev.document.step1": "கடிதத்தில் உள்ள எண்ணை அழைக்க வேண்டாம்.",
+      "ev.document.step2": "உங்கள் அட்டையின் பின்புறம் உள்ள எண்ணில் நீங்களே OCBC-ஐ அழையுங்கள்.",
+      "ev.document.step3": "கடிதம் சொல்வதைச் செய்யும் முன், அது உண்மையானதா என்று வங்கியிடம் கேளுங்கள்.",
+      "ev.sample.screenshot": "மாதிரித் திரைப்பிடிப்பு",
+      "ev.sample.document": "மாதிரிக் கடிதம்",
+      "ev.redirect.title": "உங்களுக்கு உறுதியில்லாத எதையும் சரிபாருங்கள்",
+      "ev.redirect.text": "சரிபார்ப்பைத் திறக்கிறோம்…",
+      "ev.ocr.scam.title": "சொற்களில் வலுவான மோசடி அறிகுறிகள் கிடைத்தன",
+      "ev.ocr.scam.reason1": "இந்தக் கோப்பில் உள்ள உரை அவசர மிரட்டல்கள், சந்தேகமான இணைப்புகளைப் பயன்படுத்துகிறது, அல்லது அதிகாரப்பூர்வமற்ற எண்ணைத் தொடர்புகொள்ளச் சொல்கிறது.",
+      "ev.ocr.scam.step1": "எந்த இணைப்பையும் தொட வேண்டாம், எந்த எண்ணையும் அழைக்க வேண்டாம், பணம் அனுப்ப வேண்டாம்.",
+      "ev.ocr.scam.step2": "சரிபார்க்க நீங்களே OCBC-ஐ 1800 363 3333-இல் அழையுங்கள்.",
+      "ev.ocr.suspicious.title": "இந்தக் கோப்பில் சில சந்தேகமான சொற்கள் உள்ளன",
+      "ev.ocr.suspicious.reason1": "உரையின் சில பகுதிகள் வழக்கத்துக்கு மாறாக உள்ளன அல்லது உங்களை அவசரப்படுத்துகின்றன.",
+      "ev.ocr.suspicious.step1": "இப்போதைக்குப் பதில் சொல்லவோ பணம் செலுத்தவோ வேண்டாம்.",
+      "ev.ocr.suspicious.step2": "முதலில் அதிகாரப்பூர்வச் செயலி அல்லது உதவி எண் மூலம் நேரடியாகச் சரிபாருங்கள்.",
+      "ev.ocr.clean.title": "உரையில் வெளிப்படையான மோசடி அறிகுறிகள் இல்லை",
+      "ev.ocr.clean.reason1": "இந்தக் கோப்பிலிருந்து எடுத்த சொற்கள் வழக்கமான மோசடி முறைகளுடன் பொருந்தவில்லை.",
+      "ev.ocr.clean.step1": "இருந்தாலும் கவனமாக இருங்கள், உங்கள் OTP அல்லது Singpass விவரங்களை ஒருபோதும் பகிர வேண்டாம்.",
+      "ev.err.noFile.title": "பதிவேற்றிய கோப்பைப் படிக்க முடியவில்லை",
+      "ev.err.noFile.reason1": "கோப்பின் தரவு இன்னும் சரிபார்ப்புக்கு அனுப்பப்படவில்லை.",
+      "ev.err.noFile.step1": "கோப்பை மீண்டும் தேர்ந்தெடுங்கள், அல்லது உரையை நேரடியாக ஒட்டுங்கள்.",
+      "ev.err.ocrUnavailable.title": "இந்த வகைக் கோப்பிலிருந்து இன்னும் உரையைப் படிக்க முடியாது",
+      "ev.err.ocrUnavailable.reason1": "கருவியிலுள்ள படம் அல்லது PDF படிப்பான் இன்னும் ஏற்றப்படவில்லை.",
+      "ev.err.ocrUnavailable.step1": "அதற்குப் பதிலாக, செய்தியில் உள்ள சொற்களை உரைச் சரிபார்ப்பில் ஒட்டுங்கள்.",
+      "ev.err.emptyText.title": "படிக்கக்கூடிய சொற்கள் இல்லை",
+      "ev.err.emptyText.reason1": "இந்தப் படத்திலோ ஆவணத்திலோ தெளிவான உரை கிடைக்கவில்லை.",
+      "ev.err.emptyText.step1": "தெளிவான திரைப்பிடிப்பை முயலுங்கள், அல்லது உரையை நேரடியாக ஒட்டுங்கள்.",
+      "ev.img.panelTitle": "படத்தைப் பற்றி",
+      "ev.img.title.likely": "இந்தப் படம் AI மூலம் உருவாக்கப்பட்டது",
+      "ev.img.title.partial": "இந்தப் படத்தின் ஒரு பகுதி AI மூலம் உருவாக்கப்பட்டது அல்லது மாற்றப்பட்டது",
+      "ev.img.title.uncertain": "இந்தப் படத்தின் உள்ளடக்கச் சான்றுகள் படத்துடன் பொருந்தவில்லை",
+      "ev.img.c2paAi": "அதன் உள்ளடக்கச் சான்றுகள் (அதை உருவாக்கிய செயலியின் கையொப்பமிட்ட பதிவு) அது AI மூலம் உருவாக்கப்பட்டது என்கின்றன.",
+      "ev.img.c2paAiEdit": "அதன் ஒரு பகுதி AI மூலம் உருவாக்கப்பட்டது அல்லது மாற்றப்பட்டது என்று அதன் உள்ளடக்கச் சான்றுகள் சொல்கின்றன.",
+      "ev.img.c2paSigned": "பதிவின் கையொப்பம் சரியாக உள்ளது, எனவே கையொப்பமிட்ட பிறகு படம் மாற்றப்படவில்லை.",
+      "ev.img.c2paUnchecked": "பதிவின் கையொப்பத்தைச் சரிபார்க்க முடியவில்லை, எனவே அது சாதாரணக் குறியாகவே கணக்கிடப்படுகிறது.",
+      "ev.img.c2paBroken": "அதன் உள்ளடக்கச் சான்றுகள் படத்துடன் பொருந்தவில்லை: அவை சேர்க்கப்பட்ட பிறகு படம் மாற்றப்பட்டது.",
+      "ev.img.labelAi": "கோப்பின் மறைந்த விவரங்களில் \"AI உருவாக்கியது\" என்று குறிக்கப்பட்டுள்ளது.",
+      "ev.img.labelAiEdit": "கோப்பின் மறைந்த விவரங்களில் \"AI மூலம் மாற்றப்பட்டது\" என்று குறிக்கப்பட்டுள்ளது.",
+      "ev.img.generator": "கோப்பில் ஒரு AI பட உருவாக்கியின் அமைப்புகள் உள்ளன.",
+      "ev.img.toolName": "கோப்பின் மறைந்த விவரங்கள் ஒரு AI படக் கருவியின் பெயரைக் குறிப்பிடுகின்றன.",
+      "ev.img.unsigned": "இத்தகைய குறிகளை யார் வேண்டுமானாலும் சேர்க்கவோ நீக்கவோ முடியும், எனவே அவை இருக்கும்போது மட்டுமே கணக்கில் கொள்ளப்படும்.",
+      "ev.img.notProof": "இது படம் எப்படி உருவாக்கப்பட்டது என்பதைக் காட்டுகிறது, செய்தி மோசடியா என்பதை அல்ல.",
+      "ev.img.step1": "வேறு வழியில் சரிபார்க்கும் வரை இந்தப் படம் காட்டுவதை நம்ப வேண்டாம்.",
+      "ev.img.step2": "இது உங்கள் பணம் பற்றியது என்றால், நீங்களே OCBC-ஐ 1800 363 3333-இல் அழையுங்கள்."
     }
   }
 };

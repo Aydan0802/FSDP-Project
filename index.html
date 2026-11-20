@@ -12,10 +12,12 @@
   <!-- Owner: SHARED (whole team). Every file is already linked below, so nobody needs to edit
        this page again. Each person only changes the files listed under their own name. -->
 
-  <!-- Clarity's font, from Google Fonts. Without internet the page falls back to Segoe UI. -->
+  <!-- Clarity's font, from Google Fonts. Without internet the page falls back to Segoe UI.
+       Plus Jakarta Sans has no Tamil letters, so Noto Sans Tamil draws those. The browser only
+       downloads it when a page actually shows Tamil. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Shared styles: base first, then the Clarity theme -->
   <link rel="stylesheet" href="css/base.css">
@@ -32,6 +34,7 @@
   <!-- Jose -->
   <link rel="stylesheet" href="css/features/risk-scorer.css">
   <link rel="stylesheet" href="css/features/report.css">
+  <link rel="stylesheet" href="css/features/chatbot.css">
   <link rel="stylesheet" href="css/features/freeze.css">
   <!-- Yan Lin -->
   <link rel="stylesheet" href="css/features/call-match.css">
@@ -77,6 +80,7 @@
   <!-- Jose -->
   <script src="js/data/risk-scorer.js"></script>
   <script src="js/data/report.js"></script>
+  <script src="js/data/chatbot.js"></script>
   <script src="js/data/freeze.js"></script>
   <script src="js/data/call-match-logic.js"></script>
   <!-- Yan Lin -->
@@ -106,11 +110,13 @@
   <script src="js/features/analyser.js"></script>
   <script src="js/features/coming-soon.js"></script>
   <!-- Jose (call-match-logic.js must load before Yan Lin's call-match.js, which uses it) -->
+  <script src="js/features/chatbot.js"></script>
   <script src="js/features/risk-scorer-logic.js"></script>
   <script src="js/features/risk-scorer.js"></script>
   <script src="js/features/report.js"></script>
   <script src="js/features/freeze.js"></script>
   <script src="js/features/call-match-logic.js"></script>
+  <script src="js/features/staff-reports.js"></script>
   <!-- Yan Lin -->
   <script src="js/features/call-match.js"></script>
   <!-- Reading text from pictures and PDFs, on this device (nothing is uploaded) -->

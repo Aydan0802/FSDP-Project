@@ -16,7 +16,7 @@
 // Every word comes from t() (js/core/i18n.js); the words are in js/data/calling-now.js.
 
 (function () {
-  addTranslations(CALLING_NOW_DATA.text);   // this screen's English, Chinese and Malay words
+  addTranslations(CALLING_NOW_DATA.text);   // this screen's English, Chinese, Malay and Tamil words
 
   function myState() {
     if (!appState.callingNow) appState.callingNow = { step: "1", answer: "" };

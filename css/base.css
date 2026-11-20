@@ -695,8 +695,8 @@ a, button, select, summary, label { -webkit-tap-highlight-color: transparent; to
 /* A short message at the bottom of the screen */
 .toast {
   position: fixed; left: 50%; bottom: 7rem; z-index: 20; transform: translateX(-50%);
-  max-width: calc(100vw - 2rem); padding: .75rem 1.25rem;
-  background: var(--charcoal); color: var(--white); border-radius: 999px; box-shadow: var(--shadow); font-weight: 700;
+  width: max-content; max-width: calc(100vw - 2rem); padding: .75rem 1.25rem; text-align: center;   /* max-content: left: 50% alone squeezed long messages (Tamil) into a thin column */
+  background: var(--charcoal); color: var(--white); border-radius: 1.5rem; box-shadow: var(--shadow); font-weight: 700;
 }
 .toast:empty { display: none; }
 
