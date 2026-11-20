@@ -1,15 +1,16 @@
 "use strict";
 
-// Feature: Customer home ("Need help right now?" card, one big check, a short list of the rest,
-// recent checks).
+// Feature: Customer home ("Need help right now?" card, one big check, the other tools in three
+// small groups, recent checks).
 // Owner: Yan Lin
-// Few choices on purpose: seniors find a long page of tiles hard to scan, so the page has two
-// urgent buttons, one big "Check" tile and a plain one-line list for everything else.
+// Few choices and few words on purpose: seniors find a long page of tiles hard to scan, so the page
+// has two urgent buttons, one big "Check" tile and short one-line lists in small groups, with the
+// least urgent last. The AI helper is the small round button at the bottom right (helpers.js).
 // This is also the landing page. Guests (not signed in) see it too:
 //   - a short welcome for guests, with a small drawing, instead of "Hello, Mdm Lim"
 //   - the urgent card and the open check tools work straight away, with no sign-in
 //   - tools that need signing in show a small lock (tapping one goes to sign in, then back)
-//   - signed-in customers also get "Your safety checklist" (with a progress bar) and recent checks
+//   - signed-in customers also get their recent checks
 // Words come from t() (js/core/i18n.js); this screen's words are in CUSTOMER_HOME_DATA.text.
 
 (function () {
@@ -24,11 +25,12 @@
     return hour < 12 ? t("home.morning") : hour < 18 ? t("home.afternoon") : t("home.evening");
   }
 
-  // The one big "Check something" tile (red border): the check most people need
+  // The one big "Check something" tile (red border): the check most people need.
+  // tool.text (a grey line under the title) is optional; Home leaves it out to keep words few.
   function mainToolHtml(tool) {
     return `<a class="tool tool--main" href="#${tool.route}">
         <span class="tool-icon">${icon(tool.icon)}</span>
-        <span class="tool-text"><strong>${t(tool.title)}</strong><span>${t(tool.text)}</span></span>
+        <span class="tool-text"><strong>${t(tool.title)}</strong>${tool.text ? `<span>${t(tool.text)}</span>` : ""}</span>
         ${icon("chevron", "tool-arrow")}
       </a>`;
   }
@@ -123,55 +125,13 @@
       </section>`;
   }
 
-  // ---------- "Your safety checklist" (signed-in customers) ----------
-
-  // Which steps are done, from what the other features remember for this visit
-  function stepDone(id) {
-    if (id === "signIn") return isSignedIn();
-    if (id === "passphrase") {
-      // The family list now comes from the server (passphrase.js): done once it has someone on it.
-      // list is null until the Family passphrase screen has loaded it.
-      const family = appState.passphrase && appState.passphrase.list;
-      return Array.isArray(family) && family.length > 0;
-    }
-    if (id === "learn") return Boolean(appState.learnSigns && appState.learnSigns.picked);
-    if (id === "check") return Boolean(appState.analyser && appState.analyser.history.length);
-    return false;
-  }
-
-  // A progress bar ("2 of 4 done"), the steps with ticks, and a button for the next step.
-  // When everything is done, the bar is full and a tick shows it.
-  function checklistHtml(data) {
-    const steps = data.checklist.map(step => ({ ...step, done: stepDone(step.id) }));
-    const done = steps.filter(step => step.done).length;
-    const total = steps.length;
-    const next = steps.find(step => !step.done);
-    return `<section class="checklist" aria-labelledby="checklist-title" data-read>
-        <div class="checklist-head">
-          <h2 id="checklist-title">${t("home.progress.title")}</h2>
-          <p class="checklist-count tabular">${t("home.progress.count", { done, total })}</p>
-        </div>
-        <div class="checklist-bar" role="progressbar" aria-labelledby="checklist-title"
-          aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${done}" aria-valuetext="${t("home.progress.count", { done, total })}">
-          <span style="--p: ${done / total}"></span>
-        </div>
-        <ol class="checklist-steps">
-          ${steps.map(step => `<li class="${step.done ? "is-done" : ""}">
-              <span class="checklist-mark">${step.done ? icon("check") : ""}</span>
-              <span>${t(step.label)}${step.done ? `<span class="visually-hidden"> (${t("home.progress.doneLabel")})</span>` : ""}</span>
-            </li>`).join("")}
-        </ol>
-        ${next
-          ? `<a class="btn btn-secondary btn-small checklist-next" href="#${next.route}">${t("home.progress.next", { step: t(next.label) })}${icon("arrow")}</a>`
-          : `<p class="checklist-all"><span class="done-mark">${icon("check")}</span>${t("home.progress.allDone")}</p>`}
-      </section>`;
-  }
-
   // The customer home screen's content. data-read marks what Read aloud reads (see a11y.js).
   function homeHtml() {
     const data = CUSTOMER_HOME_DATA;
     const signedIn = isSignedIn();
     const recent = recentChecks();
+    // Guests see what the lock means once, in the first group that has a locked tool
+    const lockNoteAt = signedIn ? -1 : data.groups.findIndex(group => group.tools.some(tool => tool.locked));
     return customerPageHtml("customer", `<div class="narrow home">
       ${helloHtml()}
 
@@ -180,7 +140,7 @@
         <div class="urgent-choices">
           <a class="big-choice big-choice--first" href="#calling-now">
             <span class="big-choice-icon">${icon("phone")}</span>
-            <span class="big-choice-text"><strong>${t("home.callingNow")}</strong><span>${t("home.callingNowSub")}</span></span>
+            <span class="big-choice-text"><strong>${t("home.callingNow")}</strong></span>
             ${icon("chevron", "big-choice-arrow")}
           </a>
           <a class="big-choice" href="#freeze">
@@ -192,24 +152,12 @@
         <p class="call-line">${t("home.callYourself")} <a class="tel-link" href="${OCBC_TEL}">${OCBC_PHONE}</a></p>
       </section>
 
-      ${typeof HELPER_DATA === "undefined" ? "" : `<a class="tool tool--main hp-home" href="#helper">
-        <span class="tool-icon">${icon("chat")}</span>
-        <span class="tool-text"><strong>${t("hp.home.title")}</strong><span>${t("hp.home.text")}</span></span>
-        ${icon("chevron", "tool-arrow")}
-      </a>`}
-
-      ${signedIn ? checklistHtml(data) : ""}
-
-      <section class="tools-section" aria-labelledby="check-title" data-read>
-        <h2 id="check-title">${t("home.checkTitle")}</h2>
-        ${mainToolHtml(data.mainTool)}
-      </section>
-
-      <section class="tools-section" aria-labelledby="more-title" data-read>
-        <h2 id="more-title">${t("home.moreTitle")}</h2>
-        ${signedIn ? "" : `<p class="tools-sub lock-note">${t("home.lockNote", { lock: `<span class="menu-lock" aria-hidden="true">${icon("lock")}</span>` })}</p>`}
-        ${moreToolsHtml(data.moreTools)}
-      </section>
+      ${data.groups.map((group, i) => `<section class="tools-section" aria-labelledby="${group.id}-title" data-read>
+        <h2 id="${group.id}-title">${t(group.title)}</h2>
+        ${i === lockNoteAt ? `<p class="tools-sub lock-note">${t("home.lockNote", { lock: `<span class="menu-lock" aria-hidden="true">${icon("lock")}</span>` })}</p>` : ""}
+        ${group.main ? mainToolHtml(group.main) : ""}
+        ${moreToolsHtml(group.tools)}
+      </section>`).join("")}
 
       ${signedIn ? `<details class="recent">
         <summary>${t("home.recentTitle", { count: recent.length })}</summary>

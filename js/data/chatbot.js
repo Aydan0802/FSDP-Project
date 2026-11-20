@@ -29,8 +29,7 @@ const HELPER_DATA = {
       "hp.private": "Never type your OTP, PIN or card number here. If you do, I will hide it.",
       "hp.ai": "Answers come from an AI and can be wrong. For anything about your money, call OCBC.",
       "hp.restart": "Start again",
-      "hp.home.title": "Not sure what to do? Ask the helper",
-      "hp.home.text": "Tell it what happened, in your own words",
+      "hp.fab": "AI helper",
       "hp.menu": "Ask the helper"
     },
     zh: {
@@ -51,8 +50,7 @@ const HELPER_DATA = {
       "hp.private": "千万不要在这里输入您的 OTP、PIN 或卡号。如果您输入了，我会把它隐藏起来。",
       "hp.ai": "回答来自 AI，可能会出错。凡是关于您的钱的事，请打电话给 OCBC。",
       "hp.restart": "重新开始",
-      "hp.home.title": "不知道该怎么办？问问小帮手",
-      "hp.home.text": "用您自己的话告诉它发生了什么事",
+      "hp.fab": "AI 小帮手",
       "hp.menu": "问问小帮手"
     },
     ms: {
@@ -73,8 +71,7 @@ const HELPER_DATA = {
       "hp.private": "Jangan sekali-kali taip OTP, PIN atau nombor kad anda di sini. Jika anda taip, saya akan sembunyikannya.",
       "hp.ai": "Jawapan datang daripada AI dan mungkin salah. Untuk apa-apa tentang wang anda, telefon OCBC.",
       "hp.restart": "Mula semula",
-      "hp.home.title": "Tidak pasti apa perlu dibuat? Tanya pembantu",
-      "hp.home.text": "Ceritakan apa yang berlaku, dengan kata-kata anda sendiri",
+      "hp.fab": "Pembantu AI",
       "hp.menu": "Tanya pembantu"
     },
     ta: {
@@ -95,8 +92,7 @@ const HELPER_DATA = {
       "hp.private": "உங்கள் OTP, PIN அல்லது அட்டை எண்ணை இங்கே ஒருபோதும் தட்டச்சு செய்ய வேண்டாம். செய்தால், நான் அதை மறைத்துவிடுவேன்.",
       "hp.ai": "பதில்கள் AI-இடமிருந்து வருகின்றன, தவறாக இருக்கலாம். உங்கள் பணம் பற்றிய எதற்கும், OCBC-ஐ அழையுங்கள்.",
       "hp.restart": "மீண்டும் தொடங்கு",
-      "hp.home.title": "என்ன செய்வது என்று தெரியவில்லையா? உதவியாளரிடம் கேளுங்கள்",
-      "hp.home.text": "என்ன நடந்தது என்று உங்கள் சொந்த வார்த்தைகளில் சொல்லுங்கள்",
+      "hp.fab": "AI உதவி",
       "hp.menu": "உதவியாளரிடம் கேளுங்கள்"
     }
   }
