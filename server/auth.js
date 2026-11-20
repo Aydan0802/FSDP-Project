@@ -11,9 +11,10 @@
 // Only customers can sign up. Staff accounts are made by the bank (see database/README.md), because
 // if anyone could make a staff account, the staff pages would be open to everyone.
 // The accounts live in a "user store" (db/user-store.js): Supabase, or the built-in demo accounts.
-// Two things are kept only in the server's memory, so they reset when the server restarts:
-// who is signed in (a random code in a cookie), and how many wrong passwords each account has had.
-// (A real bank would keep both in a database.)
+// Who is signed in is kept in a SIGNED cookie (see "Sessions" below), not in the server's memory,
+// so it keeps working on Vercel, where every request can land on a fresh copy of the server.
+// How many wrong passwords each account has had is still kept in memory, so on Vercel the lock
+// can reset early. (A real bank would keep that in a database.)
 
 const crypto = require("node:crypto");
 const express = require("express");
@@ -111,10 +112,27 @@ function readCookie(req, name) {
   return "";
 }
 
+// ---------- Sessions: signed cookies ----------
+// The cookie itself says who you are and until when, plus a signature: an HMAC-SHA256 of those
+// words made with a secret only the server knows. Any copy of the server can check it, and a
+// cookie someone made up or changed (say, "role":"staff") fails the check.
+// The secret: SESSION_SECRET if it is set; otherwise one worked out from SUPABASE_SECRET_KEY
+// (already set on Vercel, so every copy of the server gets the same one, and the key itself can't
+// be worked back out from it); otherwise a random one, which is fine for one server on a laptop.
+function sessionSecret(options) {
+  if (options.sessionSecret) return options.sessionSecret;
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (process.env.SUPABASE_SECRET_KEY) {
+    return crypto.createHash("sha256").update("pause-and-prove sessions:" + process.env.SUPABASE_SECRET_KEY).digest();
+  }
+  return crypto.randomBytes(32);
+}
+
 function createAuthRouter(store, options = {}) {
   const router = express.Router();
   const auth = createAuthService(store, options);
-  const sessions = new Map();   // session code -> { userId, role, loginId, expires }
+  const secret = sessionSecret(options);
+  const signedOut = new Map();   // session id -> expires: sessions signed out on THIS copy of the server
   const signups = new Map();    // computer address -> times of its recent sign-ups
   const maxSignups = options.maxSignupsPerHour || MAX_SIGNUPS_PER_HOUR;
 
@@ -128,19 +146,36 @@ function createAuthRouter(store, options = {}) {
     return true;
   }
 
+  const sign = text => crypto.createHmac("sha256", secret).update(text).digest("base64url");
+
+  // The session in the cookie, or null if there is none, it was changed, it ran out or it was signed out
   function sessionFor(req) {
-    const code = readCookie(req, COOKIE_NAME);
-    const session = code && sessions.get(code);
-    if (!session) return null;
-    if (session.expires < Date.now()) { sessions.delete(code); return null; }
-    return session;
+    const [words, signature] = readCookie(req, COOKIE_NAME).split(".");
+    if (!words || !signature) return null;
+    const expected = Buffer.from(sign(words));
+    const given = Buffer.from(signature);
+    // timingSafeEqual takes the same time however much matches, so timing gives nothing away
+    if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) return null;
+    let s;
+    try {
+      s = JSON.parse(Buffer.from(words, "base64url").toString("utf8"));
+    } catch (error) {
+      return null;
+    }
+    if (!s || typeof s.expires !== "number" || s.expires < Date.now() || signedOut.has(s.id)) return null;
+    return s;   // { id, userId, role, loginId, expires }
   }
 
   function startSession(res, user) {
-    for (const [code, session] of sessions) if (session.expires < Date.now()) sessions.delete(code);   // tidy up old ones
-    const code = crypto.randomBytes(32).toString("hex");
-    sessions.set(code, { ...user, expires: Date.now() + SESSION_HOURS * 3600 * 1000 });
-    res.cookie(COOKIE_NAME, code, {
+    const session = {
+      id: crypto.randomBytes(16).toString("hex"),   // so one session can be signed out
+      userId: user.userId,
+      role: user.role,
+      loginId: user.loginId,
+      expires: Date.now() + SESSION_HOURS * 3600 * 1000
+    };
+    const words = Buffer.from(JSON.stringify(session)).toString("base64url");
+    res.cookie(COOKIE_NAME, `${words}.${sign(words)}`, {
       httpOnly: true,            // page scripts can't read it
       sameSite: "strict",        // other websites can't use it
       path: "/",
@@ -200,9 +235,12 @@ function createAuthRouter(store, options = {}) {
     res.json({ signedIn: true, role: session.role, userId: session.loginId });
   });
 
+  // Signing out deletes the cookie from the browser. This copy of the server also remembers the
+  // session as signed out until it would have run out, in case the old cookie is sent again.
   router.post("/logout", (req, res) => {
-    const code = readCookie(req, COOKIE_NAME);
-    if (code) sessions.delete(code);
+    const session = sessionFor(req);
+    for (const [id, expires] of signedOut) if (expires < Date.now()) signedOut.delete(id);   // tidy up old ones
+    if (session) signedOut.set(session.id, session.expires);
     res.clearCookie(COOKIE_NAME, { path: "/" });
     res.json({ ok: true });
   });
