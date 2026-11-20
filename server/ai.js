@@ -2,26 +2,32 @@
 
 // Feature: the AI part of the helper chat (used by server/chat.js).
 // Owner: Jose
-// Asks a language model through Ollama for a reply and up to 3 buttons. Two ways to run it:
-//   Ollama Cloud   with OLLAMA_API_KEY: the model runs on Ollama's servers (https://ollama.com),
-//                  so it also works on Vercel. Has usage limits.
-//   On a laptop    without a key: Ollama installed on this computer. Free, no limits, slower,
-//                  and it can't run on Vercel.
+// Asks a language model for a reply and up to 3 buttons. Three ways to run it:
+//   Google Gemini  with GEMINI_API_KEY: runs on Google's servers, so it works on Vercel. The key is
+//                  free from aistudio.google.com (with daily limits). Used first when its key is set.
+//   Ollama Cloud   with OLLAMA_API_KEY: runs on Ollama's servers (https://ollama.com), so it also works
+//                  on Vercel, but it needs usage credit on ollama.com.
+//   On a laptop    with OLLAMA_MODEL and no key: Ollama installed on this computer. Free, no limits,
+//                  slower, and it can't run on Vercel.
 //
 // Settings in server/.env (and in Vercel's Environment Variables for the live site):
-//   OLLAMA_MODEL    which model, e.g. gpt-oss:20b (cloud) or gemma3:4b (laptop).
-//                   Blank = no AI: the chat uses its scripted demo replies.
+//   GEMINI_API_KEY  your Gemini key. Never put it in the code or in git.
+//   GEMINI_MODEL    which Gemini model. Blank = gemini-3.5-flash-lite (Google's fastest, cheapest one).
+//   OLLAMA_MODEL    which Ollama model, e.g. gpt-oss:20b (cloud) or gemma3:4b (laptop).
 //   OLLAMA_API_KEY  your Ollama Cloud key. Never put it in the code or in git.
 //   OLLAMA_URL      where Ollama is. Blank = https://ollama.com with a key, http://localhost:11434 without.
-//   AI_TIMEOUT_MS   how long to wait for the model before using the demo reply. Blank = 20000.
+//   AI_TIMEOUT_MS   how long to wait for the model before using the demo reply. Blank = 25000.
+// No Gemini key and no Ollama model = no AI: the chat uses its scripted demo replies.
 //
-// The model must answer in a fixed shape: { reply, actions, urgent }. On a laptop, Ollama's
-// "structured outputs" force that shape. Ollama Cloud doesn't support that yet, so there we only
+// The model must answer in a fixed shape: { reply, actions, urgent }. Gemini and Ollama on a laptop
+// can be forced to use that shape ("structured outputs"). Ollama Cloud can't yet, so there we only
 // ask for it in the instructions. Either way chat.js checks the answer before using it.
 
 const LAPTOP_URL = "http://localhost:11434";
 const CLOUD_URL = "https://ollama.com";
-const DEFAULT_TIMEOUT_MS = 20000;
+const DEFAULT_TIMEOUT_MS = 25000;   // Gemini's free tier often takes 8-16 s; Vercel allows 30 s
+const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
 const LANGUAGE_NAMES = { en: "English", zh: "Simplified Chinese", ms: "Malay", ta: "Tamil" };
 
@@ -66,7 +72,7 @@ If they already sent money or gave a code, set urgent to true and pick freeze an
 Answer as JSON: {"reply": "...", "actions": ["..."], "urgent": true or false}`;
 }
 
-// The shape the answer must have (Ollama's "format"). The button names can only be ours.
+// The shape the answer must have (Ollama's "format", Gemini's "responseJsonSchema"). The button names can only be ours.
 const REPLY_SHAPE = {
   type: "object",
   properties: {
@@ -77,8 +83,6 @@ const REPLY_SHAPE = {
   required: ["reply", "actions", "urgent"]
 };
 
-// Gives back a function ask(messages, lang) -> { reply, actions, urgent }, or null if no model is
-// set (then chat.js uses its demo replies). messages are [{ role: "user" | "bot", text }].
 // The JSON object in the model's answer. Some models wrap it in ```json ... ``` or add a sentence,
 // so we take everything from the first { to the last }.
 function readJson(text) {
@@ -88,41 +92,77 @@ function readJson(text) {
   return JSON.parse(text.slice(start, end + 1));
 }
 
-function createAi(env = process.env, fetchImpl = fetch) {
-  const model = String(env.OLLAMA_MODEL || "").trim();
-  if (!model) return null;
+// Sends one request to the AI and gives back its answer (parsed JSON). Gives up after timeoutMs,
+// because a senior should never wait forever (chat.js then uses the demo reply instead).
+async function postJson(fetchImpl, url, headers, body, timeoutMs, name) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(url, { method: "POST", headers, signal: controller.signal, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`${name} answered ${res.status}`);   // the status only, never the key
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Google Gemini. The key goes in a header, never in the link (links can end up in logs).
+function geminiAi(key, model, timeoutMs, fetchImpl) {
+  const headers = { "Content-Type": "application/json", "x-goog-api-key": key };
+  return async function ask(messages, lang) {
+    const data = await postJson(fetchImpl, `${GEMINI_URL}/${model}:generateContent`, headers, {
+      systemInstruction: { parts: [{ text: systemPrompt(lang) }] },
+      // Gemini calls the AI's own turns "model" instead of "assistant"
+      contents: messages.map(m => ({ role: m.role === "bot" ? "model" : "user", parts: [{ text: m.text }] })),
+      generationConfig: {
+        temperature: 0.2,                       // low = calmer answers (the newest models ignore it)
+        responseMimeType: "application/json",   // answer with JSON only...
+        responseJsonSchema: REPLY_SHAPE         // ...in exactly our shape, with only our button names
+      }
+    }, timeoutMs, "Gemini");
+    // The text is in candidates[0].content.parts. ?. stops at a missing piece instead of crashing
+    // (e.g. no candidates when Gemini blocks a message), and then readJson throws a clear error.
+    // Parts marked "thought" are the model thinking to itself, so they are skipped.
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    return readJson(parts.filter(p => !p.thought).map(p => p.text || "").join(""));
+  };
+}
+
+// Ollama, on Ollama Cloud (with a key) or on this laptop (without).
+function ollamaAi(env, model, timeoutMs, fetchImpl) {
   const key = String(env.OLLAMA_API_KEY || "").trim();
   const url = String(env.OLLAMA_URL || (key ? CLOUD_URL : LAPTOP_URL)).replace(/\/+$/, "");
-  const timeoutMs = Number(env.AI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
   const headers = { "Content-Type": "application/json" };
   if (key) headers.Authorization = `Bearer ${key}`;   // the key only ever goes to Ollama, from the server
 
   return async function ask(messages, lang) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);   // a senior should never wait forever
-    try {
-      const res = await fetchImpl(`${url}/api/chat`, {
-        method: "POST",
-        headers,
-        signal: controller.signal,
-        body: JSON.stringify({
-          model,
-          stream: false,                     // one whole answer, not word by word
-          ...(key ? {} : { format: REPLY_SHAPE }),   // laptop only: the answer must fit this shape
-          options: { temperature: 0.2 },     // low = calmer, more predictable answers
-          messages: [
-            { role: "system", content: systemPrompt(lang) },
-            ...messages.map(m => ({ role: m.role === "bot" ? "assistant" : "user", content: m.text }))
-          ]
-        })
-      });
-      if (!res.ok) throw new Error(`Ollama answered ${res.status}`);
-      const data = await res.json();
-      return readJson(String((data.message && data.message.content) || ""));
-    } finally {
-      clearTimeout(timer);
-    }
+    const data = await postJson(fetchImpl, `${url}/api/chat`, headers, {
+      model,
+      stream: false,                     // one whole answer, not word by word
+      ...(key ? {} : { format: REPLY_SHAPE }),   // laptop only: the answer must fit this shape
+      options: { temperature: 0.2 },     // low = calmer, more predictable answers
+      messages: [
+        { role: "system", content: systemPrompt(lang) },
+        ...messages.map(m => ({ role: m.role === "bot" ? "assistant" : "user", content: m.text }))
+      ]
+    }, timeoutMs, "Ollama");
+    return readJson(String((data.message && data.message.content) || ""));
   };
+}
+
+// Gives back a function ask(messages, lang) -> { reply, actions, urgent }, or null if no AI is set
+// (then chat.js uses its demo replies). messages are [{ role: "user" | "bot", text }].
+// Gemini first if it has a key, then Ollama if a model is set.
+function createAi(env = process.env, fetchImpl = fetch) {
+  const timeoutMs = Number(env.AI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
+  const geminiKey = String(env.GEMINI_API_KEY || "").trim();
+  if (geminiKey) {
+    const model = String(env.GEMINI_MODEL || "").trim() || GEMINI_DEFAULT_MODEL;
+    return geminiAi(geminiKey, model, timeoutMs, fetchImpl);
+  }
+  const ollamaModel = String(env.OLLAMA_MODEL || "").trim();
+  if (ollamaModel) return ollamaAi(env, ollamaModel, timeoutMs, fetchImpl);
+  return null;
 }
 
 module.exports = { createAi, systemPrompt, readJson, REPLY_SHAPE, BUTTONS };

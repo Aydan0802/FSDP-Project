@@ -154,7 +154,7 @@ test("the AI never sees a code the senior typed, in any message", async () => {
   assert.ok(!JSON.stringify(seen).includes("4111"));
 });
 
-test("createAi is off without OLLAMA_MODEL, and asks Ollama for our reply shape when it is set", async () => {
+test("createAi is off with no Gemini key and no OLLAMA_MODEL, and asks Ollama for our reply shape when it is set", async () => {
   assert.equal(createAi({}), null);
   let sent = null;
   const fakeOllama = async (url, options) => {
@@ -188,6 +188,36 @@ test("with OLLAMA_API_KEY it calls Ollama Cloud with the key, and reads JSON eve
   assert.throws(() => readJson("no json here"), /JSON/);
 });
 
+test("with GEMINI_API_KEY it uses Gemini first, with the key in a header and our reply shape", async () => {
+  let sent = null;
+  const fakeGemini = async (url, options) => {
+    sent = { url, headers: options.headers, body: JSON.parse(options.body) };
+    return { ok: true, json: async () => ({ candidates: [{ content: { parts: [
+      { text: "Let me think...", thought: true },
+      { text: '{"reply":"Hang up now.","actions":["calling-now"],"urgent":false}' }
+    ] } }] }) };
+  };
+  const ai = createAi({ GEMINI_API_KEY: "test-key", OLLAMA_MODEL: "gemma3:4b" }, fakeGemini);
+  const answerFromAi = await ai([{ role: "user", text: "Hi" }, { role: "bot", text: "Hello" }, { role: "user", text: "Help" }], "zh");
+  assert.deepEqual(answerFromAi, { reply: "Hang up now.", actions: ["calling-now"], urgent: false });
+  assert.equal(sent.url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent");
+  assert.equal(sent.headers["x-goog-api-key"], "test-key");
+  assert.ok(!sent.url.includes("test-key"));   // the key is never in the link
+  assert.match(sent.body.systemInstruction.parts[0].text, /Reply ONLY in Simplified Chinese/);
+  assert.deepEqual(sent.body.contents.map(c => c.role), ["user", "model", "user"]);
+  assert.equal(sent.body.generationConfig.responseMimeType, "application/json");
+  assert.deepEqual(sent.body.generationConfig.responseJsonSchema.required, ["reply", "actions", "urgent"]);
+});
+
+test("GEMINI_MODEL picks the model, and a Gemini error or blocked answer becomes an error", async () => {
+  let url = null;
+  const busy = createAi({ GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-3.8-flash" }, async u => { url = u; return { ok: false, status: 429 }; });
+  await assert.rejects(() => busy([{ role: "user", text: "Help" }], "en"), /Gemini answered 429/);
+  assert.match(url, /\/gemini-3\.8-flash:generateContent$/);
+  const blocked = createAi({ GEMINI_API_KEY: "k" }, async () => ({ ok: true, json: async () => ({ promptFeedback: { blockReason: "SAFETY" } }) }));
+  await assert.rejects(() => blocked([{ role: "user", text: "Help" }], "en"), /JSON/);
+});
+
 test("the AI's buttons and chat.js's buttons are the same list", () => {
   assert.deepEqual(Object.keys(BUTTONS).sort(), ACTIONS.slice().sort());
   for (const lang of LANGS) assert.ok(systemPrompt(lang).length > 200);
@@ -196,7 +226,8 @@ test("the AI's buttons and chat.js's buttons are the same list", () => {
 // ---------- The API ----------
 
 async function withServer(run) {
-  delete process.env.OLLAMA_MODEL;   // the API test uses the demo replies, even on a computer with Ollama set up
+  delete process.env.OLLAMA_MODEL;   // the API test uses the demo replies, even on a computer with an AI set up
+  delete process.env.GEMINI_API_KEY;
   const server = createApp().listen(0);
   await new Promise(resolve => server.once("listening", resolve));
   try {
