@@ -197,7 +197,10 @@
       const m = current();
       panels.querySelectorAll(".ov-kpi").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
       document.getElementById("chart-title").textContent = m.title;
-      document.getElementById("ov-chart").innerHTML = chartHtml(m);
+      const holder = document.getElementById("ov-chart");
+      const tableOpen = !!holder.querySelector("details[open]");   // keep "Show as a table" open when swapping panels
+      holder.innerHTML = chartHtml(m);
+      if (tableOpen) holder.querySelector("details").open = true;
       const side = m.side();
       document.getElementById("mix-title").textContent = side.title;
       document.getElementById("ov-side").innerHTML = side.html;

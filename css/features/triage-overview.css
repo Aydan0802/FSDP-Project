@@ -29,3 +29,23 @@
   .ov-long { display: none; }
   .ov-short { display: inline; }
 }
+
+/* The hovered bar's label sits above its neighbours, not behind them */
+#ov-chart .bar-col:hover, #ov-chart .bar-col:focus-within { position: relative; z-index: 5; }
+
+/* "Show as a table" looks like a button: outline, shadow, press-down */
+#ov-chart .chart-table summary {
+  display: inline-flex; align-items: center; gap: .5rem; padding: 0 1.25rem; list-style: none;
+  background: var(--surface); color: var(--text); font-weight: 700;
+  border: 2px solid var(--field-border); border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .14), 0 6px 12px rgba(0, 0, 0, .08);
+  transition: transform .12s, box-shadow .12s, border-color .12s;
+}
+#ov-chart .chart-table summary::-webkit-details-marker { display: none; }
+#ov-chart .chart-table summary::after { content: "\25BE"; transition: transform .15s; }
+#ov-chart .chart-table[open] summary::after { transform: rotate(180deg); }
+#ov-chart .chart-table summary:hover { transform: translateY(-2px); border-color: var(--text); box-shadow: 0 5px 0 rgba(0, 0, 0, .16), 0 10px 16px rgba(0, 0, 0, .10); }
+#ov-chart .chart-table summary:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .14); }
+#ov-chart .chart-table summary:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+#ov-chart .chart-table .table-wrap { margin-top: .75rem; }
+@media (prefers-reduced-motion: reduce) { #ov-chart .chart-table summary { transition: none; } #ov-chart .chart-table summary:hover, #ov-chart .chart-table summary:active { transform: none; } }
