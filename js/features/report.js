@@ -4,7 +4,10 @@
 // the answer to "What happened?" in advance, when another screen sends the customer here)
 // Owner: Jose
 // A short form: two questions answered with buttons, the amount only if money was lost, and
-// two optional boxes. Sending it shows a report number. Nothing is sent anywhere: it is a demo.
+// two optional boxes. Sending it saves it on the server (POST /api/reports, server/reports.js),
+// which gives back the report number, and bank staff see it under Staff > Reports & freezes.
+// If the server can't be reached (for example the site opened with python -m http.server), the
+// form still finishes with a made-up number and says "Demo only", so the demo never gets stuck.
 // Every word comes from t() (js/core/i18n.js), so it follows the language the customer picked.
 //
 // What it remembers (appState.report, cleared by #reset):
@@ -13,6 +16,7 @@
 //   lost     "yes", "no" or "unsure" ("" until picked)
 //   amount, contact, more   what is typed in the boxes
 //   ref      the report number, once sent
+//   saved    true if the server saved it (false: the made-up "Demo only" number)
 //   sent     every report sent during this visit: [{ ref, what, lost, amount, contact, more, time }]
 
 (function () {
@@ -21,7 +25,7 @@
   addTranslations(data.text);
 
   function freshForm(what = "") {
-    return { phase: "form", what, lost: "", amount: "", contact: "", more: "", ref: "" };
+    return { phase: "form", what, lost: "", amount: "", contact: "", more: "", ref: "", saved: false };
   }
   function myState() {
     if (!appState.report) appState.report = { ...freshForm(), sent: [] };
@@ -81,12 +85,33 @@
         <div class="done-mark">${icon("check")}</div>
         <h1 tabindex="-1">${t("rp.sent.title")}</h1>
         <p>${t("rp.sent.refIs")}</p>
-        <p class="rp-ref">${state.ref}</p>
+        <p class="rp-ref">${esc(state.ref)}</p>
         <p>${t("rp.sent.officer")}</p>
         <p>${t("rp.sent.alsoTell", { police, scamShield })}</p>
-        <p class="note">${t("rp.sent.demo")}</p>
+        ${state.saved ? "" : `<p class="note">${t("rp.sent.demo")}</p>`}
         <div class="stack"><a class="btn btn-primary" href="#customer">${t("common.backHome")}</a></div>
       </section>`;
+  }
+
+  // Sends the report to the server. Gives back { ref, createdAt }, or null if the server can't be
+  // reached or can't save it right now. Gives up after 8 seconds, so a senior is never left waiting.
+  // DEMO ONLY: X-User-Id tells the server who is signed in, like the family passphrase screen.
+  async function sendReport(report) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-User-Id": appState.userId || "" },
+        body: JSON.stringify(report),
+        signal: controller.signal
+      });
+      return res.ok ? await res.json() : null;
+    } catch (err) {
+      return null;   // no server, or no answer in time
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   function screenHtml(param) {
@@ -125,7 +150,7 @@
       });
     });
 
-    form.addEventListener("submit", event => {
+    form.addEventListener("submit", async event => {
       event.preventDefault();
       const amount = state.amount.replace(/[$,\s]/g, "").replace(/^S/i, "");
       let problem = "";
@@ -146,11 +171,19 @@
         focusOn.focus();
         return;
       }
-      state.ref = `${data.refPrefix}${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`;
-      state.sent.push({
-        ref: state.ref, what: state.what, lost: state.lost, amount: state.lost === "yes" ? amount : "",
-        contact: state.contact.trim(), more: state.more.trim(), time: new Date().toISOString()
-      });
+      // While it sends: the button says "Sending..." and can't be pressed twice
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.textContent = t("rp.sending");
+
+      const report = {
+        what: state.what, lost: state.lost, amount: state.lost === "yes" ? amount : "",
+        contact: state.contact.trim(), more: state.more.trim()
+      };
+      const saved = await sendReport(report);
+      state.saved = Boolean(saved);
+      state.ref = saved ? saved.ref : `${data.refPrefix}${String(Math.floor(Math.random() * 100000)).padStart(5, "0")}`;
+      state.sent.push({ ...report, ref: state.ref, saved: state.saved, time: new Date().toISOString() });
       state.phase = "sent";
       redrawScreen();
     });

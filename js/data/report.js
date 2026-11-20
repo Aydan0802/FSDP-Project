@@ -13,7 +13,7 @@ const REPORT_DATA = {
   // "Did you lose money?" choices, words under "rp.lost.<id>". "yes" shows the amount box.
   lost: [{ id: "yes" }, { id: "no" }, { id: "unsure" }],
 
-  refPrefix: "SR-26-",   // report numbers look like SR-26-48213
+  refPrefix: "SR-26-",   // made-up numbers, only when the server can't be reached, look like SR-26-48213
 
   // Other places to report to (real Singapore numbers)
   police: { phone: "1800 255 0000", tel: "tel:18002550000" },
@@ -37,6 +37,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "Freeze my accounts first",
       "rp.more": "Anything else? (optional)",
       "rp.send": "Send to OCBC",
+      "rp.sending": "Sending…",
       "rp.err.what": "Please choose what happened.",
       "rp.err.lost": "Please choose if you lost money.",
       "rp.err.amount": "Please type the amount as a number, for example 500.",
@@ -63,6 +64,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "先冻结我的户口",
       "rp.more": "还有其他要说的吗？（可以不填）",
       "rp.send": "发送给 OCBC",
+      "rp.sending": "正在发送…",
       "rp.err.what": "请选择发生了什么事。",
       "rp.err.lost": "请选择你有没有损失钱。",
       "rp.err.amount": "请用数字写金额，例如 500。",
@@ -89,6 +91,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "Bekukan akaun saya dahulu",
       "rp.more": "Ada apa-apa lagi? (tidak wajib)",
       "rp.send": "Hantar kepada OCBC",
+      "rp.sending": "Sedang dihantar…",
       "rp.err.what": "Sila pilih apa yang berlaku.",
       "rp.err.lost": "Sila pilih sama ada anda kehilangan wang.",
       "rp.err.amount": "Sila taip jumlah sebagai nombor, contohnya 500.",
@@ -115,6 +118,7 @@ const REPORT_DATA = {
       "rp.freezeFirst": "முதலில் என் கணக்குகளை முடக்கு",
       "rp.more": "வேறு ஏதாவது? (விருப்பத்தேர்வு)",
       "rp.send": "OCBC-க்கு அனுப்பு",
+      "rp.sending": "அனுப்புகிறோம்…",
       "rp.err.what": "என்ன நடந்தது என்று தேர்ந்தெடுங்கள்.",
       "rp.err.lost": "நீங்கள் பணத்தை இழந்தீர்களா என்று தேர்ந்தெடுங்கள்.",
       "rp.err.amount": "தொகையை எண்ணாகத் தட்டச்சு செய்யுங்கள், எ.கா. 500.",

@@ -158,6 +158,7 @@ function lockTagHtml() {
 const STAFF_MENU = [
   { route: "staff", icon: "chart", label: "Overview" },
   { route: "staff-queue", icon: "list", label: "Case queue", count: 9 },
+  { route: "staff-reports", icon: "document", label: "Reports & freezes" },   // Jose: js/features/staff-reports.js
   { route: "staff-trends", icon: "wave", label: "Trends" },
   { route: "staff-scam-types", icon: "flag", label: "Scam types" },
   { route: "staff-settings", icon: "settings", label: "Settings" }
