@@ -1,11 +1,14 @@
 "use strict";
 
-// Feature: Customer home ("Need help right now?" card, check tools, be-ready tools, recent checks).
+// Feature: Customer home ("Need help right now?" card, one big check, a short list of the rest,
+// recent checks).
 // Owner: Yan Lin
+// Few choices on purpose: seniors find a long page of tiles hard to scan, so the page has two
+// urgent buttons, one big "Check" tile and a plain one-line list for everything else.
 // This is also the landing page. Guests (not signed in) see it too:
-//   - a welcome for guests, with a small drawing, instead of "Hello, Mdm Lim"
+//   - a short welcome for guests, with a small drawing, instead of "Hello, Mdm Lim"
 //   - the urgent card and the open check tools work straight away, with no sign-in
-//   - tools that need signing in show "Sign in needed" (tapping one goes to sign in, then back)
+//   - tools that need signing in show a small lock (tapping one goes to sign in, then back)
 //   - signed-in customers also get "Your safety checklist" (with a progress bar) and recent checks
 // Words come from t() (js/core/i18n.js); this screen's words are in CUSTOMER_HOME_DATA.text.
 
@@ -21,20 +24,30 @@
     return hour < 12 ? t("home.morning") : hour < 18 ? t("home.afternoon") : t("home.evening");
   }
 
+  // The one big "Check something" tile (red border): the check most people need
+  function mainToolHtml(tool) {
+    return `<a class="tool tool--main" href="#${tool.route}">
+        <span class="tool-icon">${icon(tool.icon)}</span>
+        <span class="tool-text"><strong>${t(tool.title)}</strong><span>${t(tool.text)}</span></span>
+        ${icon("chevron", "tool-arrow")}
+      </a>`;
+  }
+
+  // Everything else as one plain list: an icon and a few words per row, nothing more.
   // A locked tool still links to its screen: the router sends a guest to sign in first and then
-  // straight back to it (router.js).
-  // If the tiles that share rows (two per row) are an odd number, the last one would sit alone
-  // with a gap beside it, so it spans the whole row instead.
-  function tilesHtml(tools) {
-    const paired = tools.filter(tool => !tool.wide).length;
-    const last = tools[tools.length - 1];
-    // tool-wide: the featured tile (red border); tool-span: just takes the whole row
-    const rowClass = tool => tool.wide ? ' class="tool-wide"' : paired % 2 === 1 && tool === last ? ' class="tool-span"' : "";
-    return `<ul class="tools">
-        ${tools.map(tool => `<li${rowClass(tool)}><a class="tool" href="#${tool.route}">
-            <span class="tool-icon">${icon(tool.icon)}</span>
-            <span class="tool-text"><strong>${t(tool.title)}</strong><span>${t(tool.text)}</span>${tool.locked ? lockTagHtml() : ""}</span>
-            ${icon("chevron", "tool-arrow")}
+  // straight back to it (router.js). Guests see a small lock on it, explained once under the
+  // heading; screen readers hear "Sign in needed" instead.
+  function lockIconHtml() {
+    return `<span class="menu-lock">${icon("lock")}<span class="visually-hidden"> (${t("lock.tag")})</span></span>`;
+  }
+
+  function moreToolsHtml(tools) {
+    return `<ul class="more-list">
+        ${tools.map(tool => `<li><a class="more-link" href="#${tool.route}">
+            <span class="more-icon">${icon(tool.icon)}</span>
+            <span class="more-text">${t(tool.title)}</span>
+            ${tool.locked && !isSignedIn() ? lockIconHtml() : ""}
+            ${icon("chevron", "more-arrow")}
           </a></li>`).join("")}
       </ul>`;
   }
@@ -93,24 +106,18 @@
       </svg>`;
   }
 
+  // Kept short on purpose (a greeting and one line), so the red "Need help right now?" card is
+  // on the first screen of a phone without scrolling.
   function helloHtml() {
-    if (!isSignedIn()) {
-      return `<section class="hello hello--hero" data-read>
-          <div class="hello-text">
-            <p class="eyebrow">${greeting()}</p>
-            <h1 tabindex="-1">${t("home.guest.title")}</h1>
-            <p class="hello-sub">${t("home.guest.sub")}</p>
-          </div>
-          ${heroArtHtml()}
-        </section>`;
-    }
-    // Greet by the name typed at sign-in (escaped: the customer typed it), or the made-up one
+    // Guests: "Not sure? Pause and check." Signed in: "Hello, Mdm Lim", by the name typed at
+    // sign-in (escaped: the customer typed it).
     const name = appState.userName ? escapeHtml(appState.userName) : "";
+    const title = !isSignedIn() ? t("home.guest.title")
+      : name ? t("home.hello", { name }) : t(appState.newAccount ? "home.welcomeNew" : "home.helloNoName");
     return `<section class="hello hello--hero" data-read>
         <div class="hello-text">
           <p class="eyebrow">${greeting()}</p>
-          <h1 tabindex="-1">${name ? t("home.hello", { name }) : t(appState.newAccount ? "home.welcomeNew" : "home.helloNoName")}</h1>
-          <p class="hello-sub">${t("home.sub")}</p>
+          <h1 tabindex="-1">${title}</h1>
         </div>
         ${heroArtHtml()}
       </section>`;
@@ -189,14 +196,13 @@
 
       <section class="tools-section" aria-labelledby="check-title" data-read>
         <h2 id="check-title">${t("home.checkTitle")}</h2>
-        <p class="tools-sub">${t("home.checkSub")}</p>
-        ${tilesHtml(data.checkTools)}
+        ${mainToolHtml(data.mainTool)}
       </section>
 
-      <section class="tools-section" aria-labelledby="ready-title" data-read>
-        <h2 id="ready-title">${t("home.readyTitle")}</h2>
-        ${signedIn ? "" : `<p class="tools-sub">${t("home.readySubGuest")}</p>`}
-        ${tilesHtml(data.readyTools)}
+      <section class="tools-section" aria-labelledby="more-title" data-read>
+        <h2 id="more-title">${t("home.moreTitle")}</h2>
+        ${signedIn ? "" : `<p class="tools-sub lock-note">${t("home.lockNote", { lock: `<span class="menu-lock" aria-hidden="true">${icon("lock")}</span>` })}</p>`}
+        ${moreToolsHtml(data.moreTools)}
       </section>
 
       ${signedIn ? `<details class="recent">
