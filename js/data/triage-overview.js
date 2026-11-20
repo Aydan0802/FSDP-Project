@@ -1,32 +1,28 @@
 "use strict";
 
-// Made-up data for: Overview additions (staff). #staff
+// Made-up data for: Overview (staff). #staff
 // Owner: Wei Ye
-// Feeds the "Today in context" panel (js/features/triage-overview.js).
-// Totals only, no customer details. The numbers are placeholders until real figures exist.
+// The "reports" and "flagged activity" numbers on the Overview come from CASE_INSIGHTS_DATA
+// (js/data/triage-console.js), so they always match the Flagged activity tab. This file only holds
+// what that data doesn't have: how many checks customers used, and the "Results" breakdowns next to
+// the chart. Totals only, no customer details.
 
-const OVERVIEW_CONTEXT = {
-  // A usual day of each name: the average number of reports over the last 12 weeks
-  usualDay: {
-    Mon: { name: "Monday", reports: 8.3 },
-    Tue: { name: "Tuesday", reports: 7.9 },
-    Wed: { name: "Wednesday", reports: 7.9 },
-    Thu: { name: "Thursday", reports: 8.6 },
-    Fri: { name: "Friday", reports: 8.1 },
-    Sat: { name: "Saturday", reports: 5.5 },
-    Sun: { name: "Sunday", reports: 4.6 }
+const OVERVIEW_DATA = {
+  // Checks used per day (pause checks and voice checks together), for the same last 14 days as
+  // CASE_INSIGHTS_DATA.daily, oldest first. The last number is today.
+  checksPerDay: [46, 49, 44, 31, 28, 48, 50, 51, 53, 47, 33, 30, 52, 55],
+
+  // The box next to the chart. Each list must add up to the number on its panel: today's 6 reports,
+  // this week's 37 reports and today's 55 checks. (Flagged activity is worked out from
+  // CASE_INSIGHTS_DATA, so it always matches.) Results are the five shared ones, most worrying first.
+  reportResults: {
+    today: { likely: 2, partial: 1, uncertain: 1, unsure: 0, real: 2 },
+    week:  { likely: 8, partial: 3, uncertain: 9, unsure: 4, real: 13 }
   },
-  weeks: 12,
-
-  // How much the checks were used today, next to a usual day (average over the last 12 weeks).
-  // Totals only: how many checks were run, never who ran them.
-  usage: { pauseChecks: 38, voiceChecks: 17, usualChecks: 46 },
-
-  // Flags per month for the last 12 months, oldest first (the last one is the latest full month)
-  months: ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct"],
-  flagsPerMonth: [87, 97, 95, 124, 112, 116, 131, 137, 156, 178, 216, 277],
-
-  // Of the paused transfers each month, the percentage the customer cancelled themselves
-  // after reading the warnings. Same 12 months, oldest first.
-  cancelledPct: [30, 31, 31, 33, 34, 35, 36, 37, 39, 40, 38, 41]
+  checksByTool: [
+    { label: "Check a message or call", count: 22 },
+    { label: "Check a transfer", count: 13 },
+    { label: "Is the bank really calling?", count: 11 },
+    { label: "Is the caller a real person?", count: 9 }
+  ]
 };
